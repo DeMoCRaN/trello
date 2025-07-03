@@ -1,37 +1,37 @@
 version: '3.5'
 services:
-  nest_test_postgres:
-    container_name: trello_postgres
-    image: postgres:14
-    environment:
-      POSTGRES_USER: trello
-      POSTGRES_PASSWORD: 4625
+  postgres:
+    container_name: postgres
+    image: postgres:14 # образ для построения нашего контейнера
+    environment: # переменные окружения для проброса внутрь контейнера
+      POSTGRES_USER: democran # имя пользователя по умолчанию
+      POSTGRES_PASSWORD: qweasd-123 # парооль по умолчанию
       PGDATA: /data/postgres
-    volumes:
-      - postgres:/var/lib/postgresql/data
-    ports:
+    volumes: # жесткий диск для записи данных
+      - postgres:/var/www/trello/docker-volumes/postgres # путь для локальной машины
+    ports: # проброс портов
       - 127.0.0.1:5433:5432
     networks:
-      - nest_test
+      - trello
     restart: unless-stopped
 
-  nest_test_pgadmin:
-    container_name: trello_pgadmin
+  pgadmin:
+    container_name: pgadmin
     image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: trello@trello.com
-      PGADMIN_DEFAULT_PASSWORD: trello
-      PGADMIN_CONFIG_SERVER_MODE: 'false'
+      PGADMIN_DEFAULT_EMAIL: test@admin.container-name.com
+      PGADMIN_DEFAULT_PASSWORD: qweasd-123
+      PGADMIN_CONFIG-SERVER_MODE: 'false'
     volumes:
-      - pgadmin:/var/lib/pgadmin
+      - pgadmin:/var/www/trello/docker-volumes/pgadmin
     ports:
       - 0.0.0.0:5050:80
     networks:
-      - nest_test
+      - trello
     restart: unless-stopped
 
 networks:
-  nest_test:
+  trello:
     driver: bridge
 
 volumes:
