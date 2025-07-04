@@ -1,3 +1,4 @@
+const corsMiddleware = require('./middlewares/cors');
 const express = require('express');
 const { Pool } = require('pg');
 const app = express();
@@ -6,6 +7,9 @@ const port = 3000;
 const statusPageHandler = require('./def/statusPage');
 
 app.use(express.json());
+app.use(corsMiddleware);
+
+require('./routes/api')(app);
 
 // PostgreSQL connection pool setup
 const pool = new Pool({
