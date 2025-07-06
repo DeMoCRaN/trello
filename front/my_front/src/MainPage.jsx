@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './MainPage.css';
 import Assignment from './Assignment';
+import Task from './Task';
 
 function MainPage() {
   const [assignments, setAssignments] = useState([]);
@@ -11,40 +12,63 @@ function MainPage() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskDeadline, setNewTaskDeadline] = useState('');
-  const [newTaskStatus, setNewTaskStatus] = useState('1'); // id статуса
+  const [newTaskStatus, setNewTaskStatus] = useState('1'); // id статуса по умолчанию "new"
   const [newTaskPriority, setNewTaskPriority] = useState('1'); // id приоритета
+  const [newTaskCreatorId, setNewTaskCreatorId] = useState('');
+  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState('');
 
-  // Тестовые данные для статусов и приоритетов
-  const statuses = [
-    { id: 1, name: 'Выполнена' },
-    { id: 2, name: 'В процессе' },
-    { id: 3, name: 'Ожидает' },
-  ];
+  const [statuses, setStatuses] = useState([]);
+  const [priorities, setPriorities] = useState([]);
 
-  const priorities = [
-    { id: 1, name: 'Высокий' },
-    { id: 2, name: 'Средний' },
-    { id: 3, name: 'Низкий' },
-  ];
+  const fetchStatuses = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/task_statuses');
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке статусов');
+      }
+      const data = await response.json();
+      setStatuses(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchPriorities = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/task_priorities');
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке приоритетов');
+      }
+      const data = await response.json();
+      setPriorities(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchAssignments = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/assignments');
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке заданий');
+      }
+      const data = await response.json();
+      console.log('Fetched assignments:', data);
+      setAssignments(data);
+      if (data.length > 0) {
+        setSelectedAssignment(data[0]);
+        console.log('Selected assignment set:', data[0]);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchAssignments() {
-      try {
-        const response = await fetch('http://localhost:3000/api/assignments');
-        if (!response.ok) {
-          throw new Error('Ошибка при загрузке заданий');
-        }
-        const data = await response.json();
-        setAssignments(data);
-        if (data.length > 0) {
-          setSelectedAssignment(data[0]);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
+    fetchStatuses();
+    fetchPriorities();
     fetchAssignments();
   }, []);
 
@@ -75,16 +99,12 @@ function MainPage() {
       if (!response.ok) {
         throw new Error('Ошибка при создании задачи');
       }
-      const createdTask = await response.json();
-      // Обновляем список задач в выбранном задании
-      setSelectedAssignment({
-        ...selectedAssignment,
-        tasks: [...(selectedAssignment.tasks || []), createdTask],
-      });
+      await response.json();
+      await fetchAssignments();
       setNewTaskTitle('');
       setNewTaskDescription('');
       setNewTaskDeadline('');
-      setNewTaskStatus('1');
+      setNewTaskStatus('3');
       setNewTaskPriority('1');
     } catch (err) {
       alert(err.message);
@@ -99,12 +119,31 @@ function MainPage() {
       if (!response.ok) {
         throw new Error('Ошибка при удалении задачи');
       }
-      // Обновляем список задач в выбранном задании
-      setSelectedAssignment({
-        ...selectedAssignment,
-        tasks: selectedAssignment.tasks.filter(task => task.id !== taskId),
+      await fetchAssignments();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleStatusChange = async (taskId, newStatusId) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_id: newStatusId }),
+      });
+      if (!response.ok) {
+        throw new Error('Ошибка при обновлении статуса задачи');
+      }
+      // Обновляем статус задачи в состоянии
+      setSelectedAssignment((prev) => {
+        const updatedTasks = prev.tasks.map((task) =>
+          task.id === taskId ? { ...task, status: statuses.find(s => s.id === newStatusId).name } : task
+        );
+        return { ...prev, tasks: updatedTasks };
       });
     } catch (err) {
+      console.error('Error updating task status:', err);
       alert(err.message);
     }
   };
@@ -117,10 +156,25 @@ function MainPage() {
     return <p>Ошибка: {error}</p>;
   }
 
+  // Группируем задачи по статусам
+  const tasksByStatus = {
+    'new': [],
+    'in_progress': [],
+    'done': [],
+  };
+
+  if (selectedAssignment && selectedAssignment.tasks) {
+    console.log('Selected assignment tasks:', selectedAssignment.tasks);
+    selectedAssignment.tasks.forEach((task) => {
+      if (tasksByStatus[task.status]) {
+        tasksByStatus[task.status].push(task);
+      }
+    });
+  }
+
   return (
     <main className="dashboard">
       <header>
-        <h1>Дашборд заданий</h1>
       </header>
       <section className="assignments-list">
         <ul>
@@ -139,70 +193,104 @@ function MainPage() {
         <section className="selected-assignment">
           <h2>{selectedAssignment.title}</h2>
           <p>{selectedAssignment.description}</p>
-          <div className="tasks-list">
-            {selectedAssignment.tasks && selectedAssignment.tasks.length > 0 ? (
-              selectedAssignment.tasks.map((task) => (
-                <div key={task.id} className="task-card">
-                  <h3>{task.title}</h3>
-                  <p>{task.description}</p>
-                  <p><strong>Статус:</strong> {task.status}</p>
-                  <p><strong>Приоритет:</strong> {task.priority}</p>
-                  <p><strong>Дедлайн:</strong> {task.deadline ? new Date(task.deadline).toLocaleString() : 'Нет'}</p>
-                  <button onClick={() => handleDeleteTask(task.id)}>Удалить задачу</button>
-                </div>
-              ))
-            ) : (
-              <p>Задачи отсутствуют</p>
-            )}
+          <div className="tasks-dashboard">
+            {Object.entries(tasksByStatus).map(([statusName, tasks]) => (
+              <div key={statusName} className="tasks-column">
+                <h3>{statusName}</h3>
+{tasks.length > 0 ? (
+  tasks.map((task) => (
+    <Task
+      key={task.id}
+      task={task}
+      statuses={statuses}
+      onStatusChange={handleStatusChange}
+      onDelete={handleDeleteTask}
+      creatorName={task.creator_name}
+      assigneeName={task.assignee_name}
+    />
+  ))
+) : (
+  <p>Задачи отсутствуют</p>
+)}
+              </div>
+            ))}
           </div>
           <form onSubmit={handleCreateTask}>
-            <h3>Создать новую задачу</h3>
+          <h3>Создать новую задачу</h3>
+          <label>
+            Название задачи:
             <input
               type="text"
               placeholder="Название задачи"
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
+              required
             />
+          </label>
+          <label>
+            Описание задачи:
             <textarea
               placeholder="Описание задачи"
               value={newTaskDescription}
               onChange={(e) => setNewTaskDescription(e.target.value)}
+              required
             />
-            <label>
-              Дедлайн:
-              <input
-                type="datetime-local"
-                value={newTaskDeadline}
-                onChange={(e) => setNewTaskDeadline(e.target.value)}
-              />
-            </label>
-            <label>
-              Статус:
-              <select
-                value={newTaskStatus}
-                onChange={(e) => setNewTaskStatus(e.target.value)}
-              >
-                {statuses.map((status) => (
-                  <option key={status.id} value={status.id}>
-                    {status.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Приоритет:
-              <select
-                value={newTaskPriority}
-                onChange={(e) => setNewTaskPriority(e.target.value)}
-              >
-                {priorities.map((priority) => (
-                  <option key={priority.id} value={priority.id}>
-                    {priority.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="submit">Создать задачу</button>
+          </label>
+          <label>
+            Дедлайн:
+            <input
+              type="datetime-local"
+              value={newTaskDeadline}
+              onChange={(e) => setNewTaskDeadline(e.target.value)}
+            />
+          </label>
+          <label>
+            Создатель (ID):
+            <input
+              type="number"
+              value={newTaskCreatorId || ''}
+              onChange={(e) => setNewTaskCreatorId(e.target.value)}
+              placeholder="Введите ID создателя"
+              required
+            />
+          </label>
+          <label>
+            Исполнитель (ID):
+            <input
+              type="number"
+              value={newTaskAssigneeId || ''}
+              onChange={(e) => setNewTaskAssigneeId(e.target.value)}
+              placeholder="Введите ID исполнителя"
+              required
+            />
+          </label>
+          <label>
+            Статус:
+            <select
+              value={newTaskStatus}
+              onChange={(e) => setNewTaskStatus(e.target.value)}
+            >
+              {statuses.map((status) => (
+                <option key={status.id} value={status.id}>
+                  {status.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Приоритет:
+            <select
+              value={newTaskPriority}
+              onChange={(e) => setNewTaskPriority(e.target.value)}
+            >
+              {priorities.map((priority) => (
+                <option key={priority.id} value={priority.id}>
+                  {priority.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Создать задачу</button>
           </form>
         </section>
       )}

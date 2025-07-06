@@ -1,15 +1,4 @@
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: 'democran',
-  host: 'localhost',
-  database: 'democran',
-  password: 'qweasd-123',
-  port: 5433,
-});
-
-// Получить все задания с вложенными задачами
-async function getAssignments() {
+async function getAssignments(pool) {
   const client = await pool.connect();
   try {
     const assignmentsResult = await client.query('SELECT * FROM assignments ORDER BY created_at DESC');
@@ -35,8 +24,7 @@ async function getAssignments() {
   }
 }
 
-// Создать новое задание
-async function createAssignment({ title, description }) {
+async function createAssignment(pool, { title, description }) {
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -51,8 +39,7 @@ async function createAssignment({ title, description }) {
   }
 }
 
-// Создать задачу в задании
-async function createTaskInAssignment(assignmentId, taskData) {
+async function createTaskInAssignment(pool, assignmentId, taskData) {
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -76,8 +63,23 @@ async function createTaskInAssignment(assignmentId, taskData) {
   }
 }
 
+async function deleteAssignment(pool, assignmentId) {
+  const client = await pool.connect();
+  try {
+    // Удаляем все задачи, связанные с заданием
+    await client.query('DELETE FROM tasks WHERE assignment_id = $1', [assignmentId]);
+    // Удаляем само задание
+    await client.query('DELETE FROM assignments WHERE id = $1', [assignmentId]);
+  } catch (error) {
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   getAssignments,
   createAssignment,
   createTaskInAssignment,
+  deleteAssignment,
 };

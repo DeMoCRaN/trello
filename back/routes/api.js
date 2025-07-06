@@ -1,14 +1,22 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { createTask } = require('../controllers/tasks');
-const { getAssignments, createAssignment, createTaskInAssignment } = require('../controllers/assignments');
+const tasksController = require('../controllers/tasks');
+const assignmentsController = require('../controllers/assignments');
 
-// Получаем пул подключения к базе из app.locals
-let pool;
+const { Pool } = require('pg');
+
+// Создаем пул подключения к базе данных для API
+const pool = new Pool({
+  user: 'democran',
+  host: 'localhost',
+  database: 'democran',
+  password: 'qweasd-123',
+  port: 5433,
+});
 
 const setPool = (app) => {
-  pool = app.locals.pool;
+  // Оставляем пустой, так как пул создается здесь
 };
 
 const router = express.Router();
@@ -20,7 +28,6 @@ router.get('/test', (req, res) => {
   res.json({ message: 'API is working!' });
 });
 
-// ... остальные маршруты, где используется pool ...
 
 // В каждом маршруте используем pool, например:
 router.post('/login', async (req, res) => {
@@ -101,7 +108,7 @@ router.post('/login', async (req, res) => {
 router.post('/tasks', async (req, res) => {
   try {
     const taskData = req.body;
-    const newTask = await createTask(taskData);
+    const newTask = await tasksController.createTask(pool, taskData);
     res.status(201).json(newTask);
   } catch (error) {
     console.error('Ошибка при создании задачи:', error);
@@ -134,7 +141,7 @@ router.get('/tasks', async (req, res) => {
 // Роут для получения списка заданий с задачами
 router.get('/assignments', async (req, res) => {
   try {
-    const assignments = await getAssignments();
+    const assignments = await assignmentsController.getAssignments(pool);
     res.json(assignments);
   } catch (error) {
     console.error('Ошибка при получении заданий:', error);
@@ -146,7 +153,7 @@ router.get('/assignments', async (req, res) => {
 router.post('/assignments', async (req, res) => {
   try {
     const assignmentData = req.body;
-    const newAssignment = await createAssignment(assignmentData);
+    const newAssignment = await assignmentsController.createAssignment(pool, assignmentData);
     res.status(201).json(newAssignment);
   } catch (error) {
     console.error('Ошибка при создании задания:', error);
@@ -159,7 +166,7 @@ router.post('/assignments/:id/tasks', async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.id, 10);
     const taskData = req.body;
-    const newTask = await createTaskInAssignment(assignmentId, taskData);
+    const newTask = await assignmentsController.createTaskInAssignment(pool, assignmentId, taskData);
     res.status(201).json(newTask);
   } catch (error) {
     console.error('Ошибка при создании задачи в задании:', error);
@@ -168,17 +175,60 @@ router.post('/assignments/:id/tasks', async (req, res) => {
 });
 
 router.delete('/tasks/:id', async (req, res) => {
-  console.log('DELETE /tasks/:id called with id:', req.params.id);
   try {
     const taskId = parseInt(req.params.id, 10);
-    const result = await pool.query('DELETE FROM tasks WHERE id = $1', [taskId]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Задача не найдена' });
-    }
+    await tasksController.deleteTask(pool, taskId);
     res.json({ message: 'Задача успешно удалена' });
   } catch (error) {
     console.error('Ошибка при удалении задачи:', error);
     res.status(500).json({ error: 'Ошибка при удалении задачи' });
+  }
+});
+
+router.delete('/assignments/:id', async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id, 10);
+    await assignmentsController.deleteAssignment(pool, assignmentId);
+    res.json({ message: 'Задание успешно удалено' });
+  } catch (error) {
+    console.error('Ошибка при удалении задания:', error);
+    res.status(500).json({ error: 'Ошибка при удалении задания' });
+  }
+});
+
+router.patch('/tasks/:id/status', async (req, res) => {
+  try {
+    console.log('PATCH /tasks/:id/status called with params:', req.params, 'body:', req.body);
+    const taskId = parseInt(req.params.id, 10);
+    const { status_id } = req.body;
+    if (!status_id) {
+      return res.status(400).json({ error: 'status_id is required' });
+    }
+    const updatedTask = await tasksController.updateTaskStatus(pool, taskId, status_id);
+    res.json(updatedTask);
+  } catch (error) {
+    console.error('Ошибка при обновлении статуса задачи:', error);
+    res.status(500).json({ error: 'Ошибка при обновлении статуса задачи' });
+  }
+});
+
+router.get('/task_statuses', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM task_statuses ORDER BY id');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Ошибка при получении статусов задач:', error);
+    res.status(500).json({ error: 'Ошибка при получении статусов задач' });
+  }
+});
+
+router.get('/task_priorities', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM task_priorities ORDER BY id');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Ошибка при получении приоритетов задач:', error);
+    res.status(500).json({ error: 'Ошибка при получении приоритетов задач' });
   }
 });
 
