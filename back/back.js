@@ -15,7 +15,7 @@ require('./routes/api')(app);
 const pool = new Pool({
   user: 'democran',
   host: 'localhost', 
-  database: 'postgres', 
+  database: 'democran', 
   password: 'qweasd-123',
   port: 5433, 
 });
