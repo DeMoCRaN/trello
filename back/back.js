@@ -6,11 +6,6 @@ const port = 3000;
 
 const statusPageHandler = require('./def/statusPage');
 
-app.use(express.json());
-app.use(corsMiddleware);
-
-require('./routes/api')(app);
-
 // PostgreSQL connection pool setup
 const pool = new Pool({
   user: 'democran',
@@ -19,6 +14,14 @@ const pool = new Pool({
   password: 'qweasd-123',
   port: 5433, 
 });
+
+app.use(express.json());
+app.use(corsMiddleware);
+
+app.locals.pool = pool; // Сохраняем пул в app.locals для передачи в роуты
+
+require('./routes/api')(app);
+
 // Root route
 app.get('/', statusPageHandler);
 
