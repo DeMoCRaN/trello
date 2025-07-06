@@ -89,7 +89,15 @@ function MainPage() {
         body: JSON.stringify({
           title: newTaskTitle,
           description: newTaskDescription,
-          deadline: newTaskDeadline ? new Date(newTaskDeadline).toISOString() : null,
+          deadline: newTaskDeadline ? (() => {
+            const [datePart, timePart] = newTaskDeadline.split('T');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hour, minute] = timePart.split(':').map(Number);
+            // Создаем дату в UTC, чтобы избежать смещения часового пояса
+            const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
+            return date.toISOString();
+          })() : null,
+          created_at: new Date().toISOString(), // Добавляем время создания
           creator_id: 1, // Замените на реальный ID пользователя
           assignee_id: 1, // Замените на реальный ID пользователя
           status_id: parseInt(newTaskStatus, 10),

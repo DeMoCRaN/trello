@@ -3,6 +3,10 @@ const express = require('express');
 const { Pool } = require('pg');
 const app = express();
 const port = 3000;
+const moment = require('moment-timezone');
+moment.tz.setDefault('Europe/Moscow');
+
+console.log(moment().format()); // 2025-07-07T14:30:00+03:00
 
 const statusPageHandler = require('./def/statusPage');
 

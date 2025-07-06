@@ -1,8 +1,10 @@
 import React from 'react';
-import CountdownProgressBar from './CountdownProgressBar';
+import DeadlineProgressBar from './DeadlineProgressBar';
 
 function Task({ task, statuses, onStatusChange, onDelete, name,  }) {
   const deadline = task.deadline ? new Date(task.deadline) : null;
+
+  console.log('Task dates:', { createdAt: task.created_at, deadline: task.deadline });
 
   return (
     <article className="task-card">
@@ -11,9 +13,9 @@ function Task({ task, statuses, onStatusChange, onDelete, name,  }) {
       <p><strong>Приоритет:</strong> {task.priority}</p>
       <p><strong>Создатель:</strong> {name || 'Неизвестно'}</p>
       <p><strong>Исполнитель:</strong> {name || 'Неизвестно'}</p>
-      <p><strong>Дедлайн:</strong> {deadline ? new Date(deadline.getTime() - deadline.getTimezoneOffset() * 60000).toLocaleString() : 'Нет'}</p>
+      <p><strong>Дедлайн:</strong> {deadline ? new Date(deadline.getTime()).toLocaleString() : 'Нет'}</p>
       {deadline && (
-        <CountdownProgressBar createdAt={task.created_at} deadline={task.deadline} />
+        <DeadlineProgressBar createdAt={task.created_at || task.deadline} deadline={task.deadline} />
       )}
       <label>
         Статус:
