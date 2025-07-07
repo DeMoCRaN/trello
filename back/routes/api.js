@@ -15,55 +15,7 @@ const pool = new Pool({
   port: 5433,
 });
 
-const setPool = (app) => {
-  // Оставляем пустой, так как пул создается здесь
-};
-
 const router = express.Router();
-
-// Теперь используем pool в обработчиках
-
-// Тестовый маршрут
-router.get('/test', (req, res) => {
-  res.json({ message: 'API is working!' });
-});
-
-
-// В каждом маршруте используем pool, например:
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (userResult.rows.length === 0) {
-      return res.status(401).json({ message: 'Неверный email или пароль' });
-    }
-    const user = userResult.rows[0];
-    const isMatch = await require('bcryptjs').compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Неверный email или пароль' });
-    }
-    const token = require('jsonwebtoken').sign(
-      { userId: user.id, roleId: user.role_id },
-      'your_jwt_secret_key',
-      { expiresIn: '1h' }
-    );
-    res.json({ token });
-  } catch (error) {
-    console.error('Ошибка при логине:', error);
-    res.status(500).json({ message: 'Ошибка сервера' });
-  }
-});
-
-// Аналогично для других маршрутов...
-
-// Экспортируем функцию для регистрации роутов и установки пула
-module.exports = (app) => {
-  setPool(app);
-  app.use('/api', router);
-};
-
-// Секретный ключ для JWT (в реальном проекте храните в .env)
-const JWT_SECRET = 'your_jwt_secret_key';
 
 // Тестовый маршрут
 router.get('/test', (req, res) => {
@@ -75,7 +27,6 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Ищем пользователя по email
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userResult.rows.length === 0) {
       return res.status(401).json({ message: 'Неверный email или пароль' });
@@ -83,20 +34,17 @@ router.post('/login', async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Сравниваем пароль с хэшем из базы
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Неверный email или пароль' });
     }
 
-    // Создаем JWT токен
     const token = jwt.sign(
-      { userId: user.id, roleId: user.role_id },
-      JWT_SECRET,
+      { userId: user.id, roleId: user.role_id, email: user.email },
+      'your_jwt_secret_key',
       { expiresIn: '1h' }
     );
 
-    // Отправляем токен клиенту
     res.json({ token });
   } catch (error) {
     console.error('Ошибка при логине:', error);
@@ -104,7 +52,40 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Роут для создания задачи
+
+// Новый маршрут для получения информации о пользователе по ID
+router.get('/users/:id', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const userResult = await pool.query('SELECT id, email, role_id FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+    const user = userResult.rows[0];
+    res.json(user);
+  } catch (error) {
+    console.error('Ошибка при получении пользователя:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+});
+
+// Новый маршрут для получения информации о пользователе по email
+router.get('/users/email/:email', async (req, res) => {
+  const email = req.params.email;
+  try {
+    const userResult = await pool.query('SELECT id, email, role_id FROM users WHERE email = $1', [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+    const user = userResult.rows[0];
+    res.json(user);
+  } catch (error) {
+    console.error('Ошибка при получении пользователя по email:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+});
+
+// Роуты для задач и заданий
 router.post('/tasks', async (req, res) => {
   try {
     const taskData = req.body;
@@ -116,7 +97,6 @@ router.post('/tasks', async (req, res) => {
   }
 });
 
-// Роут для получения списка задач с join на статусы и приоритеты
 router.get('/tasks', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -138,7 +118,6 @@ router.get('/tasks', async (req, res) => {
   }
 });
 
-// Роут для получения списка заданий с задачами
 router.get('/assignments', async (req, res) => {
   try {
     const assignments = await assignmentsController.getAssignments(pool);
@@ -149,7 +128,6 @@ router.get('/assignments', async (req, res) => {
   }
 });
 
-// Роут для создания нового задания
 router.post('/assignments', async (req, res) => {
   try {
     const assignmentData = req.body;
@@ -161,7 +139,6 @@ router.post('/assignments', async (req, res) => {
   }
 });
 
-// Роут для создания задачи в задании
 router.post('/assignments/:id/tasks', async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.id, 10);

@@ -1,66 +1,80 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import './DeadlineProgressBar.css';
 
-function DeadlineProgressBar({ createdAt, deadline }) {
-  console.log('DeadlineProgressBar props:', { createdAt, deadline });
-  const [now, setNow] = useState(new Date());
+function DeadlineProgressBar({ task }) {
+  const { created_at, deadline } = task;
+  const [progress, setProgress] = useState(0);
+  const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date());
-    }, 1000);
+    const calculateProgress = () => {
+      // Парсим даты как есть (без учета временной зоны)
+      const start = new Date(created_at);
+      const end = new Date(deadline);
+      const now = new Date();
 
-    return () => clearInterval(timer);
-  }, []);
+      // Проверка валидности дат
+      if (isNaN(start.getTime())) {
+        console.error('Invalid created_at date:', created_at);
+        return;
+      }
+      if (isNaN(end.getTime())) {
+        console.error('Invalid deadline date:', deadline);
+        return;
+      }
 
-  const createdDate = new Date(createdAt);
-  const deadlineDate = new Date(deadline);
+      // Вычисляем общее время и прошедшее время
+      const totalDuration = end - start;
+      const timePassed = now - start;
 
-  console.log('Parsed dates:', { createdDate, deadlineDate });
+      // Вычисляем процент выполнения (0-100)
+      let currentProgress = (timePassed / totalDuration) * 100;
+      currentProgress = Math.max(0, Math.min(100, currentProgress));
 
-  const isValidCreatedDate = !isNaN(createdDate.getTime());
-  const isValidDeadlineDate = !isNaN(deadlineDate.getTime());
+      // Форматируем оставшееся время
+      const remainingMs = Math.max(end - now, 0);
+      const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+      const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
-  let progressPercent = 0;
+      setProgress(currentProgress);
+      setTimeLeft(
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      );
+    };
 
-  if (isValidDeadlineDate) {
-    if (isValidCreatedDate && createdDate.getTime() !== deadlineDate.getTime()) {
-      const totalDuration = deadlineDate - createdDate;
-      const elapsed = now - createdDate;
-      progressPercent = Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100);
-    } else {
-      // If createdAt is invalid or equals deadline, assume start time is 24 hours before deadline or now minus 24 hours, whichever is earlier
-      const defaultStart = new Date(Math.min(deadlineDate.getTime() - 24 * 60 * 60 * 1000, now.getTime() - 24 * 60 * 60 * 1000));
-      const totalDuration = deadlineDate - defaultStart;
-      const elapsed = now - defaultStart;
-      progressPercent = Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100);
-    }
-  }
-
-  console.log('Progress percent:', progressPercent);
-
-  let progressColor = 'green';
-  if (progressPercent > 80) {
-    progressColor = 'red';
-  } else if (progressPercent > 50) {
-    progressColor = 'yellow';
-  }
+    calculateProgress();
+    const interval = setInterval(calculateProgress, 1000);
+    return () => clearInterval(interval);
+  }, [created_at, deadline]);
 
   return (
-    <div className="deadline-progress-bar-container" style={{ width: '100%', backgroundColor: '#ddd', borderRadius: '4px', height: '20px' }}>
-      <div
-        className="deadline-progress-bar"
-        style={{
-          width: progressPercent + '%',
-          backgroundColor: progressColor,
-          height: '100%',
-          borderRadius: '4px 0 0 4px',
-          transition: 'width 0.5s ease, background-color 0.5s ease',
-          transformOrigin: 'left',
-        }}
-      />
+    <div className="deadline-progress-container">
+      <div className="progress-bar-background">
+        <div 
+          className={`progress-bar-fill ${
+            progress >= 80 ? 'red' : progress >= 50 ? 'yellow' : 'green'
+          }`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      <div className="time-info">
+        {progress >= 100 ? (
+          <span>Время истекло</span>
+        ) : (
+          <span>{progress.toFixed(1)}% - Осталось: {timeLeft}</span>
+        )}
+      </div>
     </div>
   );
 }
+
+DeadlineProgressBar.propTypes = {
+  task: PropTypes.shape({
+    created_at: PropTypes.string.isRequired,
+    deadline: PropTypes.string.isRequired,
+  }).isRequired,
+};
 
 export default DeadlineProgressBar;

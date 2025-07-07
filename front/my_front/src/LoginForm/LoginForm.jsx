@@ -42,6 +42,7 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit}>
       <h2>Вход</h2>
+      <h4>Войдите для использования</h4>
       <div>
         <label>Email:</label>
         <input

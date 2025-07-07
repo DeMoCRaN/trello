@@ -1,0 +1,405 @@
+/* Общие стили для левого меню */
+.assignments-list {
+  position: fixed;
+  top: 60px; /* высота хедера */
+  left: 12px;
+  width: 218px;
+  height: 948px;
+  background: linear-gradient(180deg, #EAEDFF 0%, #B0BCFE 100%);
+  box-shadow: 3px 4px 4px 1px rgba(0, 0, 0, 0.25);
+  border-radius: 27px;
+  padding: 20px;
+  box-sizing: border-box;
+  color: #091F9C;
+  overflow-y: auto;
+  font-family: 'Red Hat Display', sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  transition: width 0.3s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.assignments-list.collapsed {
+  width: 40px;
+  padding: 10px 5px;
+  opacity: 0.8;
+  transition: width 0.3s ease, opacity 0.3s ease;
+}
+
+.task-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(176, 188, 254, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  overflow: auto;
+  padding: 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.task-form-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.task-creation-form {
+  background: #E2E2E2;
+  box-shadow: 3px 4px 4px 1px rgba(0, 0, 0, 0.25);
+  border-radius: 27px;
+  width: 400px;
+  max-height: 90vh;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  overflow-y: auto;
+  transform-origin: top left;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.task-creation-form.hidden {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.assignments-list ul {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.assignments-list li {
+  cursor: pointer;
+  padding: 12px 10px;
+  border-radius: 22px;
+  background: #F1F3FF;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  color: #091F9C;
+  font-family: 'Red Hat Display', sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  text-align: center;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.assignments-list li:hover {
+  background: #B0BCFE;
+  color: white;
+}
+
+.assignments-list li.selected {
+  background: #84abcf;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  font-weight: 700;
+  color: #091F9C;
+}
+
+.assignments-list.collapsed {
+  width: 40px;
+  padding: 10px 5px;
+}
+
+.assignments-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.assignments-list li {
+  cursor: pointer;
+  padding: 10px 5px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-family: 'Red Hat Display', sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  color: black;
+  background: #EAEDFF;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assignments-list li.selected {
+  background: #FDD3D9;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  font-weight: 700;
+}
+
+/* Панель задач */
+.selected-assignment {
+  position: fixed;
+  top: 65px;
+  left: 246px;
+  width: 1183px;
+  height: 948px;
+  background: rgba(226, 226, 226, 0.94);
+  box-shadow: 3px 4px 4px 1px rgba(0, 0, 0, 0.25);
+  border-radius: 27px;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  color: black;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+/* Заголовок панели задач */
+.selected-assignment h2 {
+  font-size: 32px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+/* Колонки задач */
+.tasks-dashboard {
+  display: flex;
+  gap: 10px;
+  height: calc(100% - 50px);
+}
+
+.tasks-column {
+  flex: 1;
+  background-color: rgba(226, 226, 226, 0.94);
+  padding: 10px;
+  border-radius: 22px;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  color: black;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  overflow-y: auto;
+}
+
+/* Заголовки колонок */
+.tasks-column h3 {
+  font-size: 32px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+/* Карточка задачи */
+.task-card {
+  background: #FDD3D9;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 22px;
+  padding: 15px;
+  margin-bottom: 15px;
+  color: black;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+/* Кнопка удаления задачи */
+.task-card button {
+  background: #FE3030;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.task-card button:hover {
+  background: #8a8ec9;
+}
+
+/* Статус задачи */
+.task-card label {
+  display: block;
+  margin-top: 10px;
+  font-weight: 700;
+}
+
+/* Статус select */
+.task-card select {
+  width: 100%;
+  padding: 6px;
+  margin-top: 4px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Плавающая кнопка */
+.floating-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background-color: #091F9C;
+  color: white;
+  font-size: 32px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+.floating-button:hover {
+  background-color: #0056b3;
+}
+
+/* Форма создания задачи */
+.task-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(176, 188, 254, 0.5);
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  z-index: 1000;
+  overflow: auto;
+  padding-right: 40px;
+}
+
+.selected-assignment {
+  position: fixed;
+  top: 65px;
+  left: 246px;
+  width: 1183px;
+  height: 948px;
+  background: rgba(226, 226, 226, 0.94);
+  box-shadow: 3px 4px 4px 1px rgba(0, 0, 0, 0.25);
+  border-radius: 27px;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  color: black;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  max-height: calc(100vh - 65px); /* ensure height fits viewport minus header */
+}
+
+.task-creation-form {
+  background: #E2E2E2;
+  box-shadow: 3px 4px 4px 1px rgba(0, 0, 0, 0.25);
+  border-radius: 27px;
+  width: 400px;
+  max-height: 90vh;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  overflow-y: auto;
+}
+
+/* Кнопка закрытия формы */
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #091F9C;
+  border: none;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 24px;
+  text-align: center;
+  padding: 0;
+  transition: background-color 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: #2ED83C;
+}
+
+/* Кнопка закрытия формы */
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #091F9C;
+  border: none;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 24px;
+  text-align: center;
+  padding: 0;
+  transition: background-color 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: #2ED83C;
+}
+
+/* Поля формы */
+.task-creation-form label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.task-creation-form input[type="text"],
+.task-creation-form input[type="datetime-local"],
+.task-creation-form input[type="email"],
+.task-creation-form textarea,
+.task-creation-form select {
+  width: 100%;
+  padding: 6px;
+  margin-top: 4px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Кнопка отправки формы */
+.task-creation-form button[type="submit"] {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #091F9C;
+  color: white;
+  border: none;
+  border-radius: 22px;
+  cursor: pointer;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.task-creation-form button[type="submit"]:hover {
+  background-color: #2ED83C;
+}

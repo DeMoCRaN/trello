@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: qweasd-123 # парооль по умолчанию
       PGDATA: /data/postgres
     volumes: # жесткий диск для записи данных
-      - postgres:/var/www/trello/docker-volumes/postgres # путь для локальной машины
+      - postgres:/data/postgres # путь для локальной машины, совпадает с PGDATA
     ports: # проброс портов
       - 127.0.0.1:5433:5432
     networks:
