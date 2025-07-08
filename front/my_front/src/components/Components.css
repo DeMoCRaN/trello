@@ -175,6 +175,7 @@
   display: flex;
   gap: 10px;
   height: calc(100% - 50px);
+  width: calc(100%-10%);
 }
 
 .tasks-column {
@@ -199,7 +200,7 @@
 
 /* Карточка задачи */
 .task-card {
-  background: #FDD3D9;
+  background: #d3d6fd;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
   border-radius: 22px;
   padding: 15px;
@@ -248,15 +249,15 @@
 /* Плавающая кнопка */
 .floating-button {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 50px;
-  height: 50px;
+  bottom: px;
+  right: px;
+  width: 10px;
+  height: 30px;
   background-color: #091F9C;
   color: white;
   font-size: 32px;
   border: none;
-  border-radius: 50%;
+  border-radius: 900px;
   cursor: pointer;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   display: flex;
@@ -291,7 +292,7 @@
   left: 246px;
   width: 1183px;
   height: 948px;
-  background: rgba(226, 226, 226, 0.94);
+  background: rgba(253, 253, 253, 0.94);
   box-shadow: 3px 4px 4px 1px rgba(0, 0, 0, 0.25);
   border-radius: 27px;
   padding: 20px;

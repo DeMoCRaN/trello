@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import './MainPage.css';
+import './MainPageNewStyles.css';
 import Header from './components/Header';
 import AssignmentsList from './components/AssignmentsList';
 import SelectedAssignmentDetails from './components/SelectedAssignmentDetails';
 import TaskCreationForm from './components/TaskCreationForm';
 import FloatingButton from './components/FloatingButton';
+import UserInfo from './components/UserInfo';
 
 function parseJwt(token) {
   try {
@@ -29,14 +30,14 @@ function MainPage() {
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [statuses, setStatuses] = useState([]);
   const [priorities, setPriorities] = useState([]);
-
   const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState(null);
+  const [currentPage, setCurrentPage] = useState('main');
+  const [showTaskForm, setShowTaskForm] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem('token');
     const tokenExpiry = localStorage.getItem('tokenExpiry');
     const now = new Date().getTime();
@@ -115,7 +116,6 @@ function MainPage() {
       }
       const data = await response.json();
 
-      // Добавим creator_name и assignee_name в задачи
       const enrichedData = data.map(assignment => {
         if (assignment.tasks) {
           assignment.tasks = assignment.tasks.map(task => ({
@@ -154,7 +154,6 @@ function MainPage() {
       return;
     }
     try {
-      // Получаем assignee_id по email
       const assigneeResponse = await fetch(`http://localhost:3000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`);
       if (!assigneeResponse.ok) {
         throw new Error('Ошибка при получении ID исполнителя');
@@ -229,8 +228,6 @@ function MainPage() {
     }
   };
 
-  const [showTaskForm, setShowTaskForm] = React.useState(false);
-
   if (loading) {
     return <p>Загрузка заданий...</p>;
   }
@@ -241,32 +238,37 @@ function MainPage() {
 
   return (
     <>
-      <Header userEmail={userEmail} onNavigate={(page) => console.log('Navigate to', page)} />
+      <Header userEmail={userEmail} onNavigate={setCurrentPage} />
       <main className="dashboard">
-        <AssignmentsList
-          assignments={assignments}
-          selectedAssignment={selectedAssignment}
-          onSelect={handleAssignmentSelect}
-        />
-        {selectedAssignment && (
-          <SelectedAssignmentDetails
-            selectedAssignment={selectedAssignment}
-            statuses={statuses}
-            onStatusChange={handleStatusChange}
-            onDelete={handleDeleteTask}
-          />
+        {currentPage === 'main' && (
+          <>
+            <AssignmentsList
+              assignments={assignments}
+              selectedAssignment={selectedAssignment}
+              onSelect={handleAssignmentSelect}
+            />
+            {selectedAssignment && (
+              <SelectedAssignmentDetails
+                selectedAssignment={selectedAssignment}
+                statuses={statuses}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDeleteTask}
+              />
+            )}
+            <FloatingButton onClick={() => setShowTaskForm(true)} />
+            <div className={`task-form-overlay ${showTaskForm ? '' : 'hidden'}`}>
+              <TaskCreationForm
+                onCreateTask={handleCreateTask}
+                statuses={statuses}
+                priorities={priorities}
+                onClose={() => setShowTaskForm(false)}
+                initialCreatorEmail={userEmail}
+                className={showTaskForm ? '' : 'hidden'}
+              />
+            </div>
+          </>
         )}
-        <FloatingButton onClick={() => setShowTaskForm(true)} />
-        <div className={`task-form-overlay ${showTaskForm ? '' : 'hidden'}`}>
-          <TaskCreationForm
-            onCreateTask={handleCreateTask}
-            statuses={statuses}
-            priorities={priorities}
-            onClose={() => setShowTaskForm(false)}
-            initialCreatorEmail={userEmail}
-            className={showTaskForm ? '' : 'hidden'}
-          />
-        </div>
+        {currentPage === 'user-info' && <UserInfo userEmail={userEmail} onBack={() => setCurrentPage('main')} />}
       </main>
     </>
   );

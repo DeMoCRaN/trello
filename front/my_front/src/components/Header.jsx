@@ -14,7 +14,17 @@ function Header({ userEmail, onNavigate }) {
         <button onClick={() => onNavigate('tasks')}>Задачи</button>
         <button onClick={() => onNavigate('profile')}>Профиль</button>
       </nav>
-      <div className="user-email">{userEmail ? userEmail : 'Не авторизован'}</div>
+      <div
+        className="user-email"
+        style={{ cursor: userEmail ? 'pointer' : 'default', textDecoration: userEmail ? 'underline' : 'none' }}
+        onClick={() => {
+          if (userEmail) {
+            onNavigate('user-info');
+          }
+        }}
+      >
+        {userEmail ? userEmail : 'Не авторизован'}
+      </div>
     </header>
   );
 }
