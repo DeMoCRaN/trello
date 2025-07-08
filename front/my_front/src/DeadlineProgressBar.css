@@ -1,39 +1,27 @@
-.deadline-progress-bar-wrapper {
+.progress-container {
   width: 100%;
-  margin-top: 10px;
-  font-family: 'Raleway', sans-serif;
+  margin: 15px 0;
+  font-family: 'Arial', sans-serif;
 }
 
-.deadline-progress-bar-container {
+.progress-bar {
   width: 100%;
   height: 20px;
-  background: linear-gradient(90deg, #d3d3d3, #e0e0e0);
+  background-color: #f0f0f0;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.deadline-progress-bar {
+.progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4caf50, #81c784);
   transition: width 0.5s ease, background-color 0.5s ease;
   border-radius: 10px 0 0 10px;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
 }
 
-.deadline-progress-bar.yellow {
-  background: linear-gradient(90deg, #ffeb3b, #fff176);
-}
-
-.deadline-progress-bar.red {
-  background: linear-gradient(90deg, #f44336, #e57373);
-}
-
-.deadline-progress-text {
-  margin-top: 6px;
+.progress-text {
+  margin-top: 8px;
   font-size: 14px;
-  color: #333;
+  color: #555;
   text-align: center;
-  user-select: none;
 }

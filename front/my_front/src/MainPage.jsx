@@ -184,7 +184,11 @@ function MainPage() {
       if (!response.ok) {
         throw new Error('Ошибка при создании задачи');
       }
-      await response.json();
+      // Check if response has content before parsing JSON
+      const text = await response.text();
+      if (text) {
+        JSON.parse(text);
+      }
       await fetchAssignments();
       setShowTaskForm(false);
     } catch (err) {
