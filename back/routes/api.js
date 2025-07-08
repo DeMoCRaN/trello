@@ -99,6 +99,19 @@ router.post('/tasks', async (req, res) => {
 
 router.get('/tasks', async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const userId = decoded.userId;
+
     const result = await pool.query(`
       SELECT t.id, t.title, t.description, t.deadline, 
              u1.name AS creator_name, u2.name AS assignee_name,
@@ -109,8 +122,9 @@ router.get('/tasks', async (req, res) => {
       LEFT JOIN users u2 ON t.assignee_id = u2.id
       LEFT JOIN task_statuses ts ON t.status_id = ts.id
       LEFT JOIN task_priorities tp ON t.priority_id = tp.id
+      WHERE t.creator_id = $1
       ORDER BY t.created_at DESC
-    `);
+    `, [userId]);
     res.json(result.rows);
   } catch (error) {
     console.error('Ошибка при получении задач:', error);
@@ -120,7 +134,20 @@ router.get('/tasks', async (req, res) => {
 
 router.get('/assignments', async (req, res) => {
   try {
-    const assignments = await assignmentsController.getAssignments(pool);
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const userId = decoded.userId;
+
+    const assignments = await assignmentsController.getAssignments(pool, userId);
     res.json(assignments);
   } catch (error) {
     console.error('Ошибка при получении заданий:', error);
@@ -130,7 +157,21 @@ router.get('/assignments', async (req, res) => {
 
 router.post('/assignments', async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const userId = decoded.userId;
+
     const assignmentData = req.body;
+    assignmentData.creator_id = userId;
     const newAssignment = await assignmentsController.createAssignment(pool, assignmentData);
     res.status(201).json(newAssignment);
   } catch (error) {

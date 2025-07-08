@@ -2,21 +2,20 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './DeadlineProgressBar.css';
 
-function DeadlineProgressBar({ task }) {
-  const { created_at, deadline } = task;
+function DeadlineProgressBar({ createdAt, deadline }) {
   const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
     const calculateProgress = () => {
       // Парсим даты как есть (без учета временной зоны)
-      const start = new Date(created_at);
+      const start = new Date(createdAt);
       const end = new Date(deadline);
       const now = new Date();
 
       // Проверка валидности дат
       if (isNaN(start.getTime())) {
-        console.error('Invalid created_at date:', created_at);
+        console.error('Invalid createdAt date:', createdAt);
         return;
       }
       if (isNaN(end.getTime())) {
@@ -47,7 +46,7 @@ function DeadlineProgressBar({ task }) {
     calculateProgress();
     const interval = setInterval(calculateProgress, 1000);
     return () => clearInterval(interval);
-  }, [created_at, deadline]);
+  }, [createdAt, deadline]);
 
   return (
     <div className="deadline-progress-container">
@@ -71,10 +70,8 @@ function DeadlineProgressBar({ task }) {
 }
 
 DeadlineProgressBar.propTypes = {
-  task: PropTypes.shape({
-    created_at: PropTypes.string.isRequired,
-    deadline: PropTypes.string.isRequired,
-  }).isRequired,
+  createdAt: PropTypes.string.isRequired,
+  deadline: PropTypes.string.isRequired,
 };
 
 export default DeadlineProgressBar;

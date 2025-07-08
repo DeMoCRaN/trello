@@ -104,7 +104,12 @@ function MainPage() {
 
   const fetchAssignments = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/assignments');
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/assignments', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error('Ошибка при загрузке заданий');
       }
