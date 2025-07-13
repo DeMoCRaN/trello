@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import DeadlineProgressBar from './DeadlineProgressBar';
 
-function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeName }) {
+function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeName, onDetails }) {
   const deadline = task.deadline ? new Date(task.deadline) : null;
-
-  console.log('Task dates:', { createdAt: task.created_at, deadline: task.deadline });
+  const [elapsedTime, setElapsedTime] = useState('');
 
   const formatDate = (date) => {
     if (!date) return 'Нет';
@@ -16,6 +15,51 @@ function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeN
     const minutes = String(d.getMinutes()).padStart(2, '0');
     const seconds = String(d.getSeconds()).padStart(2, '0');
     return `${day}.${month}.${year}, ${hours}:${minutes}:${seconds}`;
+  };
+
+  const calculateElapsedTime = () => {
+    if (!task.in_progress_since) {
+      setElapsedTime('');
+      return;
+    }
+    const start = new Date(task.in_progress_since);
+    const now = new Date();
+    const diffMs = now - start;
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
+    setElapsedTime(`${diffHrs}ч ${diffMins}м ${diffSecs}с`);
+  };
+
+  useEffect(() => {
+    if (task.status === 'done') {
+      setElapsedTime('');
+      return;
+    }
+    calculateElapsedTime();
+    const interval = setInterval(calculateElapsedTime, 1000);
+    return () => clearInterval(interval);
+  }, [task.in_progress_since, task.status]);
+
+  const handleStartProgress = async () => {
+    const inProgressStatus = statuses.find(s => s.name.toLowerCase() === 'in_progress');
+    if (!inProgressStatus) {
+      alert('Статус "in_progress" не найден');
+      return;
+    }
+    try {
+      const response = await fetch(`http://localhost:3000/api/tasks/${task.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_id: inProgressStatus.id }),
+      });
+      if (!response.ok) {
+        throw new Error('Ошибка при обновлении статуса задачи');
+      }
+      onStatusChange(task.id, inProgressStatus.id);
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
@@ -42,7 +86,14 @@ function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeN
           ))}
         </select>
       </label>
+      {!task.in_progress_since && (
+        <button onClick={handleStartProgress}>Начать выполнение</button>
+      )}
+      {task.in_progress_since && (
+        <p>В работе: {elapsedTime}</p>
+      )}
       <button onClick={() => onDelete(task.id)}>Удалить задачу</button>
+      <button onClick={() => onDetails(task)}>Подробнее</button>
     </article>
   );
 }

@@ -71,19 +71,26 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 90vw;
-  height: 95vh;
-  background-color: rgba(144, 164, 255, 0.4);
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  overflow: auto;
   padding: 0;
   opacity: 1;
   transition: opacity 0.3s ease;
   padding-right: 240px;
   padding-bottom: 100px;
+}
+
+.details-form-overlay {
+  background-color: transparent !important;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  overflow: auto;
 }
 
 .task-form-overlay.hidden {

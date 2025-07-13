@@ -1,6 +1,8 @@
 import React from 'react';
 import './Header.css';
 
+import { Link } from 'react-router-dom';
+
 function Header({ userEmail, onNavigate }) {
   console.log('Header userEmail prop:', userEmail);
   return (
@@ -11,7 +13,7 @@ function Header({ userEmail, onNavigate }) {
       <nav className="nav-buttons">
         <button onClick={() => onNavigate('main')}>Главная</button>
         <button onClick={() => onNavigate('assignments')}>Задания</button>
-        <button onClick={() => onNavigate('tasks')}>Задачи</button>
+        <Link to="/tasks"><button>Задачи</button></Link>
         <button onClick={() => onNavigate('profile')}>Профиль</button>
       </nav>
       <div

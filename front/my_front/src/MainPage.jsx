@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './MainPageNewStyles.css';
 import Header from './components/Header';
 import AssignmentsList from './components/AssignmentsList';
@@ -25,6 +25,8 @@ function parseJwt(token) {
   }
 }
 
+import TaskDetailsModal from './components/TaskDetailsModal';
+
 function MainPage() {
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
@@ -36,6 +38,58 @@ function MainPage() {
   const [userId, setUserId] = useState(null);
   const [currentPage, setCurrentPage] = useState('main');
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [assignedTasks, setAssignedTasks] = useState([]);
+  const [loadingAssignedTasks, setLoadingAssignedTasks] = useState(false);
+  const [currentTab, setCurrentTab] = useState('assignments');
+
+  // Removed unused states to fix ESLint warnings
+  // const [selectedTask, setSelectedTask] = useState(null);
+  // const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  // Removed unused variable to fix ESLint warning
+  // const isLoadingDetails = false;
+
+  // New states for details form without overlay
+  const [showDetailsForm, setShowDetailsForm] = useState(false);
+  const [detailsFormTask, setDetailsFormTask] = useState(null);
+
+  const handleShowDetails = (task) => {
+    // Open details form without overlay
+    setDetailsFormTask(task);
+    setShowDetailsForm(true);
+  };
+
+  const handleCloseDetails = () => {
+    // Close details form
+    setShowDetailsForm(false);
+    setDetailsFormTask(null);
+  };
+
+  const fetchAssignedTasks = useCallback(async () => {
+    setLoadingAssignedTasks(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/tasks/assigned', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке задач по исполнителю');
+      }
+      const data = await response.json();
+      setAssignedTasks(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingAssignedTasks(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentTab === 'assigned') {
+      fetchAssignedTasks();
+    }
+  }, [currentTab, fetchAssignedTasks]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -45,12 +99,10 @@ function MainPage() {
     async function fetchUserEmail(userId) {
       try {
         const response = await fetch(`http://localhost:3000/api/users/${userId}`);
-        console.log('Fetch user info response status:', response.status);
         if (!response.ok) {
           throw new Error('Ошибка при получении данных пользователя');
         }
         const userData = await response.json();
-        console.log('User data fetched:', userData);
         setUserEmail(userData.email || '');
       } catch (error) {
         console.error('Error fetching user email:', error);
@@ -60,10 +112,8 @@ function MainPage() {
 
     if (token && tokenExpiry && now < parseInt(tokenExpiry, 10)) {
       const decoded = parseJwt(token);
-      console.log('Decoded JWT:', decoded);
       if (decoded) {
         setUserId(decoded.userId || null);
-        console.log('User ID:', decoded.userId);
         if (decoded.userId) {
           fetchUserEmail(decoded.userId);
         }
@@ -73,11 +123,10 @@ function MainPage() {
       localStorage.removeItem('tokenExpiry');
       setUserEmail('');
       setUserId(null);
-      console.log('Token expired or missing');
     }
   }, []);
 
-  const fetchStatuses = async () => {
+  const fetchStatuses = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3000/api/task_statuses');
       if (!response.ok) {
@@ -88,9 +137,9 @@ function MainPage() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
-  const fetchPriorities = async () => {
+  const fetchPriorities = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3000/api/task_priorities');
       if (!response.ok) {
@@ -101,9 +150,9 @@ function MainPage() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:3000/api/assignments', {
@@ -128,7 +177,7 @@ function MainPage() {
       });
 
       setAssignments(enrichedData);
-      if (enrichedData.length > 0) {
+      if (enrichedData.length > 0 && !selectedAssignment) {
         setSelectedAssignment(enrichedData[0]);
       }
     } catch (err) {
@@ -136,21 +185,48 @@ function MainPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedAssignment]);
 
   useEffect(() => {
     fetchStatuses();
     fetchPriorities();
     fetchAssignments();
+  }, [fetchStatuses, fetchPriorities, fetchAssignments]);
+
+  const handleAssignmentSelect = useCallback((assignment) => {
+    setSelectedAssignment(assignment);
   }, []);
 
-  const handleAssignmentSelect = (assignment) => {
-    setSelectedAssignment(assignment);
-  };
+  useEffect(() => {
+    if (!assignments.length) return;
+    const token = localStorage.getItem('token');
+    assignments.forEach(async (assignment) => {
+      if (assignment.tasks) {
+        for (const task of assignment.tasks) {
+          if (!task.seen_at) {
+            try {
+              await fetch(`http://localhost:3000/api/tasks/${task.id}/seen`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
+            } catch (error) {
+              console.error(`Error marking task ${task.id} as seen:`, error);
+            }
+          }
+        }
+      }
+    });
+  }, [assignments]);
 
-  const handleCreateTask = async (taskData) => {
+  const handleCreateTask = useCallback(async (taskData) => {
     if (!taskData.title.trim()) {
       alert('Введите название задачи');
+      return;
+    }
+    if (!selectedAssignment) {
+      alert('Выберите задание для создания задачи');
       return;
     }
     try {
@@ -161,19 +237,18 @@ function MainPage() {
       const assigneeData = await assigneeResponse.json();
       const assigneeId = assigneeData.id;
 
+      const deadline = taskData.deadline ? new Date(taskData.deadline).toISOString() : null;
+
       const response = await fetch(`http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           title: taskData.title,
           description: taskData.description,
-          deadline: taskData.deadline ? (() => {
-            const [datePart, timePart] = taskData.deadline.split('T');
-            const [year, month, day] = datePart.split('-').map(Number);
-            const [hour, minute] = timePart.split(':').map(Number);
-            const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
-            return date.toISOString();
-          })() : null,
+          deadline: deadline,
           created_at: new Date().toISOString(),
           creator_id: userId,
           assignee_id: assigneeId,
@@ -181,25 +256,26 @@ function MainPage() {
           priority_id: parseInt(taskData.priorityId, 10),
         }),
       });
+      
       if (!response.ok) {
         throw new Error('Ошибка при создании задачи');
       }
-      // Check if response has content before parsing JSON
-      const text = await response.text();
-      if (text) {
-        JSON.parse(text);
-      }
+      
       await fetchAssignments();
       setShowTaskForm(false);
     } catch (err) {
       alert(err.message);
     }
-  };
+  }, [selectedAssignment, userId, fetchAssignments]);
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = useCallback(async (taskId) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         throw new Error('Ошибка при удалении задачи');
@@ -208,40 +284,39 @@ function MainPage() {
     } catch (err) {
       alert(err.message);
     }
-  };
+  }, [fetchAssignments]);
 
-  const handleStatusChange = async (taskId, newStatusId) => {
+  const handleStatusChange = useCallback(async (taskId, newStatusId) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ status_id: newStatusId }),
       });
       if (!response.ok) {
         throw new Error('Ошибка при обновлении статуса задачи');
       }
-      setSelectedAssignment((prev) => {
-        const updatedTasks = prev.tasks.map((task) =>
-          task.id === taskId ? { ...task, status: statuses.find(s => s.id === newStatusId).name } : task
-        );
-        return { ...prev, tasks: updatedTasks };
-      });
+      await fetchAssignments();
     } catch (err) {
       console.error('Error updating task status:', err);
       alert(err.message);
     }
-  };
+  }, [fetchAssignments]);
 
   if (loading) {
-    return <p>Загрузка заданий...</p>;
+    return <div className="loading-container">Загрузка заданий...</div>;
   }
 
   if (error) {
-    return <p>Ошибка: {error}</p>;
+    return <div className="error-container">Ошибка: {error}</div>;
   }
 
   return (
-    <>
+    <div className="app-container">
       <Header userEmail={userEmail} onNavigate={setCurrentPage} />
       <main className="dashboard">
         {currentPage === 'main' && (
@@ -250,14 +325,38 @@ function MainPage() {
               assignments={assignments}
               selectedAssignment={selectedAssignment}
               onSelect={handleAssignmentSelect}
+              currentTab={currentTab}
+              setCurrentTab={setCurrentTab}
             />
             {selectedAssignment && (
-              <SelectedAssignmentDetails
-                selectedAssignment={selectedAssignment}
-                statuses={statuses}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDeleteTask}
-              />
+              <>
+                <SelectedAssignmentDetails
+                  selectedAssignment={selectedAssignment}
+                  statuses={statuses}
+                  onStatusChange={handleStatusChange}
+                  onDelete={handleDeleteTask}
+                  onDetails={handleShowDetails}
+                  assignedTasks={assignedTasks}
+                  loadingAssignedTasks={loadingAssignedTasks}
+                  currentTab={currentTab}
+                />
+                {/* Remove TaskDetailsModal usage */}
+                {/* Render details form without overlay */}
+                {showDetailsForm && detailsFormTask && (
+                  <div className="details-form-container">
+                    <TaskCreationForm
+                      onCreateTask={() => {}}
+                      statuses={statuses}
+                      priorities={priorities}
+                      onClose={handleCloseDetails}
+                      initialCreatorEmail={userEmail}
+                      initialAssigneeEmail={detailsFormTask.assignee_email || ''}
+                      task={detailsFormTask}
+                      isDetailsView={true}
+                    />
+                  </div>
+                )}
+              </>
             )}
             <FloatingButton onClick={() => setShowTaskForm(true)} />
             <div className={`task-form-overlay ${showTaskForm ? '' : 'hidden'}`}>
@@ -267,14 +366,13 @@ function MainPage() {
                 priorities={priorities}
                 onClose={() => setShowTaskForm(false)}
                 initialCreatorEmail={userEmail}
-                className={showTaskForm ? '' : 'hidden'}
               />
             </div>
           </>
         )}
         {currentPage === 'user-info' && <UserInfo userEmail={userEmail} onBack={() => setCurrentPage('main')} />}
       </main>
-    </>
+    </div>
   );
 }
 

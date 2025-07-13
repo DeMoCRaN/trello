@@ -2,7 +2,7 @@ import React from 'react';
 import Task from '../Task';
 import './Components.css';
 
-function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChange, onDelete }) {
+function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChange, onDelete, onDetails }) {
   // Группируем задачи по статусам
   const tasksByStatus = {
     'new': [],
@@ -34,6 +34,7 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
                   statuses={statuses}
                   onStatusChange={onStatusChange}
                   onDelete={onDelete}
+                  onDetails={onDetails}
                   creatorName={task.creator_name}
                   assigneeName={task.assignee_name}
                 />

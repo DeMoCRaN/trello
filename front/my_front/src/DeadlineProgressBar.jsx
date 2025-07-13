@@ -2,11 +2,17 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './DeadlineProgressBar.css';
 
-function DeadlineProgressBar({ taskId, createdAt, deadline }) {
+function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
   const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
+    if (status === 'done') {
+      setProgress(100);
+      setTimeLeft('Время истекло');
+      return;
+    }
+
     const calculateProgress = () => {
       const now = new Date();
       const start = createdAt ? new Date(createdAt) : new Date(); // Если createdAt отсутствует, используем текущее время
@@ -46,7 +52,7 @@ function DeadlineProgressBar({ taskId, createdAt, deadline }) {
     calculateProgress();
     const interval = setInterval(calculateProgress, 1000);
     return () => clearInterval(interval);
-  }, [taskId, createdAt, deadline]);
+  }, [taskId, createdAt, deadline, status]);
 
   return (
     <div className="deadline-progress-container">

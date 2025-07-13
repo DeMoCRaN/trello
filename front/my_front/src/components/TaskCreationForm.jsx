@@ -8,17 +8,24 @@ function TaskCreationForm({
   onClose,
   initialCreatorEmail = '',
   initialAssigneeEmail = '',
+  task = null,
+  isDetailsView = false,
 }) {
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskDeadline, setNewTaskDeadline] = useState('');
-  const [newTaskStatus, setNewTaskStatus] = useState('1');
-  const [newTaskPriority, setNewTaskPriority] = useState('1');
-  const [newTaskCreatorEmail, setNewTaskCreatorEmail] = useState(initialCreatorEmail);
-  const [newTaskAssigneeEmail, setNewTaskAssigneeEmail] = useState(initialAssigneeEmail);
+  const [newTaskTitle, setNewTaskTitle] = useState(task ? task.title : '');
+  const [newTaskDescription, setNewTaskDescription] = useState(task ? task.description : '');
+  const [newTaskDeadline, setNewTaskDeadline] = useState(task ? (task.deadline ? task.deadline.substring(0, 16) : '') : '');
+  const [newTaskStatus, setNewTaskStatus] = useState(task ? String(task.status_id || '1') : '1');
+  const [newTaskPriority, setNewTaskPriority] = useState(task ? String(task.priority_id || '1') : '1');
+  const [newTaskCreatorEmail, setNewTaskCreatorEmail] = useState(task ? task.creator_email || initialCreatorEmail : initialCreatorEmail);
+  const [newTaskAssigneeEmail, setNewTaskAssigneeEmail] = useState(task ? task.assignee_email || initialAssigneeEmail : initialAssigneeEmail);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isDetailsView) {
+      // In details view, do not submit or create task
+      onClose();
+      return;
+    }
     onCreateTask({
       title: newTaskTitle,
       description: newTaskDescription,
@@ -38,10 +45,10 @@ function TaskCreationForm({
   };
 
   return (
-    <div className="task-form-overlay">
+    <div className={`task-form-overlay ${isDetailsView ? 'details-form-overlay' : ''}`}>
       <form className="task-creation-form" onSubmit={handleSubmit}>
         <button type="button" className="close-button" onClick={onClose}>×</button>
-        <h3>Создать новую задачу</h3>
+        <h3>{isDetailsView ? 'Детали задачи' : 'Создать новую задачу'}</h3>
         <label>
           Название задачи:
           <input
@@ -50,6 +57,7 @@ function TaskCreationForm({
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             required
+            readOnly={isDetailsView}
           />
         </label>
         <label>
@@ -59,6 +67,7 @@ function TaskCreationForm({
             value={newTaskDescription}
             onChange={(e) => setNewTaskDescription(e.target.value)}
             required
+            readOnly={isDetailsView}
           />
         </label>
         <label>
@@ -67,6 +76,7 @@ function TaskCreationForm({
             type="datetime-local"
             value={newTaskDeadline}
             onChange={(e) => setNewTaskDeadline(e.target.value)}
+            readOnly={isDetailsView}
           />
         </label>
         <label>
@@ -88,6 +98,7 @@ function TaskCreationForm({
             onChange={(e) => setNewTaskAssigneeEmail(e.target.value)}
             placeholder="Введите email исполнителя"
             required
+            readOnly={isDetailsView}
           />
         </label>
         <label>
@@ -95,6 +106,7 @@ function TaskCreationForm({
           <select
             value={newTaskStatus}
             onChange={(e) => setNewTaskStatus(e.target.value)}
+            disabled={isDetailsView}
           >
             {statuses.map((status) => (
               <option key={status.id} value={status.id}>
@@ -108,6 +120,7 @@ function TaskCreationForm({
           <select
             value={newTaskPriority}
             onChange={(e) => setNewTaskPriority(e.target.value)}
+            disabled={isDetailsView}
           >
             {priorities.map((priority) => (
               <option key={priority.id} value={priority.id}>
@@ -116,7 +129,7 @@ function TaskCreationForm({
             ))}
           </select>
         </label>
-        <button type="submit">Создать задачу</button>
+        <button type="submit" disabled={isDetailsView}>{isDetailsView ? 'Закрыть' : 'Создать задачу'}</button>
       </form>
     </div>
   );
