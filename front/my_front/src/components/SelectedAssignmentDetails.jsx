@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Task from '../Task';
 import './Components.css';
 
@@ -17,6 +17,18 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
       }
     });
   }
+
+  useEffect(() => {
+    const handleTaskUpdate = () => {
+      // Можно добавить логику обновления, если нужно
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdate);
+
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdate);
+    };
+  }, []);
 
   return (
     <section className="selected-assignment">

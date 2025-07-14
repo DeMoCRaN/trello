@@ -1,37 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
+import TaskNotification from './components/TaskNotification';
 import './components/Components.css';
 
-function AssignedTasks() {
+function AssignedTasks({ userEmail }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
   const [timers, setTimers] = useState({});
   const navigate = useNavigate();
-
-  // Get user email from localStorage or set empty string
-  const userEmail = localStorage.getItem('userEmail') || '';
-
-  // onNavigate handler for Header component
+  
   function onNavigate(page) {
     switch (page) {
       case 'main':
         navigate('/main');
         break;
-      case 'assignments':
-        navigate('/assignments');
-        break;
       case 'tasks':
         navigate('/tasks');
         break;
-      case 'profile':
-        navigate('/');
-        break;
-      case 'user-info':
-        navigate('/user-info');
-        break;
+
+
       default:
         break;
     }
@@ -39,6 +29,19 @@ function AssignedTasks() {
 
   useEffect(() => {
     fetchTasks();
+  }, []);
+
+  // Add event listener for real-time updates
+  useEffect(() => {
+    const handleTaskUpdate = () => {
+      fetchTasks();
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdate);
+
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -129,6 +132,8 @@ function AssignedTasks() {
         throw new Error('Failed to update task status: ' + errorText);
       }
       await fetchTasks();
+      // Dispatch event for real-time update
+      window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -192,6 +197,7 @@ function AssignedTasks() {
   return (
     <>
       <Header userEmail={userEmail} onNavigate={onNavigate} />
+      <TaskNotification tasks={tasks} />
       <div className="tasks-columns-container" style={{ display: 'flex', gap: '16px' }}>
         <button onClick={goBack} style={{ marginBottom: '16px' }}>Back</button>
         {Object.entries(tasksByStatus).map(([status, tasksList]) => (

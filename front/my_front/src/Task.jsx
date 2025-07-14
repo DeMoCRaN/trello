@@ -55,6 +55,21 @@ function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeN
     return () => clearInterval(interval);
   }, [task.in_progress_since, task.status, task.work_duration]);
 
+  // Add event listener for real-time updates
+  useEffect(() => {
+    const handleTaskUpdate = () => {
+      // Force update elapsed times on task update
+      calculateElapsedTime();
+      calculateTotalElapsedTime();
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdate);
+
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdate);
+    };
+  }, []);
+
   const handleStopProgress = () => {
     onStopWork(task.id);
   };

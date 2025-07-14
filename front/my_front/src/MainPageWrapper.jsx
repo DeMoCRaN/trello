@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { parseJwt } from './utils/wt'
 import MainPage from './MainPage' // Импортируем MainPage напрямую
+import AssignedTasks from './AssignedTasks' // Импорт AssignedTasks
 
 export default function MainPageWrapper() {
   const [userEmail, setUserEmail] = useState('')
@@ -39,6 +40,15 @@ export default function MainPageWrapper() {
     }
   }, [])
 
-  return <MainPage userEmail={userEmail} />
+  if (!userEmail) {
+    return <div>Loading user data...</div>;
+  }
+
+  return (
+    <>
+      <MainPage userEmail={userEmail} />
+      <AssignedTasks userEmail={userEmail} />
+    </>
+  )
   
 }

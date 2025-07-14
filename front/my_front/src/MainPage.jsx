@@ -77,6 +77,8 @@ function MainPage({ userEmail }) {
       }
       const data = await response.json();
       setAssignedTasks(data);
+      // Dispatch event for real-time update
+      window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       setError(err.message);
     } finally {
