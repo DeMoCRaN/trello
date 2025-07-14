@@ -17,18 +17,55 @@ const pool = new Pool({
 
 const router = express.Router();
 
+// Logging middleware for /api/tasks/*
+router.use('/tasks', (req, res, next) => {
+  console.log(`Incoming ${req.method} request to ${req.originalUrl}`);
+  next();
+});
+
 // Тестовый маршрут
 router.get('/test', (req, res) => {
   res.json({ message: 'API is working!' });
 });
 
 // Новый маршрут для получения информации о задачи по ID
+router.get('/tasks/assigned', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const userId = decoded.userId;
+
+    const tasks = await tasksController.getTasksByAssignee(pool, userId);
+    res.json(tasks);
+  } catch (error) {
+    console.error('Ошибка при получении задач по assignee:', error);
+    res.status(500).json({ error: 'Ошибка при получении задач по assignee' });
+  }
+});
+
 router.get('/tasks/:id', async (req, res) => {
   try {
-    const taskId = parseInt(req.params.id, 10);
-    if (isNaN(taskId)) {
+    let taskIdRaw = req.params.id;
+    console.log(`GET /tasks/:id called with id param: ${taskIdRaw}`);
+
+    // Sanitize and validate taskIdRaw
+    taskIdRaw = taskIdRaw.trim();
+    if (!/^\d+$/.test(taskIdRaw)) {
+      console.warn(`Invalid task ID received: ${taskIdRaw}`);
       return res.status(400).json({ error: 'Invalid task ID' });
     }
+
+    const taskId = parseInt(taskIdRaw, 10);
+
     const task = await tasksController.getTaskById(pool, taskId);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
@@ -112,41 +149,6 @@ router.post('/tasks', async (req, res) => {
   } catch (error) {
     console.error('Ошибка при создании задачи:', error);
     res.status(500).json({ error: 'Ошибка при создании задачи' });
-  }
-});
-
-router.get('/tasks', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    const userId = decoded.userId;
-
-    const result = await pool.query(`
-      SELECT t.id, t.title, t.description, t.deadline, 
-             u1.name AS creator_name, u2.name AS assignee_name,
-             ts.name AS status, tp.name AS priority,
-             t.created_at, t.updated_at
-      FROM tasks t
-      LEFT JOIN users u1 ON t.creator_id = u1.id
-      LEFT JOIN users u2 ON t.assignee_id = u2.id
-      LEFT JOIN task_statuses ts ON t.status_id = ts.id
-      LEFT JOIN task_priorities tp ON t.priority_id = tp.id
-      WHERE t.creator_id = $1
-      ORDER BY t.created_at DESC
-    `, [userId]);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Ошибка при получении задач:', error);
-    res.status(500).json({ error: 'Ошибка при получении задач' });
   }
 });
 
@@ -279,40 +281,6 @@ router.get('/task_priorities', async (req, res) => {
   }
 });
 
-router.get('/tasks/assigned', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    const userId = decoded.userId;
-
-    const result = await pool.query(`
-      SELECT t.id, t.title, t.description, t.deadline, 
-             u1.email AS creator_name, u2.email AS assignee_name,
-             ts.name AS status, tp.name AS priority,
-             t.created_at, t.updated_at
-      FROM tasks t
-      LEFT JOIN users u1 ON t.creator_id = u1.id
-      LEFT JOIN users u2 ON t.assignee_id = u2.id
-      LEFT JOIN task_statuses ts ON t.status_id = ts.id
-      LEFT JOIN task_priorities tp ON t.priority_id = tp.id
-      WHERE t.assignee_id = $1
-      ORDER BY t.created_at DESC
-    `, [userId]);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Ошибка при получении задач по исполнителю:', error);
-    res.status(500).json({ error: 'Ошибка при получении задач по исполнителю' });
-  }
-});
 
 module.exports = (app) => {
   app.use('/api', router);

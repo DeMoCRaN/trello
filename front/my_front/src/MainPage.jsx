@@ -27,14 +27,13 @@ function parseJwt(token) {
 
 import TaskDetailsModal from './components/TaskDetailsModal';
 
-function MainPage() {
+function MainPage({ userEmail }) {
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statuses, setStatuses] = useState([]);
   const [priorities, setPriorities] = useState([]);
-  const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState(null);
   const [currentPage, setCurrentPage] = useState('main');
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -96,32 +95,14 @@ function MainPage() {
     const tokenExpiry = localStorage.getItem('tokenExpiry');
     const now = new Date().getTime();
 
-    async function fetchUserEmail(userId) {
-      try {
-        const response = await fetch(`http://localhost:3000/api/users/${userId}`);
-        if (!response.ok) {
-          throw new Error('Ошибка при получении данных пользователя');
-        }
-        const userData = await response.json();
-        setUserEmail(userData.email || '');
-      } catch (error) {
-        console.error('Error fetching user email:', error);
-        setUserEmail('');
-      }
-    }
-
     if (token && tokenExpiry && now < parseInt(tokenExpiry, 10)) {
       const decoded = parseJwt(token);
       if (decoded) {
         setUserId(decoded.userId || null);
-        if (decoded.userId) {
-          fetchUserEmail(decoded.userId);
-        }
       }
     } else {
       localStorage.removeItem('token');
       localStorage.removeItem('tokenExpiry');
-      setUserEmail('');
       setUserId(null);
     }
   }, []);
@@ -339,6 +320,90 @@ function MainPage() {
                   assignedTasks={assignedTasks}
                   loadingAssignedTasks={loadingAssignedTasks}
                   currentTab={currentTab}
+                  onStartWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({ status_id: 2, action: 'start' }),
+                  });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to start work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  onStopWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({ status_id: 2, action: 'stop' }),
+                  });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to stop work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  onResumeWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({ status_id: 2, action: 'resume' }),
+                  });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to resume work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  onCompleteWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({ status_id: 3, action: 'done' }),
+                  });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to complete work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
                 />
                 {/* Remove TaskDetailsModal usage */}
                 {/* Render details form without overlay */}

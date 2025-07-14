@@ -22,7 +22,6 @@ function TaskCreationForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isDetailsView) {
-      // In details view, do not submit or create task
       onClose();
       return;
     }

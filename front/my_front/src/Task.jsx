@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import DeadlineProgressBar from './DeadlineProgressBar';
 
-function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeName, onDetails }) {
+function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeName, onDetails, onStopWork, onResumeWork, onCompleteWork }) {
   const deadline = task.deadline ? new Date(task.deadline) : null;
   const [elapsedTime, setElapsedTime] = useState('');
+  const [totalElapsedTime, setTotalElapsedTime] = useState('');
 
   const formatDate = (date) => {
     if (!date) return 'Нет';
@@ -31,36 +32,34 @@ function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeN
     setElapsedTime(`${diffHrs}ч ${diffMins}м ${diffSecs}с`);
   };
 
+  const calculateTotalElapsedTime = () => {
+    if (!task.work_duration) {
+      setTotalElapsedTime('');
+      return;
+    }
+    const totalSeconds = task.work_duration;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    setTotalElapsedTime(`${hours}ч ${minutes}м ${seconds}с`);
+  };
+
   useEffect(() => {
     if (task.status === 'done') {
+      calculateTotalElapsedTime();
       setElapsedTime('');
       return;
     }
     calculateElapsedTime();
     const interval = setInterval(calculateElapsedTime, 1000);
     return () => clearInterval(interval);
-  }, [task.in_progress_since, task.status]);
+  }, [task.in_progress_since, task.status, task.work_duration]);
 
-  const handleStartProgress = async () => {
-    const inProgressStatus = statuses.find(s => s.name.toLowerCase() === 'in_progress');
-    if (!inProgressStatus) {
-      alert('Статус "in_progress" не найден');
-      return;
-    }
-    try {
-      const response = await fetch(`http://localhost:3000/api/tasks/${task.id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status_id: inProgressStatus.id }),
-      });
-      if (!response.ok) {
-        throw new Error('Ошибка при обновлении статуса задачи');
-      }
-      onStatusChange(task.id, inProgressStatus.id);
-    } catch (error) {
-      alert(error.message);
-    }
+  const handleStopProgress = () => {
+    onStopWork(task.id);
   };
+
+  const isCreator = creatorName === assigneeName ? false : true;
 
   return (
     <article className="task-card">
@@ -78,6 +77,7 @@ function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeN
         <select
           value={statuses.find(s => s.name === task.status)?.id || 3}
           onChange={(e) => onStatusChange(task.id, parseInt(e.target.value, 10))}
+          disabled={task.inProgress}
         >
           {statuses.map((status) => (
             <option key={status.id} value={status.id}>
@@ -86,11 +86,22 @@ function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeN
           ))}
         </select>
       </label>
-      {!task.in_progress_since && (
-        <button onClick={handleStartProgress}>Начать выполнение</button>
+      {task.inProgress && (
+        <>
+          <p>В работе: {elapsedTime}</p>
+          <button onClick={handleStopProgress}>Остановить выполнение</button>
+          <button onClick={() => onResumeWork(task.id)}>Продолжить выполнение</button>
+          <button onClick={() => onCompleteWork(task.id)}>Выполнено</button>
+        </>
       )}
-      {task.in_progress_since && (
-        <p>В работе: {elapsedTime}</p>
+      {task.status === 'in_progress' && (
+        <button onClick={() => onCompleteWork(task.id)}>Выполнено</button>
+      )}
+      {task.status === 'done' && (
+        <p>Общее время работы: {totalElapsedTime}</p>
+      )}
+      {isCreator && task.status !== 'done' && (
+        <button onClick={() => onStatusChange(task.id, statuses.find(s => s.name.toLowerCase() === 'done')?.id)}>Выполнить</button>
       )}
       <button onClick={() => onDelete(task.id)}>Удалить задачу</button>
       <button onClick={() => onDetails(task)}>Подробнее</button>
