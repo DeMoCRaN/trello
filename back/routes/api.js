@@ -238,11 +238,11 @@ router.patch('/tasks/:id/status', async (req, res) => {
   try {
     console.log('PATCH /tasks/:id/status called with params:', req.params, 'body:', req.body);
     const taskId = parseInt(req.params.id, 10);
-    const { status_id } = req.body;
+    const { status_id, action } = req.body;
     if (!status_id) {
       return res.status(400).json({ error: 'status_id is required' });
     }
-    const updatedTask = await tasksController.updateTaskStatus(pool, taskId, status_id);
+    const updatedTask = await tasksController.updateTaskStatus(pool, taskId, status_id, action);
     res.json(updatedTask);
   } catch (error) {
     console.error('Ошибка при обновлении статуса задачи:', error);

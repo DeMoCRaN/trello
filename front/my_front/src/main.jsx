@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import LoginForm from './LoginForm/LoginForm.jsx'
 import MainPage from './MainPage.jsx'
-import AssignedTasks from './AssignedTasks.jsx'
+import AssignedTasksWrapper from './AssignedTasksWrapper.jsx'
 
 function parseJwt(token) {
   try {
@@ -35,7 +35,7 @@ const MainPageWrapper = () => {
 
     async function fetchUserEmail(userId) {
       try {
-        const response = await fetch(`http://localhost:3000/api/users/${userId}`)
+        const response = await fetch("http://localhost:3000/api/users/" + userId)
         if (!response.ok) {
           throw new Error('Ошибка при получении данных пользователя')
         }
@@ -70,7 +70,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<LoginForm />} />
         <Route path="/main" element={<MainPageWrapper />} />
-        <Route path="/tasks" element={<AssignedTasks />} />
+        <Route path="/tasks" element={<AssignedTasksWrapper />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

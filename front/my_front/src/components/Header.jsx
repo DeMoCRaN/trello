@@ -3,7 +3,7 @@ import './Header.css';
 
 import { Link } from 'react-router-dom';
 
-function Header({ userEmail, onNavigate }) {
+function Header({ userEmail, onNavigate,  }) {
   console.log('Header userEmail prop:', userEmail);
   return (
     <header className="app-header">
@@ -12,9 +12,7 @@ function Header({ userEmail, onNavigate }) {
       </div>
       <nav className="nav-buttons">
         <button onClick={() => onNavigate('main')}>Главная</button>
-        <button onClick={() => onNavigate('assignments')}>Задания</button>
         <Link to="/tasks"><button>Задачи</button></Link>
-        <button onClick={() => onNavigate('profile')}>Профиль</button>
       </nav>
       <div
         className="user-email"

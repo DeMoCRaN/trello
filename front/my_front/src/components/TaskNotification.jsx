@@ -1,19 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 function TaskNotification({ tasks }) {
-  const [newTaskCount, setNewTaskCount] = useState(0);
+  // Filter new tasks that need to be executed
+  const newTasks = tasks.filter(task => task.status === 'new');
 
-  useEffect(() => {
-    if (tasks && tasks.length > 0) {
-      const newTasks = tasks.filter(task => task.status === 'new');
-      setNewTaskCount(newTasks.length);
-    } else {
-      setNewTaskCount(0);
-    }
-  }, [tasks]);
-
-  if (newTaskCount === 0) {
-    return null;
+  if (newTasks.length === 0) {
+    return null; // No new tasks, no notification
   }
 
   return (
@@ -24,11 +16,14 @@ function TaskNotification({ tasks }) {
       backgroundColor: '#ff9800',
       color: 'white',
       padding: '10px 20px',
-      borderRadius: '5px',
+      borderRadius: '8px',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
       zIndex: 1000,
-      boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+      maxWidth: '300px',
+      fontWeight: 'bold',
+      cursor: 'pointer',
     }}>
-      У вас {newTaskCount} новых задач
+      You have {newTasks.length} new task{newTasks.length > 1 ? 's' : ''} to execute.
     </div>
   );
 }

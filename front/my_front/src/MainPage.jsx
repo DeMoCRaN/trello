@@ -25,6 +25,7 @@ function parseJwt(token) {
   }
 }
 
+
 import TaskDetailsModal from './components/TaskDetailsModal';
 
 function MainPage({ userEmail }) {
@@ -41,11 +42,20 @@ function MainPage({ userEmail }) {
   const [loadingAssignedTasks, setLoadingAssignedTasks] = useState(false);
   const [currentTab, setCurrentTab] = useState('assignments');
 
+  useEffect(() => {
+    if (assignedTasks.length > 0) {
+      const newTasks = assignedTasks.filter(task => task.status === 'new');
+      if (newTasks.length > 0) {
+        alert(`You have ${newTasks.length} new task${newTasks.length > 1 ? 's' : ''} to execute.`);
+      }
+    }
+  }, [assignedTasks]);
+
   // Removed unused states to fix ESLint warnings
   // const [selectedTask, setSelectedTask] = useState(null);
   // const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   // Removed unused variable to fix ESLint warning
-  // const isLoadingDetails = false;
+  //  const isLoadingDetails = false;
 
   // New states for details form without overlay
   const [showDetailsForm, setShowDetailsForm] = useState(false);
@@ -300,7 +310,7 @@ function MainPage({ userEmail }) {
 
   return (
     <div className="app-container">
-      <Header userEmail={userEmail} onNavigate={setCurrentPage} />
+      <Header userEmail={userEmail} onNavigate={() => {}} hideAssignmentsAndProfile={true} />
       <main className="dashboard">
         {currentPage === 'main' && (
           <>
@@ -313,100 +323,100 @@ function MainPage({ userEmail }) {
             />
             {selectedAssignment && (
               <>
-                <SelectedAssignmentDetails
-                  selectedAssignment={selectedAssignment}
-                  statuses={statuses}
-                  onStatusChange={handleStatusChange}
-                  onDelete={handleDeleteTask}
-                  onDetails={handleShowDetails}
-                  assignedTasks={assignedTasks}
-                  loadingAssignedTasks={loadingAssignedTasks}
-                  currentTab={currentTab}
-                  onStartWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Bearer ' + token,
-                    },
-                    body: JSON.stringify({ status_id: 2, action: 'start' }),
-                  });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to start work: ' + errorText);
-                      }
-                      await fetchAssignments();
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                  onStopWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Bearer ' + token,
-                    },
-                    body: JSON.stringify({ status_id: 2, action: 'stop' }),
-                  });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to stop work: ' + errorText);
-                      }
-                      await fetchAssignments();
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                  onResumeWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Bearer ' + token,
-                    },
-                    body: JSON.stringify({ status_id: 2, action: 'resume' }),
-                  });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to resume work: ' + errorText);
-                      }
-                      await fetchAssignments();
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                  onCompleteWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                  const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Bearer ' + token,
-                    },
-                    body: JSON.stringify({ status_id: 3, action: 'done' }),
-                  });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to complete work: ' + errorText);
-                      }
-                      await fetchAssignments();
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                />
+            <SelectedAssignmentDetails
+              selectedAssignment={selectedAssignment}
+              statuses={statuses}
+              onStatusChange={handleStatusChange}
+              onDelete={handleDeleteTask}
+              onDetails={handleShowDetails}
+              assignedTasks={assignedTasks}
+              loadingAssignedTasks={loadingAssignedTasks}
+              currentTab={currentTab}
+              onStartWork={async (taskId) => {
+                try {
+                  const token = localStorage.getItem('token');
+                  if (!token) throw new Error('User not logged in');
+              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Bearer ' + token,
+                },
+                body: JSON.stringify({ status_id: 2, action: 'start' }),
+              });
+                  if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Failed to start work: ' + errorText);
+                  }
+                  await fetchAssignments();
+                } catch (err) {
+                  alert(err.message);
+                }
+              }}
+              onStopWork={async (taskId) => {
+                try {
+                  const token = localStorage.getItem('token');
+                  if (!token) throw new Error('User not logged in');
+              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Bearer ' + token,
+                },
+                body: JSON.stringify({ status_id: 2, action: 'stop' }),
+              });
+                  if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Failed to stop work: ' + errorText);
+                  }
+                  await fetchAssignments();
+                } catch (err) {
+                  alert(err.message);
+                }
+              }}
+              onResumeWork={async (taskId) => {
+                try {
+                  const token = localStorage.getItem('token');
+                  if (!token) throw new Error('User not logged in');
+              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Bearer ' + token,
+                },
+                body: JSON.stringify({ status_id: 2, action: 'resume' }),
+              });
+                  if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Failed to resume work: ' + errorText);
+                  }
+                  await fetchAssignments();
+                } catch (err) {
+                  alert(err.message);
+                }
+              }}
+              onCompleteWork={async (taskId) => {
+                try {
+                  const token = localStorage.getItem('token');
+                  if (!token) throw new Error('User not logged in');
+              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Bearer ' + token,
+                },
+                body: JSON.stringify({ status_id: 3, action: 'done' }),
+              });
+                  if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Failed to complete work: ' + errorText);
+                  }
+                  await fetchAssignments();
+                } catch (err) {
+                  alert(err.message);
+                }
+              }}
+            />
                 {/* Remove TaskDetailsModal usage */}
                 {/* Render details form without overlay */}
                 {showDetailsForm && detailsFormTask && (

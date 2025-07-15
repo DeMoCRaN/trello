@@ -1,6 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import DeadlineProgressBar from './DeadlineProgressBar';
 
+// Utility function to get priority color
+const getPriorityColor = (priority) => {
+  const priorityName = typeof priority === 'object' 
+    ? priority.name?.toLowerCase() 
+    : priority?.toLowerCase();
+  
+  switch(priorityName) {
+    case 'low': return '#9e9e9e';
+    case 'medium': return '#ff9800';
+    case 'high': return '#f44336';
+    default: return '#9e9e9e';
+  }
+};
+
 function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeName, onDetails, onStopWork, onResumeWork, onCompleteWork }) {
   const deadline = task.deadline ? new Date(task.deadline) : null;
   const [elapsedTime, setElapsedTime] = useState('');
@@ -77,7 +91,14 @@ function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeN
   const isCreator = creatorName === assigneeName ? false : true;
 
   return (
-    <article className="task-card">
+    <article
+      className="task-card"
+      style={{
+        borderLeft: `4px solid ${getPriorityColor(task.priority)}`,
+        borderLeftStyle: 'solid',
+        borderLeftWidth: '4px',
+      }}
+    >
       <h2>{task.title}</h2>
       <p>{task.description}</p>
       <p><strong>Приоритет:</strong> {task.priority}</p>

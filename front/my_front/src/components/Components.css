@@ -1,10 +1,10 @@
-/* Modernized styles for left menu */
+/* Modernized left menu with collapse functionality */
 .assignments-list {
   position: fixed;
-  top: 60px; /* height of header */
+  top: 60px;
   left: 12px;
   width: 220px;
-  height: 90vh;
+  height: calc(100vh - 72px);
   background: linear-gradient(180deg, #f0f4ff 0%, #d5dbfd 100%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-radius: 20px;
@@ -14,320 +14,205 @@
   overflow-y: auto;
   font-family: 'Red Hat Display', sans-serif;
   font-weight: 500;
-  font-size: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  transition: width 0.3s ease, opacity 0.3s ease;
-  opacity: 1;
+  z-index: 900;
+  transition: all 0.3s ease;
 }
 
 .assignments-list.collapsed {
-  width: 50px;
-  padding: 10px 8px;
-  opacity: 0.85;
-  transition: width 0.3s ease, opacity 0.3s ease;
+  width: 60px;
+  padding: 20px 5px;
+  overflow: hidden;
 }
 
-.assignments-list ul {
-  width: 100%;
+.assignments-list.collapsed .menu-title,
+.assignments-list.collapsed .assignment-name {
+  display: none;
+}
+
+.assignments-list.collapsed li {
+  width: 40px;
+  height: 40px;
   padding: 0;
-  margin: 0;
-  list-style: none;
+  justify-content: center;
+  margin: 0 auto 10px;
 }
 
-.assignments-list li {
+.assignments-list.collapsed li::before {
+  content: attr(data-initial);
+  font-size: 18px;
+}
+
+/* Menu toggle button */
+.menu-toggle {
+  position: absolute;
+  top: 15px;
+  right: -15px;
+  width: 30px;
+  height: 30px;
+  background: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 50%;
   cursor: pointer;
-  padding: 14px 12px;
-  border-radius: 20px;
-  background: #e3e7ff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  color: #1a237e;
-  font-family: 'Red Hat Display', sans-serif;
-  font-weight: 600;
-  font-size: 20px;
-  text-align: center;
-  transition: background-color 0.3s ease, color 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 950;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
 }
 
-.assignments-list li:hover {
-  background: #9fa8da;
-  color: white;
+.menu-toggle:hover {
+  background: #2c387e;
+  transform: scale(1.1);
 }
 
-.assignments-list li.selected {
-  background: #7986cb;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  font-weight: 700;
-  color: white;
-}
-
-/* Task form overlay */
-.task-form-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 0;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  padding-right: 240px;
-  padding-bottom: 100px;
-}
-
-.details-form-overlay {
-  background-color: transparent !important;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  overflow: auto;
-}
-
-.task-form-overlay.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-/* Selected assignment panel */
+/* Selected assignment panel - full width */
 .selected-assignment {
   position: fixed;
   top: 65px;
   left: 246px;
-  width: 1180px;
-  height: 90vh;
+  right: 20px;
+  height: calc(100vh - 85px);
   background: #f9f9ff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   border-radius: 24px;
   padding: 24px;
   box-sizing: border-box;
   overflow-y: auto;
-  color: #222;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 500;
-  font-size: 16px;
-  transition: width 0.3s ease, left 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-/* Header in selected assignment */
-.selected-assignment h2 {
-  font-size: 34px;
+.assignments-list.collapsed ~ .selected-assignment {
+  left: 86px;
+}
+
+/* Unified button styles */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-family: 'Raleway', sans-serif;
   font-weight: 600;
-  margin-bottom: 16px;
-  color: #3f51b5;
-}
-
-/* Tasks dashboard */
-.tasks-dashboard {
-  display: flex;
-  gap: 16px;
-  height: calc(100% - 50px);
-  width: calc(100% - 10%);
-}
-
-/* Tasks column */
-.tasks-column {
-  flex: 1;
-  background-color: #e8ebff;
-  padding: 16px;
-  border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  color: #222;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 500;
   font-size: 16px;
-  overflow-y: auto;
-}
-
-/* Column headers */
-.tasks-column h3 {
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 14px;
-  color: #3f51b5;
-}
-
-/* Task card */
-.task-card {
-  background: #dbe1ff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  border-radius: 20px;
-  padding: 18px;
-  margin-bottom: 18px;
-  color: #222;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 500;
-  font-size: 16px;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-}
-
-.task-card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-  transform: translateY(-4px);
-}
-
-/* Delete button */
-.task-card button {
-  background: #f44336;
-  color: white;
-  border: none;
-  border-radius: 9999px;
-  padding: 6px 14px;
   cursor: pointer;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  margin-top: 12px;
-  transition: background-color 0.3s ease;
+  border: none;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.task-card button:hover {
-  background-color: #d32f2f;
+.button-primary {
+  background: linear-gradient(45deg, #3f51b5, #5c6bc0);
+  color: white;
 }
 
-/* Status label */
-.task-card label {
-  display: block;
-  margin-top: 12px;
-  font-weight: 700;
-  color: #3f51b5;
+.button-primary:hover {
+  background: linear-gradient(45deg, #2c387e, #3f51b5);
+  box-shadow: 0 6px 12px rgba(63, 81, 181, 0.3);
 }
 
-/* Status select */
-.task-card select {
-  width: 100%;
-  padding: 8px;
-  margin-top: 6px;
-  box-sizing: border-box;
-  border: 1px solid #9fa8da;
-  border-radius: 6px;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 500;
-  font-size: 16px;
+.button-danger {
+  background: linear-gradient(45deg, #f44336, #ef5350);
+  color: white;
 }
 
-/* Floating button */
-.floating-button {
+.button-danger:hover {
+  background: linear-gradient(45deg, #d32f2f, #f44336);
+  box-shadow: 0 6px 12px rgba(244, 67, 54, 0.3);
+}
+
+.button-success {
+  background: linear-gradient(45deg, #4caf50, #66bb6a);
+  color: white;
+}
+
+.button-success:hover {
+  background: linear-gradient(45deg, #388e3c, #4caf50);
+  box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* Fixed form styles */
+.task-form-overlay {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 60px;
-  height: 60px;
-  background-color: #3f51b5;
-  color: white;
-  font-size: 28px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(63, 81, 181, 0.4);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1001;
-  transition: background-color 0.3s ease;
+  z-index: 1000;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
-.floating-button:hover {
-  background-color: #2c387e;
-}
-
-/* Task form */
 .task-creation-form {
   background: #f0f2ff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   border-radius: 24px;
-  width: 420px;
+  width: 100%;
+  max-width: 500px;
   max-height: 90vh;
-  padding: 24px;
-  box-sizing: border-box;
+  padding: 30px;
   position: relative;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 500;
-  font-size: 16px;
   overflow-y: auto;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  opacity: 1;
 }
 
-.task-creation-form.hidden {
-  opacity: 0;
-  transform: scale(0.95);
-  pointer-events: none;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+.form-group {
+  margin-bottom: 20px;
 }
 
-/* Close button */
-.close-button {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: #3f51b5;
-  border: none;
-  color: white;
-  font-size: 26px;
-  font-weight: 700;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  line-height: 26px;
-  text-align: center;
-  padding: 0;
-  transition: background-color 0.3s ease;
-}
-
-.close-button:hover {
-  background-color: #2c387e;
-}
-
-/* Form fields */
-.task-creation-form label {
+.form-group label {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  font-weight: 600;
   color: #3f51b5;
 }
 
-.task-creation-form input[type="text"],
-.task-creation-form input[type="datetime-local"],
-.task-creation-form input[type="email"],
-.task-creation-form textarea,
-.task-creation-form select {
+.form-control {
   width: 100%;
-  padding: 8px;
-  margin-top: 6px;
-  box-sizing: border-box;
-  border: 1px solid #9fa8da;
-  border-radius: 6px;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 500;
+  padding: 12px 16px;
+  border: 2px solid #c5cae9;
+  border-radius: 10px;
   font-size: 16px;
+  transition: border-color 0.3s ease;
 }
 
-/* Submit button */
-.task-creation-form button[type="submit"] {
-  margin-top: 16px;
-  padding: 10px 16px;
-  background-color: #3f51b5;
-  color: white;
-  border: none;
-  border-radius: 24px;
-  cursor: pointer;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 600;
-  font-size: 18px;
-  transition: background-color 0.3s ease;
+.form-control:focus {
+  border-color: #3f51b5;
+  outline: none;
 }
 
-.task-creation-form button[type="submit"]:hover {
-  background-color: #2c387e;
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .assignments-list {
+    transform: translateX(-100%);
+    z-index: 1000;
+  }
+  
+  .assignments-list.open {
+    transform: translateX(0);
+  }
+  
+  .selected-assignment {
+    left: 20px !important;
+    right: 20px;
+  }
+  
+  .menu-toggle {
+    display: flex;
+  }
 }

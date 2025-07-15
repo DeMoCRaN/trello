@@ -1,10 +1,8 @@
-// src/MainPageWrapper.jsx
 import { useState, useEffect } from 'react'
 import { parseJwt } from './utils/wt'
-import MainPage from './MainPage' // Импортируем MainPage напрямую
-import AssignedTasks from './AssignedTasks' // Импорт AssignedTasks
+import AssignedTasks from './AssignedTasks'
 
-export default function MainPageWrapper() {
+const AssignedTasksWrapper = () => {
   const [userEmail, setUserEmail] = useState('')
 
   useEffect(() => {
@@ -14,7 +12,7 @@ export default function MainPageWrapper() {
 
     async function fetchUserEmail(userId) {
       try {
-        const response = await fetch(`http://localhost:3000/api/users/${userId}`)
+        const response = await fetch('http://localhost:3000/api/users/' + userId)
         if (!response.ok) {
           throw new Error('Ошибка при получении данных пользователя')
         }
@@ -40,14 +38,7 @@ export default function MainPageWrapper() {
     }
   }, [])
 
-  if (!userEmail) {
-    return <div>Loading user data...</div>;
-  }
-
-  return (
-    <>
-      <MainPage userEmail={userEmail} />
-    </>
-  )
-  
+  return <AssignedTasks userEmail={userEmail} />
 }
+
+export default AssignedTasksWrapper
