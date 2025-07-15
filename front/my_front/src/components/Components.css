@@ -1,4 +1,4 @@
-/* Modernized left menu with collapse functionality */
+/* Modernized styles for left menu */
 .assignments-list {
   position: fixed;
   top: 60px;
@@ -135,7 +135,73 @@
   box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
 }
 
-/* Fixed form styles */
+/* Task card styles */
+.task-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.task-card h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #1a237e;
+}
+
+.task-card p {
+  margin: 6px 0;
+  color: #424242;
+}
+
+.task-card strong {
+  color: #3f51b5;
+}
+
+/* Priority colors */
+.task-card.priority-low {
+  border-left-color: #9e9e9e;
+}
+
+.task-card.priority-medium {
+  border-left-color: #ff9800;
+}
+
+.task-card.priority-high {
+  border-left-color: #f44336;
+}
+
+/* Task dashboard layout */
+.tasks-dashboard {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.tasks-column {
+  flex: 1;
+  background: #f5f5ff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.tasks-column h3 {
+  text-align: center;
+  color: #3f51b5;
+  margin-top: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Form styles */
 .task-form-overlay {
   position: fixed;
   top: 0;
@@ -147,25 +213,19 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 20px;
-  opacity: 1;
-  transition: opacity 0.3s ease;
 }
 
 .task-creation-form {
-  background: #f0f2ff;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  border-radius: 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
   width: 100%;
   max-width: 500px;
-  max-height: 90vh;
-  padding: 30px;
-  position: relative;
-  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
@@ -177,23 +237,17 @@
 
 .form-control {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #c5cae9;
-  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid #c5cae9;
+  border-radius: 8px;
   font-size: 16px;
-  transition: border-color 0.3s ease;
-}
-
-.form-control:focus {
-  border-color: #3f51b5;
-  outline: none;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 30px;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 /* Responsive adjustments */
@@ -212,7 +266,11 @@
     right: 20px;
   }
   
-  .menu-toggle {
-    display: flex;
+  .tasks-dashboard {
+    flex-direction: column;
   }
+}
+
+.hidden {
+  display: none;
 }

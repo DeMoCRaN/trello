@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import './LoginForm.css';
 
 function LoginForm() {
@@ -27,12 +26,9 @@ function LoginForm() {
       }
 
       const data = await response.json();
-      // Сохраняем токен в localStorage
       localStorage.setItem('token', data.token);
-      // Сохраняем время истечения сессии (через 1 час)
       const expiryTime = new Date().getTime() + 60 * 60 * 1000;
       localStorage.setItem('tokenExpiry', expiryTime);
-      // Перенаправляем на главную страницу
       navigate('/main');
     } catch {
       setError('Ошибка сети');
@@ -43,7 +39,7 @@ function LoginForm() {
     <form onSubmit={handleSubmit}>
       <h2>Вход</h2>
       <h4>Войдите для использования</h4>
-      <div>
+      <div className="input-container">
         <label>Email:</label>
         <input
           type="email"
@@ -52,7 +48,7 @@ function LoginForm() {
           required
         />
       </div>
-      <div>
+      <div className="input-container">
         <label>Пароль:</label>
         <input
           type="password"
@@ -61,7 +57,7 @@ function LoginForm() {
           required
         />
       </div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p>{error}</p>}
       <button type="submit">Войти</button>
     </form>
   );

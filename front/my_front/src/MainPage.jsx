@@ -1,4 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiBell, FiX } from 'react-icons/fi';
 import './MainPageNewStyles.css';
 import Header from './components/Header';
 import AssignmentsList from './components/AssignmentsList';
@@ -25,8 +28,144 @@ function parseJwt(token) {
   }
 }
 
+function TaskNotification({ tasks, onClose, onTaskClick }) {
+  const [visible, setVisible] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const newTasks = tasks?.filter(task => task?.status === 'new') || [];
 
-import TaskDetailsModal from './components/TaskDetailsModal';
+  useEffect(() => {
+    if (newTasks.length > 0) {
+      setVisible(true);
+      
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(`New tasks assigned`, {
+          body: `You have ${newTasks.length} new task${newTasks.length > 1 ? 's' : ''} to complete`,
+          icon: '/notification-icon.png'
+        });
+      }
+    }
+  }, [tasks, newTasks.length]);
+
+  const handleClose = (e) => {
+    e.stopPropagation();
+    setVisible(false);
+    onClose?.();
+  };
+
+  const handleTaskClick = (e, taskId) => {
+    e.stopPropagation();
+    onTaskClick?.(taskId);
+  };
+
+  if (!visible || newTasks.length === 0) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        onClick={() => setExpanded(!expanded)}
+        className={`notification ${newTasks.some(t => t.priority === 'high') ? 'notification-high' : 
+                   newTasks.some(t => t.priority === 'medium') ? 'notification-medium' : 'notification-low'}`}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          color: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 1000,
+          maxWidth: '350px',
+          overflow: 'hidden',
+          cursor: 'pointer',
+        }}
+      >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '16px',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              <FiBell size={20} />
+            </motion.div>
+            <span style={{ fontWeight: '600' }}>
+              {newTasks.length} new task{newTasks.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          <motion.button 
+            onClick={handleClose}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+          >
+            <FiX size={18} />
+          </motion.button>
+        </div>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              style={{ background: 'rgba(255,255,255,0.1)' }}
+            >
+              <div style={{ padding: '0 16px 16px' }}>
+                {newTasks.slice(0, 3).map(task => (
+                  <motion.div 
+                    key={task.id}
+                    onClick={(e) => handleTaskClick(e, task.id)}
+                    whileHover={{ scale: 1.02 }}
+                    style={{
+                      padding: '12px 0',
+                      borderBottom: '1px solid rgba(255,255,255,0.2)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <span style={{ flex: 1 }}>{task.title}</span>
+                    <span style={{
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      borderRadius: '12px',
+                      padding: '2px 8px',
+                      fontSize: '12px'
+                    }}>
+                      {task.priority}
+                    </span>
+                  </motion.div>
+                ))}
+                {newTasks.length > 3 && (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    paddingTop: '12px',
+                    fontSize: '14px',
+                    opacity: 0.8
+                  }}>
+                    +{newTasks.length - 3} more tasks
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 function MainPage({ userEmail }) {
   const [assignments, setAssignments] = useState([]);
@@ -41,37 +180,8 @@ function MainPage({ userEmail }) {
   const [assignedTasks, setAssignedTasks] = useState([]);
   const [loadingAssignedTasks, setLoadingAssignedTasks] = useState(false);
   const [currentTab, setCurrentTab] = useState('assignments');
-
-  useEffect(() => {
-    if (assignedTasks.length > 0) {
-      const newTasks = assignedTasks.filter(task => task.status === 'new');
-      if (newTasks.length > 0) {
-        alert(`You have ${newTasks.length} new task${newTasks.length > 1 ? 's' : ''} to execute.`);
-      }
-    }
-  }, [assignedTasks]);
-
-  // Removed unused states to fix ESLint warnings
-  // const [selectedTask, setSelectedTask] = useState(null);
-  // const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  // Removed unused variable to fix ESLint warning
-  //  const isLoadingDetails = false;
-
-  // New states for details form without overlay
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [detailsFormTask, setDetailsFormTask] = useState(null);
-
-  const handleShowDetails = (task) => {
-    // Open details form without overlay
-    setDetailsFormTask(task);
-    setShowDetailsForm(true);
-  };
-
-  const handleCloseDetails = () => {
-    // Close details form
-    setShowDetailsForm(false);
-    setDetailsFormTask(null);
-  };
 
   const fetchAssignedTasks = useCallback(async () => {
     setLoadingAssignedTasks(true);
@@ -87,7 +197,6 @@ function MainPage({ userEmail }) {
       }
       const data = await response.json();
       setAssignedTasks(data);
-      // Dispatch event for real-time update
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       setError(err.message);
@@ -97,10 +206,8 @@ function MainPage({ userEmail }) {
   }, []);
 
   useEffect(() => {
-    if (currentTab === 'assigned') {
-      fetchAssignedTasks();
-    }
-  }, [currentTab, fetchAssignedTasks]);
+    fetchAssignedTasks(); // Загружаем задачи сразу при монтировании
+  }, [fetchAssignedTasks]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -186,32 +293,19 @@ function MainPage({ userEmail }) {
     fetchAssignments();
   }, [fetchStatuses, fetchPriorities, fetchAssignments]);
 
+  const handleShowDetails = (task) => {
+    setDetailsFormTask(task);
+    setShowDetailsForm(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetailsForm(false);
+    setDetailsFormTask(null);
+  };
+
   const handleAssignmentSelect = useCallback((assignment) => {
     setSelectedAssignment(assignment);
   }, []);
-
-  useEffect(() => {
-    if (!assignments.length) return;
-    const token = localStorage.getItem('token');
-    assignments.forEach(async (assignment) => {
-      if (assignment.tasks) {
-        for (const task of assignment.tasks) {
-          if (!task.seen_at) {
-            try {
-              await fetch(`http://localhost:3000/api/tasks/${task.id}/seen`, {
-                method: 'PATCH',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                },
-              });
-            } catch (error) {
-              console.error(`Error marking task ${task.id} as seen:`, error);
-            }
-          }
-        }
-      }
-    });
-  }, [assignments]);
 
   const handleCreateTask = useCallback(async (taskData) => {
     if (!taskData.title.trim()) {
@@ -311,6 +405,17 @@ function MainPage({ userEmail }) {
   return (
     <div className="app-container">
       <Header userEmail={userEmail} onNavigate={() => {}} hideAssignmentsAndProfile={true} />
+      
+      {/* Уведомление о новых задачах */}
+      <TaskNotification 
+        tasks={assignedTasks} 
+        onClose={() => {}} 
+        onTaskClick={(taskId) => {
+          const task = assignedTasks.find(t => t.id === taskId);
+          if (task) handleShowDetails(task);
+        }}
+      />
+
       <main className="dashboard">
         {currentPage === 'main' && (
           <>
@@ -323,102 +428,100 @@ function MainPage({ userEmail }) {
             />
             {selectedAssignment && (
               <>
-            <SelectedAssignmentDetails
-              selectedAssignment={selectedAssignment}
-              statuses={statuses}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDeleteTask}
-              onDetails={handleShowDetails}
-              assignedTasks={assignedTasks}
-              loadingAssignedTasks={loadingAssignedTasks}
-              currentTab={currentTab}
-              onStartWork={async (taskId) => {
-                try {
-                  const token = localStorage.getItem('token');
-                  if (!token) throw new Error('User not logged in');
-              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Bearer ' + token,
-                },
-                body: JSON.stringify({ status_id: 2, action: 'start' }),
-              });
-                  if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error('Failed to start work: ' + errorText);
-                  }
-                  await fetchAssignments();
-                } catch (err) {
-                  alert(err.message);
-                }
-              }}
-              onStopWork={async (taskId) => {
-                try {
-                  const token = localStorage.getItem('token');
-                  if (!token) throw new Error('User not logged in');
-              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Bearer ' + token,
-                },
-                body: JSON.stringify({ status_id: 2, action: 'stop' }),
-              });
-                  if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error('Failed to stop work: ' + errorText);
-                  }
-                  await fetchAssignments();
-                } catch (err) {
-                  alert(err.message);
-                }
-              }}
-              onResumeWork={async (taskId) => {
-                try {
-                  const token = localStorage.getItem('token');
-                  if (!token) throw new Error('User not logged in');
-              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Bearer ' + token,
-                },
-                body: JSON.stringify({ status_id: 2, action: 'resume' }),
-              });
-                  if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error('Failed to resume work: ' + errorText);
-                  }
-                  await fetchAssignments();
-                } catch (err) {
-                  alert(err.message);
-                }
-              }}
-              onCompleteWork={async (taskId) => {
-                try {
-                  const token = localStorage.getItem('token');
-                  if (!token) throw new Error('User not logged in');
-              const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Bearer ' + token,
-                },
-                body: JSON.stringify({ status_id: 3, action: 'done' }),
-              });
-                  if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error('Failed to complete work: ' + errorText);
-                  }
-                  await fetchAssignments();
-                } catch (err) {
-                  alert(err.message);
-                }
-              }}
-            />
-                {/* Remove TaskDetailsModal usage */}
-                {/* Render details form without overlay */}
+                <SelectedAssignmentDetails
+                  selectedAssignment={selectedAssignment}
+                  statuses={statuses}
+                  onStatusChange={handleStatusChange}
+                  onDelete={handleDeleteTask}
+                  onDetails={handleShowDetails}
+                  assignedTasks={assignedTasks}
+                  loadingAssignedTasks={loadingAssignedTasks}
+                  currentTab={currentTab}
+                  onStartWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: 'Bearer ' + token,
+                        },
+                        body: JSON.stringify({ status_id: 2, action: 'start' }),
+                      });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to start work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  onStopWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: 'Bearer ' + token,
+                        },
+                        body: JSON.stringify({ status_id: 2, action: 'stop' }),
+                      });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to stop work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  onResumeWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: 'Bearer ' + token,
+                        },
+                        body: JSON.stringify({ status_id: 2, action: 'resume' }),
+                      });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to resume work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  onCompleteWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: 'Bearer ' + token,
+                        },
+                        body: JSON.stringify({ status_id: 3, action: 'done' }),
+                      });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to complete work: ' + errorText);
+                      }
+                      await fetchAssignments();
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                />
                 {showDetailsForm && detailsFormTask && (
                   <div className="details-form-container">
                     <TaskCreationForm

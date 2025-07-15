@@ -1,77 +1,172 @@
 /* LoginForm.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --primary: #4361ee;
+  --primary-dark: #3a56d4;
+  --error: #ef233c;
+  --text: #2b2d42;
+  --text-light: #8d99ae;
+  --bg: #f8f9fa;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(67,97,238,0.1) 0%, rgba(255,255,255,0) 70%);
+  animation: rotate 20s linear infinite;
+  z-index: -1;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
 form {
   max-width: 400px;
   margin: 0 auto;
-  padding: 30px 40px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  backdrop-filter: blur(8px);
+  font-family: 'Inter', sans-serif;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  animation: fadeIn 0.6s ease-out, float 6s ease-in-out infinite;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -45%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-10px); }
 }
 
 form h2 {
   text-align: center;
-  margin-bottom: 24px;
-  color: #333;
+  margin-bottom: 16px;
+  color: var(--text);
   font-weight: 600;
   font-size: 28px;
+  letter-spacing: -0.5px;
+}
+
+form h4 {
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--text-light);
+  font-weight: 400;
+  font-size: 16px;
 }
 
 form div {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  position: relative;
 }
 
 form label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 500;
-  color: #555;
+  color: var(--text);
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 form input[type="email"],
 form input[type="password"] {
   width: 100%;
   height: 48px;
-  padding: 0 14px;
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: border-color 0.3s ease;
+  padding: 0 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s ease;
   box-sizing: border-box;
+  background: #f8f9fa;
+  color: var(--text);
 }
 
 form input[type="email"]:focus,
 form input[type="password"]:focus {
-  border-color: #007bff;
+  border-color: var(--primary);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
+  background: #fff;
 }
 
 form button {
   width: 100%;
-  padding: 12px 0;
-  background-color: #007bff;
+  padding: 14px 0;
+  background-color: var(--primary);
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: white;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  margin-top: 8px;
 }
 
 form button:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(67,97,238,0.2);
+}
+
+form button:active {
+  transform: translateY(0);
 }
 
 form p {
-  color: #d9534f;
-  font-weight: 600;
+  color: var(--error);
+  font-weight: 500;
   text-align: center;
-  margin-top: -10px;
-  margin-bottom: 10px;
+  margin: 16px 0;
+  font-size: 14px;
+  animation: shake 0.5s ease;
+}
+
+
+
+/* Input focus animation */
+.input-container {
+  position: relative;
+}
+
+.input-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.input-container:focus-within::after {
+  width: 100%;
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
-import './components/Components.css';
+import './AssignedTasks.css';
 
 function AssignedTasks({ userEmail }) {
   const [tasks, setTasks] = useState([]);
@@ -12,7 +12,7 @@ function AssignedTasks({ userEmail }) {
   const [sortByAssignment, setSortByAssignment] = useState(false);
   const [assignmentNames, setAssignmentNames] = useState({});
   const navigate = useNavigate();
-  
+
   function onNavigate(page) {
     switch (page) {
       case 'main':
@@ -27,6 +27,11 @@ function AssignedTasks({ userEmail }) {
   }
 
   useEffect(() => {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
     fetchTasks();
     fetchAssignmentNames();
   }, []);
@@ -44,10 +49,13 @@ function AssignedTasks({ userEmail }) {
   }, []);
 
   useEffect(() => {
+    // Play sound for new tasks
     if (tasks.length > 0) {
       const newTasks = tasks.filter(task => task.status === 'new');
       if (newTasks.length > 0) {
-        alert(`You have ${newTasks.length} new task${newTasks.length > 1 ? 's' : ''} to execute.`);
+        const audio = new Audio('/notification-sound.mp3');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('Audio play failed:', e));
       }
     }
   }, [tasks]);
@@ -226,17 +234,20 @@ function AssignedTasks({ userEmail }) {
     navigate('/main');
   }
 
+
+
   function renderTaskCard(task) {
     const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
     const isInProgress = task.status === 'in_progress' || timer.isRunning;
     
     return (
       <div
+        id={`task-${task.id}`}
         key={task.id}
         className="task-card"
         style={{
           borderLeft: '4px solid ' + (
-            task.priority.toLowerCase() === 'low' ? '#9e9e9e' :
+            task.priority.toLowerCase() === 'low' ? '#4caf50' :
             task.priority.toLowerCase() === 'medium' ? '#ff9800' :
             task.priority.toLowerCase() === 'high' ? '#f44336' :
             '#9e9e9e'
@@ -246,6 +257,7 @@ function AssignedTasks({ userEmail }) {
           borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           backgroundColor: '#fff',
+          transition: 'box-shadow 0.3s ease',
         }}
       >
         <h4 style={{ marginTop: 0 }}>{task.title}</h4>
@@ -265,72 +277,32 @@ function AssignedTasks({ userEmail }) {
           <button
             onClick={() => updateTaskStatus(task.id, 2, 'start')}
             disabled={updatingTaskId === task.id}
-            style={{
-              backgroundColor: '#3f51b5',
-              color: 'white',
-              border: 'none',
-              borderRadius: '24px',
-              padding: '8px 16px',
-              cursor: updatingTaskId === task.id ? 'wait' : 'pointer',
-              fontWeight: '600',
-              fontSize: '14px',
-              marginTop: '12px',
-            }}
+            className="task-button start-button"
           >
             {updatingTaskId === task.id ? 'Starting...' : 'Start Work'}
           </button>
         )}
         
         {isInProgress && (
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="task-buttons-container">
             <button
               onClick={() => updateTaskStatus(task.id, 2, 'stop')}
               disabled={updatingTaskId === task.id}
-              style={{
-                backgroundColor: '#f44336',
-                color: 'white',
-                border: 'none',
-                borderRadius: '24px',
-                padding: '8px 16px',
-                cursor: updatingTaskId === task.id ? 'wait' : 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                marginTop: '12px',
-              }}
+              className="task-button stop-button"
             >
               {updatingTaskId === task.id ? 'Stopping...' : 'Stop Work'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 2, 'resume')}
               disabled={updatingTaskId === task.id}
-              style={{
-                backgroundColor: '#4caf50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '24px',
-                padding: '8px 16px',
-                cursor: updatingTaskId === task.id ? 'wait' : 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                marginTop: '12px',
-              }}
+              className="task-button resume-button"
             >
               {updatingTaskId === task.id ? 'Resuming...' : 'Resume Work'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 3, 'done')}
               disabled={updatingTaskId === task.id}
-              style={{
-                backgroundColor: '#2196f3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '24px',
-                padding: '8px 16px',
-                cursor: updatingTaskId === task.id ? 'wait' : 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                marginTop: '12px',
-              }}
+              className="task-button complete-button"
             >
               {updatingTaskId === task.id ? 'Completing...' : 'Mark as Done'}
             </button>
@@ -338,7 +310,7 @@ function AssignedTasks({ userEmail }) {
         )}
         
         {task.status === 'done' && (
-          <p style={{ color: '#4caf50', fontWeight: 'bold' }}>
+          <p className="task-completed">
             Task completed. Total work time: {formatTime(timer.elapsedSeconds)}
           </p>
         )}
@@ -348,81 +320,72 @@ function AssignedTasks({ userEmail }) {
 
   if (loading) {
     return (
-      <>
+      <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} />
-        <div style={{ padding: '20px', textAlign: 'center' }}>Loading tasks...</div>
-      </>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading tasks...</p>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
+      <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} />
-        <div style={{ padding: '20px', color: '#f44336' }}>Error: {error}</div>
-      </>
+        <div className="error-container">
+          <p>Error: {error}</p>
+          <button onClick={fetchTasks} className="retry-button">
+            Retry
+          </button>
+        </div>
+      </div>
     );
   }
 
   if (!tasks || tasks.length === 0) {
     return (
-      <>
+      <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} />
-        <div style={{ padding: '20px' }}>
-          <button 
-            onClick={goBack} 
-            style={{ 
-              marginBottom: '16px',
-              padding: '8px 16px',
-              backgroundColor: '#3f51b5',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
+        <div className="no-tasks-container">
+          <button onClick={goBack} className="back-button">
             Back to Main
           </button>
-          <div>No tasks assigned to you.</div>
+          <p>No tasks assigned to you.</p>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="page-container">
       <Header userEmail={userEmail} onNavigate={onNavigate} />
-      <div style={{ padding: '20px', paddingTop: '80px' }}>
-        <button
-          onClick={() => setSortByAssignment(!sortByAssignment)}
-          className="cool-button"
-        >
-          {sortByAssignment ? 'Показать по статусу' : 'Группировать по назначению'}
-        </button>
-        
-        <button 
-          onClick={goBack} 
-          className="cool-button"
-          style={{ backgroundColor: '#9e9e9e' }}
-        >
-          Назад на главную
-        </button>
+
+      
+      <div className="content-container">
+        <div className="controls-container">
+          <button
+            onClick={() => setSortByAssignment(!sortByAssignment)}
+            className="toggle-sort-button"
+          >
+            {sortByAssignment ? 'Show by Status' : 'Group by Assignment'}
+          </button>
+          
+          <button onClick={goBack} className="back-button">
+            Back to Main
+          </button>
+        </div>
 
         {!sortByAssignment ? (
-          <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
+          <div className="status-columns-container">
             {Object.entries(tasksGroupedByStatus).map(([status, tasksList]) => (
-              <div key={status} style={{ flex: 1 }}>
-                <h3 style={{
-                  padding: '10px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '4px',
-                  textAlign: 'center',
-                  textTransform: 'capitalize',
-                }}>
+              <div key={status} className="status-column">
+                <h3 className="status-header">
                   {status.replace('_', ' ')}
                 </h3>
                 {tasksList.length === 0 ? (
-                  <p style={{ textAlign: 'center', color: '#9e9e9e' }}>No tasks in this category</p>
+                  <p className="no-tasks-message">No tasks in this category</p>
                 ) : (
                   tasksList.map(renderTaskCard)
                 )}
@@ -430,22 +393,13 @@ function AssignedTasks({ userEmail }) {
             ))}
           </div>
         ) : (
-          <div style={{ marginTop: '20px' }}>
+          <div className="assignments-container">
             {Object.entries(tasksGroupedByAssignment).map(([assignmentId, group]) => (
-              <div key={assignmentId} style={{ marginBottom: '30px' }}>
-                <h3 style={{
-                  padding: '10px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '4px',
-                }}>
+              <div key={assignmentId} className="assignment-group">
+                <h3 className="assignment-header">
                   {group.name}
                 </h3>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                  gap: '20px',
-                  marginTop: '10px'
-                }}>
+                <div className="assignment-tasks-grid">
                   {group.tasks.map(renderTaskCard)}
                 </div>
               </div>
@@ -453,7 +407,7 @@ function AssignedTasks({ userEmail }) {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
