@@ -206,7 +206,7 @@ function MainPage({ userEmail }) {
   }, []);
 
   useEffect(() => {
-    fetchAssignedTasks(); // Загружаем задачи сразу при монтировании
+    fetchAssignedTasks();
   }, [fetchAssignedTasks]);
 
   useEffect(() => {
@@ -271,11 +271,14 @@ function MainPage({ userEmail }) {
             ...task,
             creator_name: task.creator_name || 'Неизвестно',
             assignee_name: task.assignee_name || 'Неизвестно',
+            created_at: task.created_at || new Date().toISOString(), // Гарантируем наличие даты создания
+            createdAt: task.created_at || task.createdAt || new Date().toISOString(), // Дублируем для совместимости
           }));
         }
         return assignment;
       });
 
+      console.log('Enriched assignments data:', enrichedData); // Логируем обогащенные данные
       setAssignments(enrichedData);
       if (enrichedData.length > 0 && !selectedAssignment) {
         setSelectedAssignment(enrichedData[0]);
@@ -294,7 +297,11 @@ function MainPage({ userEmail }) {
   }, [fetchStatuses, fetchPriorities, fetchAssignments]);
 
   const handleShowDetails = (task) => {
-    setDetailsFormTask(task);
+    console.log('Showing details for task:', task); // Логируем задачу перед отображением
+    setDetailsFormTask({
+      ...task,
+      created_at: task.created_at || task.createdAt || new Date().toISOString()
+    });
     setShowDetailsForm(true);
   };
 
@@ -325,6 +332,7 @@ function MainPage({ userEmail }) {
       const assigneeId = assigneeData.id;
 
       const deadline = taskData.deadline ? new Date(taskData.deadline).toISOString() : null;
+      const createdAt = new Date().toISOString(); // Явно устанавливаем дату создания
 
       const response = await fetch(`http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`, {
         method: 'POST',
@@ -336,7 +344,7 @@ function MainPage({ userEmail }) {
           title: taskData.title,
           description: taskData.description,
           deadline: deadline,
-          created_at: new Date().toISOString(),
+          created_at: createdAt, // Явно передаем дату создания
           creator_id: userId,
           assignee_id: assigneeId,
           status_id: parseInt(taskData.statusId, 10),
@@ -406,7 +414,6 @@ function MainPage({ userEmail }) {
     <div className="app-container">
       <Header userEmail={userEmail} onNavigate={() => {}} hideAssignmentsAndProfile={true} />
       
-      {/* Уведомление о новых задачах */}
       <TaskNotification 
         tasks={assignedTasks} 
         onClose={() => {}} 
@@ -452,48 +459,6 @@ function MainPage({ userEmail }) {
                       if (!response.ok) {
                         const errorText = await response.text();
                         throw new Error('Failed to start work: ' + errorText);
-                      }
-                      await fetchAssignments();
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                  onStopWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                        method: 'PATCH',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          Authorization: 'Bearer ' + token,
-                        },
-                        body: JSON.stringify({ status_id: 2, action: 'stop' }),
-                      });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to stop work: ' + errorText);
-                      }
-                      await fetchAssignments();
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                  onResumeWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                        method: 'PATCH',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          Authorization: 'Bearer ' + token,
-                        },
-                        body: JSON.stringify({ status_id: 2, action: 'resume' }),
-                      });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to resume work: ' + errorText);
                       }
                       await fetchAssignments();
                     } catch (err) {

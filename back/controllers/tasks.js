@@ -7,9 +7,10 @@ async function createTask(pool, { title, description, deadline, creator_id, assi
         title, description, deadline, 
         creator_id, assignee_id, 
         status_id, priority_id, 
-        created_at, updated_at
+        created_at, updated_at,
+        progress_percentage
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now(), 0)
       RETURNING *`,
       [
         title, 
@@ -151,6 +152,7 @@ async function getTaskById(pool, taskId) {
         t.priority_id,
         t.creator_id,
         t.assignee_id,
+        t.progress_percentage,
         u1.email AS creator_name, 
         u2.email AS assignee_name,
         s.name AS status,
@@ -172,7 +174,8 @@ async function getTaskById(pool, taskId) {
     created_at: task.created_at ? new Date(task.created_at).toISOString() : null,
     updated_at: task.updated_at ? new Date(task.updated_at).toISOString() : null,
     in_progress_since: task.in_progress_since ? new Date(task.in_progress_since).toISOString() : null,
-    deadline: task.deadline ? new Date(task.deadline).toISOString() : null
+    deadline: task.deadline ? new Date(task.deadline).toISOString() : null,
+    progress_percentage: task.progress_percentage || 0
   };
 
   } catch (error) {
@@ -196,6 +199,7 @@ async function getTasksByAssignee(pool, assigneeId) {
         t.work_duration,
         t.created_at,
         t.updated_at,
+        t.progress_percentage,
         u1.email AS creator_email,
         u2.email AS assignee_email,
         ts.name AS status,
@@ -224,10 +228,27 @@ async function getTasksByAssignee(pool, assigneeId) {
       deadline: task.deadline ? new Date(task.deadline).toISOString() : null,
       in_progress_since: task.in_progress_since ? new Date(task.in_progress_since).toISOString() : null,
       created_at: new Date(task.created_at).toISOString(),
-      updated_at: new Date(task.updated_at).toISOString()
+      updated_at: new Date(task.updated_at).toISOString(),
+      progress_percentage: task.progress_percentage || 0
     }));
   } catch (error) {
     console.error('Error in getTasksByAssignee:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function updateTaskProgress(pool, taskId, progressPercentage) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      'UPDATE tasks SET progress_percentage = $1, updated_at = now() WHERE id = $2 RETURNING *',
+      [progressPercentage, taskId]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error in updateTaskProgress:', error);
     throw error;
   } finally {
     client.release();
@@ -241,4 +262,5 @@ module.exports = {
   markTaskAsSeen,
   getTaskById,
   getTasksByAssignee,
+  updateTaskProgress,
 };

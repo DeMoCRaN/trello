@@ -30,6 +30,12 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
     };
   }, []);
 
+  useEffect(() => {
+  if (selectedAssignment?.tasks) {
+    console.log('Task data structure:', selectedAssignment.tasks[0]);
+  }
+}, [selectedAssignment])
+
   return (
     <section className="selected-assignment">
       <h2>{selectedAssignment.title}</h2>
@@ -53,6 +59,7 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
                   onCompleteWork={onCompleteWork}
                   creatorName={task.creator_name}
                   assigneeName={task.assignee_name}
+                  createdAt={ task.created_at}
                 />
               ))
             ) : (

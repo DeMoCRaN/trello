@@ -17,6 +17,21 @@ const pool = new Pool({
 
 const router = express.Router();
 
+router.patch('/tasks/:id/progress', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id, 10);
+    const { progress_percentage } = req.body;
+    if (progress_percentage === undefined || progress_percentage < 0 || progress_percentage > 100) {
+      return res.status(400).json({ error: 'Invalid progress_percentage value' });
+    }
+    const updatedTask = await require('../controllers/tasks').updateTaskProgress(pool, taskId, progress_percentage);
+    res.json(updatedTask);
+  } catch (error) {
+    console.error('Error updating task progress:', error);
+    res.status(500).json({ error: 'Error updating task progress' });
+  }
+});
+
 // Logging middleware for /api/tasks/*
 router.use('/tasks', (req, res, next) => {
   console.log(`Incoming ${req.method} request to ${req.originalUrl}`);

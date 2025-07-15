@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './DeadlineProgressBar.css';
 
-function DeadlineProgressBar({ taskId, created_at, deadline, status }) {
+function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
   const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState('');
   const [error, setError] = useState(null);
@@ -10,21 +10,40 @@ function DeadlineProgressBar({ taskId, created_at, deadline, status }) {
   const parseDate = (dateInput) => {
     if (!dateInput) return null;
     if (dateInput instanceof Date) return dateInput;
-    
-    // Пробуем разные форматы дат
+
     const formats = [
-      dateInput, // исходный формат
-      dateInput.replace(' ', 'T'), // для формата с пробелом
-      dateInput.includes('T') ? dateInput : `${dateInput}T00:00:00` // добавляем время если его нет
+      dateInput,
+      dateInput.replace(' ', 'T') + 'Z',
+      dateInput.includes('T') ? dateInput : `${dateInput}T00:00:00Z`,
+      dateInput.endsWith('Z') ? dateInput : `${dateInput}Z`
     ];
-    
+
     for (const format of formats) {
       const date = new Date(format);
       if (!isNaN(date.getTime())) return date;
     }
-    
+
     return null;
   };
+
+  useEffect(() => {
+
+    const fetchProgress = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch task progress');
+        }
+        const task = await response.json();
+        setProgress(task.progress_percentage || 0);
+      } catch (err) {
+        console.error(err);
+        setError('Ошибка загрузки прогресса');
+      }
+    };
+
+    fetchProgress();
+  }, [taskId]);
 
   useEffect(() => {
     if (status === 'done') {
@@ -35,70 +54,82 @@ function DeadlineProgressBar({ taskId, created_at, deadline, status }) {
 
     const calculateProgress = () => {
       try {
-        setError(null);
         const now = new Date();
+        const start = parseDate(createdAt);
         const end = parseDate(deadline);
-        
-        if (!end) {
-          setError('Дедлайн не указан');
+
+        if (!start || !end) {
+          setError('Некорректные даты');
           return;
         }
 
-        // Используем createdAt или текущую дату минус 1 день (как минимальное значение)
-        const start = parseDate(created_at);
-        
-        // Проверка что дедлайн в будущем относительно даты создания
         if (end <= start) {
-          setError('Дедлайн должен быть после даты создания');
+          setError('Дедлайн раньше создания');
           return;
         }
 
-        // Если текущее время раньше даты создания
+        const totalMs = end - start;
+        const elapsedMs = now - start;
+
         if (now < start) {
           setProgress(0);
-          const totalDuration = end - start;
-          setTimeLeft(formatDuration(totalDuration));
+          setTimeLeft(`До начала: ${formatTime(start - now)}`);
           return;
         }
 
-        // Если дедлайн уже прошёл
         if (now >= end) {
           setProgress(100);
           setTimeLeft('Время истекло');
           return;
         }
 
-        // Рассчитываем прогресс
-        const totalDuration = end - start;
-        const timePassed = now - start;
-        const currentProgress = Math.min(100, (timePassed / totalDuration) * 100);
-        
+        const currentProgress = (elapsedMs / totalMs) * 100;
         setProgress(currentProgress);
-        setTimeLeft(formatDuration(end - now));
+        setTimeLeft(`Осталось: ${formatTime(end - now)}`);
+
+        // Update progress in backend
+        updateProgress(currentProgress);
+
       } catch (err) {
-        console.error('Ошибка в DeadlineProgressBar:', err);
-        setError('Ошибка расчета времени');
+        console.error('Progress calculation error:', err);
+        setError('Ошибка расчета');
       }
     };
 
-    const formatDuration = (ms) => {
-      const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+    const formatTime = (ms) => {
+      const totalSeconds = Math.floor(ms / 1000);
+      const days = Math.floor(totalSeconds / (3600 * 24));
+      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
 
-      if (days > 0) {
-        return `${days}д ${hours}ч`;
-      } else if (hours > 0) {
-        return `${hours}ч ${minutes}м`;
+      if (days > 0) return `${days}д ${hours}ч`;
+      if (hours > 0) return `${hours}ч ${minutes}м`;
+      if (minutes > 0) return `${minutes}м ${seconds}с`;
+      return `${seconds}с`;
+    };
+
+    const updateProgress = async (progressValue) => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/progress`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ progress_percentage: progressValue }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update progress');
+        }
+      } catch (err) {
+        console.error('Error updating progress:', err);
       }
-      return `${minutes}м ${seconds}с`;
     };
 
     calculateProgress();
     const interval = setInterval(calculateProgress, 1000);
     return () => clearInterval(interval);
-  }, [taskId, created_at, deadline, status]);
+  }, [taskId, createdAt, deadline, status]);
 
   if (error) {
     return <div className="deadline-error">{error}</div>;
@@ -124,21 +155,16 @@ function DeadlineProgressBar({ taskId, created_at, deadline, status }) {
 }
 
 DeadlineProgressBar.propTypes = {
-  taskId: PropTypes.number.isRequired,
+  taskId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   createdAt: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.instanceOf(Date)
-  ]),
+  ]).isRequired,
   deadline: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.instanceOf(Date)
-  ]),
+  ]).isRequired,
   status: PropTypes.string.isRequired,
-};
-
-DeadlineProgressBar.defaultProps = {
-  createdAt: null,
-  deadline: null,
 };
 
 export default DeadlineProgressBar;
