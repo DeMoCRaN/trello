@@ -1,27 +1,57 @@
-.progress-container {
+/* DeadlineProgressBar.css */
+.deadline-progress-container {
+  margin: 16px 0;
   width: 100%;
-  margin: 15px 0;
-  font-family: 'Arial', sans-serif;
 }
 
-.progress-bar {
+.progress-bar-background {
+  height: 8px;
   width: 100%;
-  height: 20px;
   background-color: #f0f0f0;
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  position: relative;
 }
 
-.progress-fill {
+.progress-bar-fill {
   height: 100%;
-  transition: width 0.5s ease, background-color 0.5s ease;
-  border-radius: 10px 0 0 10px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: width 0.5s ease-out;
 }
 
-.progress-text {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #555;
+/* Цвета для разных состояний прогресса */
+.progress-bar-fill.normal {
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+}
+
+.progress-bar-fill.warning {
+  background: linear-gradient(90deg, #ff9800, #ffc107);
+}
+
+.progress-bar-fill.critical {
+  background: linear-gradient(90deg, #f44336, #ff5722);
+}
+
+.time-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #616161;
+}
+
+.time-info span {
+  font-weight: 500;
+}
+
+.deadline-error {
+  color: #f44336;
+  font-size: 0.8rem;
   text-align: center;
+  padding: 8px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  margin: 10px 0;
 }

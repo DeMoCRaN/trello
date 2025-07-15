@@ -1,12 +1,27 @@
 async function createTask(pool, { title, description, deadline, creator_id, assignee_id, status_id, priority_id }) {
   const client = await pool.connect();
   try {
+    // Теперь deadline приходит в правильном формате "YYYY-MM-DD HH:MM:SS"
     const result = await client.query(
-      `INSERT INTO tasks (title, description, deadline, creator_id, assignee_id, status_id, priority_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())
-       RETURNING *`,
-      [title, description, deadline, creator_id, assignee_id, status_id, priority_id]
+      `INSERT INTO tasks (
+        title, description, deadline, 
+        creator_id, assignee_id, 
+        status_id, priority_id, 
+        created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())
+      RETURNING *`,
+      [
+        title, 
+        description, 
+        deadline, // Используем как есть (уже правильный формат)
+        creator_id, 
+        assignee_id, 
+        status_id, 
+        priority_id
+      ]
     );
+    
     return result.rows[0];
   } catch (error) {
     throw error;
@@ -35,7 +50,7 @@ async function updateTaskStatus(pool, taskId, statusId, action) {
     let paramIndex = 2;
 
     // Fetch current task to get in_progress_since and work_duration
-    const taskResult = await client.query('SELECT in_progress_since, work_duration FROM tasks WHERE id = $1', [taskId]);
+    const taskResult = await client.query('SELECT in_progress_since, work_duration, created_at FROM tasks WHERE id = $1', [taskId]);
     if (taskResult.rows.length === 0) {
       throw new Error('Task not found');
     }
@@ -123,7 +138,19 @@ async function getTaskById(pool, taskId) {
   const client = await pool.connect();
   try {
     const result = await client.query(
-      `SELECT t.*, 
+      `SELECT 
+        t.id,
+        t.title,
+        t.description,
+        t.deadline,
+        t.created_at, 
+        t.updated_at,
+        t.in_progress_since,
+        t.work_duration,
+        t.status_id,
+        t.priority_id,
+        t.creator_id,
+        t.assignee_id,
         u1.email AS creator_name, 
         u2.email AS assignee_name,
         s.name AS status,
@@ -136,14 +163,25 @@ async function getTaskById(pool, taskId) {
       WHERE t.id = $1`,
       [taskId]
     );
-    return result.rows[0];
+      const task = result.rows[0];
+  if (!task) return null;
+  
+  return {
+    ...task,
+    id: task.id.toString(),
+    created_at: task.created_at ? new Date(task.created_at).toISOString() : null,
+    updated_at: task.updated_at ? new Date(task.updated_at).toISOString() : null,
+    in_progress_since: task.in_progress_since ? new Date(task.in_progress_since).toISOString() : null,
+    deadline: task.deadline ? new Date(task.deadline).toISOString() : null
+  };
+
   } catch (error) {
     throw error;
   } finally {
     client.release();
   }
+  
 }
-
 
 async function getTasksByAssignee(pool, assigneeId) {
   const client = await pool.connect();

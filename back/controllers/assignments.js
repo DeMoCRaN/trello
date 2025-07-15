@@ -9,7 +9,7 @@ async function getAssignments(pool, creator_id) {
 
     for (const assignment of assignments) {
       const tasksResult = await client.query(
-        "SELECT t.id, t.title, t.description, t.deadline, t.seen_at, t.in_progress_since, t.work_duration, " +
+        "SELECT t.id, t.title, t.description, t.deadline, t.seen_at, t.in_progress_since, t.work_duration, t.created_at, t.updated_at, " +
         "ts.name AS status, tp.name AS priority, " +
         "u1.email AS creator_name, u2.email AS assignee_name " +
         "FROM tasks t " +

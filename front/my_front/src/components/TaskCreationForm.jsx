@@ -13,41 +13,84 @@ function TaskCreationForm({
 }) {
   const [newTaskTitle, setNewTaskTitle] = useState(task ? task.title : '');
   const [newTaskDescription, setNewTaskDescription] = useState(task ? task.description : '');
-  const [newTaskDeadline, setNewTaskDeadline] = useState(task ? (task.deadline ? task.deadline.substring(0, 16) : '') : '');
+  const [newTaskDeadline, setNewTaskDeadline] = useState(task ? (task.deadline ? formatDateTimeForInput(task.deadline) : '') : '');
   const [newTaskStatus, setNewTaskStatus] = useState(task ? String(task.status_id || '1') : '1');
   const [newTaskPriority, setNewTaskPriority] = useState(task ? String(task.priority_id || '1') : '1');
   const [newTaskCreatorEmail, setNewTaskCreatorEmail] = useState(task ? task.creator_email || initialCreatorEmail : initialCreatorEmail);
   const [newTaskAssigneeEmail, setNewTaskAssigneeEmail] = useState(task ? task.assignee_email || initialAssigneeEmail : initialAssigneeEmail);
 
+  // Преобразование даты из БД в формат для input[type="datetime-local"]
+  function formatDateTimeForInput(dbDateTime) {
+    if (!dbDateTime) return '';
+    const date = new Date(dbDateTime);
+    // Добавляем 2 часа для компенсации разницы с сервером
+    date.setHours(date.getHours() + 0);
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  // Преобразование даты для отправки на сервер
+  function formatDateTimeForBackend(datetimeLocal) {
+    if (!datetimeLocal) return null;
+    
+    const date = new Date(datetimeLocal);
+    // Вычитаем 2 часа для компенсации разницы с сервером
+    date.setHours(date.getHours() + 3);
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
     if (isDetailsView) {
       onClose();
       return;
     }
-    onCreateTask({
+    
+    const taskData = {
       title: newTaskTitle,
       description: newTaskDescription,
-      deadline: newTaskDeadline,
+      deadline: formatDateTimeForBackend(newTaskDeadline),
       statusId: newTaskStatus,
       priorityId: newTaskPriority,
       creatorEmail: newTaskCreatorEmail,
       assigneeEmail: newTaskAssigneeEmail,
-    });
-    setNewTaskTitle('');
-    setNewTaskDescription('');
-    setNewTaskDeadline('');
-    setNewTaskStatus('1');
-    setNewTaskPriority('1');
-    setNewTaskCreatorEmail('');
-    setNewTaskAssigneeEmail('');
+    };
+
+    onCreateTask(taskData);
+
+    if (!task) {
+      // Сброс формы только при создании новой задачи
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+      setNewTaskDeadline('');
+      setNewTaskStatus('1');
+      setNewTaskPriority('1');
+      setNewTaskCreatorEmail('');
+      setNewTaskAssigneeEmail('');
+    }
   };
 
   return (
     <div className={`task-form-overlay ${isDetailsView ? 'details-form-overlay' : ''}`}>
       <form className="task-creation-form" onSubmit={handleSubmit}>
         <button type="button" className="close-button" onClick={onClose}>×</button>
-        <h3>{isDetailsView ? 'Детали задачи' : 'Создать новую задачу'}</h3>
+        <h3>{isDetailsView ? 'Детали задачи' : task ? 'Редактировать задачу' : 'Создать новую задачу'}</h3>
+        
         <label>
           Название задачи:
           <input
@@ -59,6 +102,7 @@ function TaskCreationForm({
             readOnly={isDetailsView}
           />
         </label>
+
         <label>
           Описание задачи:
           <textarea
@@ -69,6 +113,7 @@ function TaskCreationForm({
             readOnly={isDetailsView}
           />
         </label>
+
         <label>
           Дедлайн:
           <input
@@ -78,6 +123,7 @@ function TaskCreationForm({
             readOnly={isDetailsView}
           />
         </label>
+
         <label>
           Создатель (Email):
           <input
@@ -86,9 +132,10 @@ function TaskCreationForm({
             onChange={(e) => setNewTaskCreatorEmail(e.target.value)}
             placeholder="Введите email создателя"
             required
-            readOnly
+            readOnly={!!task}
           />
         </label>
+
         <label>
           Исполнитель (Email):
           <input
@@ -100,6 +147,7 @@ function TaskCreationForm({
             readOnly={isDetailsView}
           />
         </label>
+
         <label>
           Статус:
           <select
@@ -114,6 +162,7 @@ function TaskCreationForm({
             ))}
           </select>
         </label>
+
         <label>
           Приоритет:
           <select
@@ -128,7 +177,10 @@ function TaskCreationForm({
             ))}
           </select>
         </label>
-        <button type="submit" disabled={isDetailsView}>{isDetailsView ? 'Закрыть' : 'Создать задачу'}</button>
+
+        <button type="submit" className="submit-button">
+          {isDetailsView ? 'Закрыть' : task ? 'Обновить задачу' : 'Создать задачу'}
+        </button>
       </form>
     </div>
   );

@@ -19,6 +19,7 @@
   justify-content: space-between;
   margin-bottom: 20px;
   padding: 0 10px;
+  padding-top: 20px;
 }
 
 .toggle-sort-button, .back-button, .retry-button {
@@ -214,4 +215,66 @@
     flex-direction: column;
     gap: 10px;
   }
+}
+
+/* Добавьте эти стили в существующий CSS файл */
+
+.status-columns-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+}
+
+.status-column {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tasks-scroll-container {
+  overflow-y: auto;
+  max-height: calc(100vh - 200px); /* Подстройте это значение по необходимости */
+  padding-right: 10px;
+}
+
+.assignments-container {
+  overflow-y: auto;
+  max-height: calc(100vh - 150px); /* Подстройте это значение по необходимости */
+  padding-right: 10px;
+}
+
+.assignment-group {
+  margin-bottom: 30px;
+}
+
+.assignment-tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Стили для скроллбара (опционально) */
+.tasks-scroll-container::-webkit-scrollbar,
+.assignments-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tasks-scroll-container::-webkit-scrollbar-track,
+.assignments-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.tasks-scroll-container::-webkit-scrollbar-thumb,
+.assignments-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.tasks-scroll-container::-webkit-scrollbar-thumb:hover,
+.assignments-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

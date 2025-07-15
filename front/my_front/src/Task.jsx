@@ -1,148 +1,191 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import DeadlineProgressBar from './DeadlineProgressBar';
+import './components/Components.css';
 
-// Utility function to get priority color
-const getPriorityColor = (priority) => {
+// Определяем режим разработки
+const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+
+const getPriorityClass = (priority) => {
   const priorityName = typeof priority === 'object' 
     ? priority.name?.toLowerCase() 
     : priority?.toLowerCase();
-  
-  switch(priorityName) {
-    case 'low': return '#9e9e9e';
-    case 'medium': return '#ff9800';
-    case 'high': return '#f44336';
-    default: return '#9e9e9e';
-  }
+  return `priority-${priorityName || 'normal'}`;
 };
 
-function Task({ task, statuses, onStatusChange, onDelete, creatorName, assigneeName, onDetails, onStopWork, onResumeWork, onCompleteWork }) {
-  const deadline = task.deadline ? new Date(task.deadline) : null;
-  const [elapsedTime, setElapsedTime] = useState('');
-  const [totalElapsedTime, setTotalElapsedTime] = useState('');
+function Task({ task, onDelete, creatorName, assigneeName, onDetails, onCompleteWork }) {
+  // Проверка данных при монтировании
+  useEffect(() => {
+    if (isDev) {
+      console.groupCollapsed(`Task Data Validation (ID: ${task.id || 'unknown'})`);
+      
+      // Основная информация о задаче
+      console.log('📌 Основные данные:', {
+        'ID задачи': task.id,
+        'Заголовок': task.title,
+        'Статус': task.status,
+        'Приоритет': task.priority || 'не указан',
+        'Создатель': creatorName || 'не указан',
+        'Исполнитель': assigneeName || 'не указан'
+      });
+
+      // Функция для логирования дат
+      const logDateInfo = (dateValue, dateName) => {
+        if (!dateValue) {
+          console.log(`⏰ ${dateName}: не указана`);
+          return null;
+        }
+
+        try {
+          const dateObj = new Date(dateValue);
+          if (isNaN(dateObj.getTime())) {
+            console.error(`❌ ${dateName}: неверный формат даты`, dateValue);
+            return null;
+          }
+
+          const now = new Date();
+          const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+          const diffHours = Math.floor((now - dateObj) / (1000 * 60 * 60));
+          
+          console.log(`⏰ ${dateName}:`, {
+            'Исходное значение': dateValue,
+            'Дата/время (ISO)': dateObj.toISOString(),
+            'Локальный формат': dateObj.toLocaleString('ru-RU'),
+            'Относительное время': diffDays > 0 
+              ? `${diffDays} дней назад` 
+              : `${diffHours} часов назад`,
+            'День недели': dateObj.toLocaleString('ru-RU', { weekday: 'long' })
+          });
+          
+          return dateObj;
+        } catch (error) {
+          console.error(`❌ Ошибка обработки ${dateName}:`, error);
+          return null;
+        }
+      };
+
+      // Проверяем все возможные варианты поля created_at
+      const creationDate = task.createdAt || task.created_at;
+      logDateInfo(creationDate, 'Дата создания');
+
+      // Логируем дедлайн
+      logDateInfo(task.deadline, 'Дедлайн');
+
+      // Логируем дату начала работы
+      logDateInfo(task.in_progress_since, 'В работе с');
+
+      console.groupEnd();
+    }
+  }, [task, creatorName, assigneeName]);
+
+  // Нормализация данных
+  const normalizedTask = {
+    ...task,
+    createdAt: task.createdAt || task.created_at,
+    inProgressSince: task.in_progress_since || task.inProgressSince,
+    workDuration: task.work_duration || task.workDuration
+  };
+
+  const deadline = normalizedTask.deadline ? new Date(normalizedTask.deadline) : null;
+  const [, setElapsedTime] = useState('');
+  const priorityClass = getPriorityClass(normalizedTask.priority);
 
   const formatDate = (date) => {
     if (!date) return 'Нет';
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
-    return `${day}.${month}.${year}, ${hours}:${minutes}:${seconds}`;
+    return new Date(date).toLocaleString('ru-RU');
   };
 
   const calculateElapsedTime = () => {
-    if (!task.in_progress_since) {
+    if (!normalizedTask.inProgressSince) {
       setElapsedTime('');
       return;
     }
-    const start = new Date(task.in_progress_since);
-    const now = new Date();
-    const diffMs = now - start;
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
-    setElapsedTime(`${diffHrs}ч ${diffMins}м ${diffSecs}с`);
-  };
-
-  const calculateTotalElapsedTime = () => {
-    if (!task.work_duration) {
-      setTotalElapsedTime('');
-      return;
-    }
-    const totalSeconds = task.work_duration;
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    setTotalElapsedTime(`${hours}ч ${minutes}м ${seconds}с`);
+    const diff = new Date() - new Date(normalizedTask.inProgressSince);
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    setElapsedTime(`${hours}ч ${minutes}м ${seconds}с`);
   };
 
   useEffect(() => {
-    if (task.status === 'done') {
-      calculateTotalElapsedTime();
-      setElapsedTime('');
-      return;
-    }
+    if (normalizedTask.status === 'done') return;
     calculateElapsedTime();
     const interval = setInterval(calculateElapsedTime, 1000);
     return () => clearInterval(interval);
-  }, [task.in_progress_since, task.status, task.work_duration]);
-
-  // Add event listener for real-time updates
-  useEffect(() => {
-    const handleTaskUpdate = () => {
-      // Force update elapsed times on task update
-      calculateElapsedTime();
-      calculateTotalElapsedTime();
-    };
-
-    window.addEventListener('taskUpdated', handleTaskUpdate);
-
-    return () => {
-      window.removeEventListener('taskUpdated', handleTaskUpdate);
-    };
-  }, []);
-
-  const handleStopProgress = () => {
-    onStopWork(task.id);
-  };
-
-  const isCreator = creatorName === assigneeName ? false : true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedTask.inProgressSince, normalizedTask.status]);
 
   return (
-    <article
-      className="task-card"
-      style={{
-        borderLeft: `4px solid ${getPriorityColor(task.priority)}`,
-        borderLeftStyle: 'solid',
-        borderLeftWidth: '4px',
-      }}
-    >
-      <h2>{task.title}</h2>
-      <p>{task.description}</p>
-      <p><strong>Приоритет:</strong> {task.priority}</p>
-      <p><strong>Создатель:</strong> {creatorName || 'Неизвестно'}</p>
-      <p><strong>Исполнитель:</strong> {assigneeName || 'Неизвестно'}</p>
-      <p><strong>Дедлайн:</strong> {formatDate(deadline)}</p>
-      {deadline && (
-        <DeadlineProgressBar createdAt={task.created_at || task.deadline} deadline={task.deadline} />
+    <article className={`task-card ${priorityClass}`}>
+      <div className="task-header">
+        <h2>{normalizedTask.title}</h2>
+        <span className="task-priority">{normalizedTask.priority}</span>
+      </div>
+
+      <p className="task-description">{normalizedTask.description}</p>
+
+      <div className="task-meta">
+        <div className="meta-item">
+          <span>Создатель:</span>
+          <span>{creatorName || 'Неизвестно'}</span>
+        </div>
+        <div className="meta-item">
+          <span>Исполнитель:</span>
+          <span>{assigneeName || 'Неизвестно'}</span>
+        </div>
+        <div className="meta-item">
+          <span>Дедлайн:</span>
+          <span>{formatDate(deadline)}</span>
+        </div>
+      </div>
+
+      {normalizedTask.deadline ? (
+        <DeadlineProgressBar 
+          taskId={normalizedTask.id}
+          createdAt={normalizedTask.createdAt}
+          deadline={normalizedTask.deadline}
+          status={normalizedTask.status}
+        />
+      ) : (
+        <div className="no-deadline">Дедлайн не установлен</div>
       )}
-      <label>
-        Статус:
-        <select
-          value={statuses.find(s => s.name === task.status)?.id || 3}
-          onChange={(e) => onStatusChange(task.id, parseInt(e.target.value, 10))}
-          disabled={task.inProgress}
-        >
-          {statuses.map((status) => (
-            <option key={status.id} value={status.id}>
-              {status.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {task.inProgress && (
-        <>
-          <p>В работе: {elapsedTime}</p>
-          <button onClick={handleStopProgress}>Остановить выполнение</button>
-          <button onClick={() => onResumeWork(task.id)}>Продолжить выполнение</button>
-          <button onClick={() => onCompleteWork(task.id)}>Выполнено</button>
-        </>
-      )}
-      {task.status === 'in_progress' && (
-        <button onClick={() => onCompleteWork(task.id)}>Выполнено</button>
-      )}
-      {task.status === 'done' && (
-        <p>Общее время работы: {totalElapsedTime}</p>
-      )}
-      {isCreator && task.status !== 'done' && (
-        <button onClick={() => onStatusChange(task.id, statuses.find(s => s.name.toLowerCase() === 'done')?.id)}>Выполнить</button>
-      )}
-      <button onClick={() => onDelete(task.id)}>Удалить задачу</button>
-      <button onClick={() => onDetails(task)}>Подробнее</button>
+
+      <div className="task-actions">
+        <button onClick={() => onDetails(normalizedTask)}>Подробнее</button>
+        {normalizedTask.status !== 'done' && (
+          <button onClick={() => onCompleteWork(normalizedTask.id)}>Завершить</button>
+        )}
+        <button onClick={() => onDelete(normalizedTask.id)}>Удалить</button>
+      </div>
     </article>
   );
 }
+
+Task.propTypes = {
+  task: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    title: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    deadline: PropTypes.string,
+    createdAt: PropTypes.string,
+    created_at: PropTypes.string,
+    status: PropTypes.string.isRequired,
+    priority: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.object
+    ]),
+    in_progress_since: PropTypes.string,
+    work_duration: PropTypes.number
+  }).isRequired,
+  statuses: PropTypes.array.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  creatorName: PropTypes.string,
+  assigneeName: PropTypes.string,
+  onDetails: PropTypes.func.isRequired,
+  onStopWork: PropTypes.func.isRequired,
+  onResumeWork: PropTypes.func.isRequired,
+  onCompleteWork: PropTypes.func.isRequired
+};
 
 export default Task;

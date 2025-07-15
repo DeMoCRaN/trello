@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
+import TaskNotification from './components/TaskNotification';
 import './AssignedTasks.css';
 
 function AssignedTasks({ userEmail }) {
@@ -11,6 +12,7 @@ function AssignedTasks({ userEmail }) {
   const [timers, setTimers] = useState({});
   const [sortByAssignment, setSortByAssignment] = useState(false);
   const [assignmentNames, setAssignmentNames] = useState({});
+  const [showNotification, setShowNotification] = useState(true);
   const navigate = useNavigate();
 
   function onNavigate(page) {
@@ -234,7 +236,16 @@ function AssignedTasks({ userEmail }) {
     navigate('/main');
   }
 
-
+  const handleNotificationClick = (taskId) => {
+    const element = document.getElementById(`task-${taskId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.style.boxShadow = '0 0 0 3px rgba(67, 97, 238, 0.5)';
+      setTimeout(() => {
+        element.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      }, 2000);
+    }
+  };
 
   function renderTaskCard(task) {
     const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
@@ -361,9 +372,15 @@ function AssignedTasks({ userEmail }) {
   return (
     <div className="page-container">
       <Header userEmail={userEmail} onNavigate={onNavigate} />
-
+      {showNotification && (
+        <TaskNotification 
+          tasks={tasks} 
+          onClose={() => setShowNotification(false)}
+          onTaskClick={handleNotificationClick}
+        />
+      )}
       
-      <div className="content-container">
+      <div className="content-container" style={{ maxHeight: 'calc(100vh - 60px)', overflowY: 'auto' }}>
         <div className="controls-container">
           <button
             onClick={() => setSortByAssignment(!sortByAssignment)}
