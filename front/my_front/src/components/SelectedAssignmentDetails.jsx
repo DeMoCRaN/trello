@@ -3,11 +3,18 @@ import Task from '../Task';
 import './Components.css';
 
 function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChange, onDelete, onDetails, onStartWork, onStopWork, onResumeWork, onCompleteWork }) {
-  // Группируем задачи по статусам
+  // Группируем задачи по статусам (английские ключи)
   const tasksByStatus = {
     'new': [],
     'in_progress': [],
     'done': [],
+  };
+
+  // Перевод статусов на русский
+  const statusTranslations = {
+    'new': 'Новые',
+    'in_progress': 'В работе',
+    'done': 'Завершённые'
   };
 
   if (selectedAssignment && selectedAssignment.tasks) {
@@ -31,21 +38,24 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
   }, []);
 
   useEffect(() => {
-  if (selectedAssignment?.tasks) {
-    console.log('Task data structure:', selectedAssignment.tasks[0]);
-  }
-}, [selectedAssignment])
+    if (selectedAssignment?.tasks) {
+      console.log('Task data structure:', selectedAssignment.tasks[0]);
+    }
+  }, [selectedAssignment]);
+
+  // Получаем массив статусов в правильном порядке для отображения
+  const orderedStatuses = Object.keys(tasksByStatus);
 
   return (
     <section className="selected-assignment">
-      <h2>{selectedAssignment.title}</h2>
-      <p>{selectedAssignment.description}</p>
+      <h2>{selectedAssignment?.title || 'Название не указано'}</h2>
+      <p>{selectedAssignment?.description || 'Описание отсутствует'}</p>
       <div className="tasks-dashboard">
-        {Object.entries(tasksByStatus).map(([statusName, tasks]) => (
-          <div key={statusName} className="tasks-column">
-            <h3>{statusName}</h3>
-            {tasks.length > 0 ? (
-              tasks.map((task) => (
+        {orderedStatuses.map((statusKey) => (
+          <div key={statusKey} className="tasks-column">
+            <h3>{statusTranslations[statusKey] || statusKey}</h3>
+            {tasksByStatus[statusKey].length > 0 ? (
+              tasksByStatus[statusKey].map((task) => (
                 <Task
                   key={task.id}
                   task={task}
@@ -59,7 +69,7 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
                   onCompleteWork={onCompleteWork}
                   creatorName={task.creator_name}
                   assigneeName={task.assignee_name}
-                  createdAt={ task.created_at}
+                  createdAt={task.created_at}
                 />
               ))
             ) : (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import TaskNotification from './components/TaskNotification';
@@ -15,6 +15,17 @@ function AssignedTasks({ userEmail }) {
   const [showNotification, setShowNotification] = useState(true);
   const navigate = useNavigate();
 
+  // Добавляем дебаунсинг для fetchTasks
+  const debouncedFetchTasks = useCallback(() => {
+    let timeoutId;
+    return () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        fetchTasks();
+      }, 500); // Задержка 500 мс
+    };
+  }, []);
+
   function onNavigate(page) {
     switch (page) {
       case 'main':
@@ -28,84 +39,7 @@ function AssignedTasks({ userEmail }) {
     }
   }
 
-  useEffect(() => {
-    // Request notification permission
-    if ('Notification' in window && Notification.permission !== 'denied') {
-      Notification.requestPermission();
-    }
-
-    fetchTasks();
-    fetchAssignmentNames();
-  }, []);
-
-  useEffect(() => {
-    const handleTaskUpdate = () => {
-      fetchTasks();
-    };
-
-    window.addEventListener('taskUpdated', handleTaskUpdate);
-
-    return () => {
-      window.removeEventListener('taskUpdated', handleTaskUpdate);
-    };
-  }, []);
-
-  useEffect(() => {
-    // Play sound for new tasks
-    if (tasks.length > 0) {
-      const newTasks = tasks.filter(task => task.status === 'new');
-      if (newTasks.length > 0) {
-        const audio = new Audio('/notification-sound.mp3');
-        audio.volume = 0.3;
-        audio.play().catch(e => console.log('Audio play failed:', e));
-      }
-    }
-  }, [tasks]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTimers(prevTimers => {
-        const newTimers = { ...prevTimers };
-        const now = Date.now();
-        Object.entries(newTimers).forEach(([taskId, timer]) => {
-          if (timer.isRunning) {
-            const elapsedSinceLastSync = Math.floor((now - (timer.lastSyncTimestamp || now)) / 1000);
-            if (elapsedSinceLastSync > 0) {
-              newTimers[taskId].elapsedSeconds += elapsedSinceLastSync;
-              newTimers[taskId].lastSyncTimestamp = now;
-            }
-          }
-        });
-        return newTimers;
-      });
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
-
-  async function fetchAssignmentNames() {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/assignments', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch assignments');
-      const assignments = await response.json();
-      
-      const namesMap = {};
-      assignments.forEach(assignment => {
-        namesMap[assignment.id] = assignment.name || `Assignment ${assignment.id}`;
-      });
-      setAssignmentNames(namesMap);
-    } catch (err) {
-      console.error('Error fetching assignments:', err);
-    }
-  }
-
-  async function fetchTasks() {
+  const fetchTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -160,7 +94,97 @@ function AssignedTasks({ userEmail }) {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const fetchAssignmentNames = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/assignments', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch assignments');
+      const assignments = await response.json();
+      
+      const namesMap = {};
+      assignments.forEach(assignment => {
+        namesMap[assignment.id] = assignment.name || `Assignment ${assignment.id}`;
+      });
+      setAssignmentNames(namesMap);
+    } catch (err) {
+      console.error('Error fetching assignments:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
+    fetchTasks();
+    fetchAssignmentNames();
+  }, [fetchTasks, fetchAssignmentNames]);
+
+  useEffect(() => {
+    const debouncedHandler = debouncedFetchTasks();
+    const handleTaskUpdate = () => {
+      debouncedHandler();
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdate);
+
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdate);
+    };
+  }, [debouncedFetchTasks]);
+
+useEffect(() => {
+  if (tasks.length > 0) {
+    const newTasks = tasks.filter(task => task.status === 'new');
+    if (newTasks.length > 0) {
+      // Используем base64 encoded звук как fallback
+      const audio = new Audio();
+      audio.volume = 0.3;
+      
+      // Пробуем загрузить внешний файл
+      audio.src = '/front/my_front/src/notification-sound.mp3';
+      
+      // Добавляем обработчик ошибок
+      audio.onerror = () => {
+        // Если внешний файл не загрузился, используем встроенный звук
+        audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+        audio.play().catch(e => console.log('Fallback audio play failed:', e));
+      };
+      
+      // Пытаемся воспроизвести
+      audio.play().catch(e => console.log('Audio play failed:', e));
+    }
   }
+}, [tasks]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTimers(prevTimers => {
+        const newTimers = { ...prevTimers };
+        const now = Date.now();
+        Object.entries(newTimers).forEach(([taskId, timer]) => {
+          if (timer.isRunning) {
+            const elapsedSinceLastSync = Math.floor((now - (timer.lastSyncTimestamp || now)) / 1000);
+            if (elapsedSinceLastSync > 0) {
+              newTimers[taskId].elapsedSeconds += elapsedSinceLastSync;
+              newTimers[taskId].lastSyncTimestamp = now;
+            }
+          }
+        });
+        return newTimers;
+      });
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const tasksGroupedByStatus = React.useMemo(() => {
     const groups = {
@@ -193,7 +217,7 @@ function AssignedTasks({ userEmail }) {
     return groups;
   }, [tasks, assignmentNames]);
 
-  async function updateTaskStatus(taskId, statusId, action) {
+  const updateTaskStatus = useCallback(async (taskId, statusId, action) => {
     setUpdatingTaskId(taskId);
     try {
       const token = localStorage.getItem('token');
@@ -221,22 +245,22 @@ function AssignedTasks({ userEmail }) {
     } finally {
       setUpdatingTaskId(null);
     }
-  }
+  }, [fetchTasks]);
 
-  function formatTime(seconds) {
+  const formatTime = useCallback((seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs.toString().padStart(2, '0')}:${mins
       .toString()
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
+  }, []);
 
-  function goBack() {
+  const goBack = useCallback(() => {
     navigate('/main');
-  }
+  }, [navigate]);
 
-  const handleNotificationClick = (taskId) => {
+  const handleNotificationClick = useCallback((taskId) => {
     const element = document.getElementById(`task-${taskId}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -245,9 +269,14 @@ function AssignedTasks({ userEmail }) {
         element.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
       }, 2000);
     }
-  };
+  }, []);
 
-  function renderTaskCard(task) {
+const formatDeadline = useCallback((deadline) => {
+  const date = new Date(deadline);
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+}, []);
+
+  const renderTaskCard = useCallback((task) => {
     const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
     const isInProgress = task.status === 'in_progress' || timer.isRunning;
     
@@ -276,7 +305,7 @@ function AssignedTasks({ userEmail }) {
         {task.assignment_id && (
           <p><strong>Assignment:</strong> {assignmentNames[task.assignment_id] || `Assignment ${task.assignment_id}`}</p>
         )}
-        <p><strong>Deadline:</strong> {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}</p>
+        <p><strong>Deadline:</strong> {task.deadline ? formatDeadline(task.deadline) : 'N/A'}</p>
         <p><strong>Creator:</strong> {task.creator_email}</p>
         <p><strong>Status:</strong> {task.status.replace('_', ' ')}</p>
         <p><strong>Priority:</strong> {task.priority}</p>
@@ -327,7 +356,7 @@ function AssignedTasks({ userEmail }) {
         )}
       </div>
     );
-  }
+  }, [assignmentNames, formatTime, timers, updateTaskStatus, updatingTaskId]);
 
   if (loading) {
     return (

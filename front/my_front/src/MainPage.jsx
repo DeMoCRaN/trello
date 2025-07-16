@@ -7,8 +7,10 @@ import Header from './components/Header';
 import AssignmentsList from './components/AssignmentsList';
 import SelectedAssignmentDetails from './components/SelectedAssignmentDetails';
 import TaskCreationForm from './components/TaskCreationForm';
+import TaskDetailsForm from './components/TaskDetailsForm';
 import FloatingButton from './components/FloatingButton';
-import UserInfo from './components/UserInfo';
+import UserProfileForm from './components/UserProfileForm';
+import TaskNotification from './components/TaskNotification'; 
 
 function parseJwt(token) {
   try {
@@ -28,144 +30,6 @@ function parseJwt(token) {
   }
 }
 
-function TaskNotification({ tasks, onClose, onTaskClick }) {
-  const [visible, setVisible] = useState(true);
-  const [expanded, setExpanded] = useState(false);
-  const newTasks = tasks?.filter(task => task?.status === 'new') || [];
-
-  useEffect(() => {
-    if (newTasks.length > 0) {
-      setVisible(true);
-      
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`New tasks assigned`, {
-          body: `You have ${newTasks.length} new task${newTasks.length > 1 ? 's' : ''} to complete`,
-          icon: '/notification-icon.png'
-        });
-      }
-    }
-  }, [tasks, newTasks.length]);
-
-  const handleClose = (e) => {
-    e.stopPropagation();
-    setVisible(false);
-    onClose?.();
-  };
-
-  const handleTaskClick = (e, taskId) => {
-    e.stopPropagation();
-    onTaskClick?.(taskId);
-  };
-
-  if (!visible || newTasks.length === 0) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-        onClick={() => setExpanded(!expanded)}
-        className={`notification ${newTasks.some(t => t.priority === 'high') ? 'notification-high' : 
-                   newTasks.some(t => t.priority === 'medium') ? 'notification-medium' : 'notification-low'}`}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          color: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 1000,
-          maxWidth: '350px',
-          overflow: 'hidden',
-          cursor: 'pointer',
-        }}
-      >
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '16px',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-            >
-              <FiBell size={20} />
-            </motion.div>
-            <span style={{ fontWeight: '600' }}>
-              {newTasks.length} new task{newTasks.length > 1 ? 's' : ''}
-            </span>
-          </div>
-          <motion.button 
-            onClick={handleClose}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              padding: '4px'
-            }}
-          >
-            <FiX size={18} />
-          </motion.button>
-        </div>
-
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              style={{ background: 'rgba(255,255,255,0.1)' }}
-            >
-              <div style={{ padding: '0 16px 16px' }}>
-                {newTasks.slice(0, 3).map(task => (
-                  <motion.div 
-                    key={task.id}
-                    onClick={(e) => handleTaskClick(e, task.id)}
-                    whileHover={{ scale: 1.02 }}
-                    style={{
-                      padding: '12px 0',
-                      borderBottom: '1px solid rgba(255,255,255,0.2)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <span style={{ flex: 1 }}>{task.title}</span>
-                    <span style={{
-                      backgroundColor: 'rgba(255,255,255,0.2)',
-                      borderRadius: '12px',
-                      padding: '2px 8px',
-                      fontSize: '12px'
-                    }}>
-                      {task.priority}
-                    </span>
-                  </motion.div>
-                ))}
-                {newTasks.length > 3 && (
-                  <div style={{ 
-                    textAlign: 'center', 
-                    paddingTop: '12px',
-                    fontSize: '14px',
-                    opacity: 0.8
-                  }}>
-                    +{newTasks.length - 3} more tasks
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
 
 function MainPage({ userEmail }) {
   const [assignments, setAssignments] = useState([]);
@@ -182,8 +46,50 @@ function MainPage({ userEmail }) {
   const [currentTab, setCurrentTab] = useState('assignments');
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [detailsFormTask, setDetailsFormTask] = useState(null);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+
+  const fetchAssignments = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/assignments', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке заданий');
+      }
+      const data = await response.json();
+
+      const enrichedData = data.map(assignment => {
+        if (assignment.tasks) {
+          assignment.tasks = assignment.tasks.map(task => ({
+            ...task,
+            creator_name: task.creator_name || 'Неизвестно',
+            assignee_name: task.assignee_name || 'Неизвестно',
+            created_at: task.created_at || new Date().toISOString(),
+            createdAt: task.created_at || task.createdAt || new Date().toISOString(),
+          }));
+        }
+        return assignment;
+      });
+
+      setAssignments(enrichedData);
+      if (enrichedData.length > 0 && !selectedAssignment) {
+        setSelectedAssignment(enrichedData[0]);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedAssignment]);
 
   const fetchAssignedTasks = useCallback(async () => {
+    const now = Date.now();
+    // Делаем запрос не чаще чем раз в 5 секунд
+    if (now - lastFetchTime < 5000) return;
+    
     setLoadingAssignedTasks(true);
     try {
       const token = localStorage.getItem('token');
@@ -197,34 +103,14 @@ function MainPage({ userEmail }) {
       }
       const data = await response.json();
       setAssignedTasks(data);
+      setLastFetchTime(now);
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoadingAssignedTasks(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchAssignedTasks();
-  }, [fetchAssignedTasks]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const tokenExpiry = localStorage.getItem('tokenExpiry');
-    const now = new Date().getTime();
-
-    if (token && tokenExpiry && now < parseInt(tokenExpiry, 10)) {
-      const decoded = parseJwt(token);
-      if (decoded) {
-        setUserId(decoded.userId || null);
-      }
-    } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('tokenExpiry');
-      setUserId(null);
-    }
-  }, []);
+  }, [lastFetchTime]);
 
   const fetchStatuses = useCallback(async () => {
     try {
@@ -252,52 +138,53 @@ function MainPage({ userEmail }) {
     }
   }, []);
 
-  const fetchAssignments = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/assignments', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Ошибка при загрузке заданий');
-      }
-      const data = await response.json();
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const tokenExpiry = localStorage.getItem('tokenExpiry');
+    const now = new Date().getTime();
 
-      const enrichedData = data.map(assignment => {
-        if (assignment.tasks) {
-          assignment.tasks = assignment.tasks.map(task => ({
-            ...task,
-            creator_name: task.creator_name || 'Неизвестно',
-            assignee_name: task.assignee_name || 'Неизвестно',
-            created_at: task.created_at || new Date().toISOString(), // Гарантируем наличие даты создания
-            createdAt: task.created_at || task.createdAt || new Date().toISOString(), // Дублируем для совместимости
-          }));
-        }
-        return assignment;
-      });
-
-      console.log('Enriched assignments data:', enrichedData); // Логируем обогащенные данные
-      setAssignments(enrichedData);
-      if (enrichedData.length > 0 && !selectedAssignment) {
-        setSelectedAssignment(enrichedData[0]);
+    if (token && tokenExpiry && now < parseInt(tokenExpiry, 10)) {
+      const decoded = parseJwt(token);
+      if (decoded) {
+        setUserId(decoded.userId || null);
       }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('tokenExpiry');
+      setUserId(null);
     }
-  }, [selectedAssignment]);
+  }, []);
 
   useEffect(() => {
-    fetchStatuses();
-    fetchPriorities();
-    fetchAssignments();
-  }, [fetchStatuses, fetchPriorities, fetchAssignments]);
+    const handleTaskUpdate = () => {
+      fetchAssignedTasks();
+      fetchAssignments();
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdate);
+    const intervalId = setInterval(handleTaskUpdate, 30000);
+
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdate);
+      clearInterval(intervalId);
+    };
+  }, [fetchAssignedTasks, fetchAssignments]);
+
+  useEffect(() => {
+    // Загружаем данные только один раз при монтировании
+    const loadInitialData = async () => {
+      await Promise.all([
+        fetchStatuses(),
+        fetchPriorities(),
+        fetchAssignments(),
+        fetchAssignedTasks()
+      ]);
+    };
+    
+    loadInitialData();
+  }, []);
 
   const handleShowDetails = (task) => {
-    console.log('Showing details for task:', task); // Логируем задачу перед отображением
     setDetailsFormTask({
       ...task,
       created_at: task.created_at || task.createdAt || new Date().toISOString()
@@ -332,7 +219,7 @@ function MainPage({ userEmail }) {
       const assigneeId = assigneeData.id;
 
       const deadline = taskData.deadline ? new Date(taskData.deadline).toISOString() : null;
-      const createdAt = new Date().toISOString(); // Явно устанавливаем дату создания
+      const createdAt = new Date().toISOString();
 
       const response = await fetch(`http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`, {
         method: 'POST',
@@ -344,7 +231,7 @@ function MainPage({ userEmail }) {
           title: taskData.title,
           description: taskData.description,
           deadline: deadline,
-          created_at: createdAt, // Явно передаем дату создания
+          created_at: createdAt,
           creator_id: userId,
           assignee_id: assigneeId,
           status_id: parseInt(taskData.statusId, 10),
@@ -358,6 +245,7 @@ function MainPage({ userEmail }) {
       
       await fetchAssignments();
       setShowTaskForm(false);
+      window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       alert(err.message);
     }
@@ -376,6 +264,7 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при удалении задачи');
       }
       await fetchAssignments();
+      window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       alert(err.message);
     }
@@ -396,6 +285,7 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при обновлении статуса задачи');
       }
       await fetchAssignments();
+      window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       console.error('Error updating task status:', err);
       alert(err.message);
@@ -412,7 +302,7 @@ function MainPage({ userEmail }) {
 
   return (
     <div className="app-container">
-      <Header userEmail={userEmail} onNavigate={() => {}} hideAssignmentsAndProfile={true} />
+      <Header userEmail={userEmail} onNavigate={(page) => setCurrentPage(page)} hideAssignmentsAndProfile={true} />
       
       <TaskNotification 
         tasks={assignedTasks} 
@@ -461,6 +351,7 @@ function MainPage({ userEmail }) {
                         throw new Error('Failed to start work: ' + errorText);
                       }
                       await fetchAssignments();
+                      window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
                       alert(err.message);
                     }
@@ -482,6 +373,7 @@ function MainPage({ userEmail }) {
                         throw new Error('Failed to complete work: ' + errorText);
                       }
                       await fetchAssignments();
+                      window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
                       alert(err.message);
                     }
@@ -489,15 +381,9 @@ function MainPage({ userEmail }) {
                 />
                 {showDetailsForm && detailsFormTask && (
                   <div className="details-form-container">
-                    <TaskCreationForm
-                      onCreateTask={() => {}}
-                      statuses={statuses}
-                      priorities={priorities}
-                      onClose={handleCloseDetails}
-                      initialCreatorEmail={userEmail}
-                      initialAssigneeEmail={detailsFormTask.assignee_email || ''}
+                    <TaskDetailsForm
                       task={detailsFormTask}
-                      isDetailsView={true}
+                      onClose={handleCloseDetails}
                     />
                   </div>
                 )}
@@ -515,7 +401,12 @@ function MainPage({ userEmail }) {
             </div>
           </>
         )}
-        {currentPage === 'user-info' && <UserInfo userEmail={userEmail} onBack={() => setCurrentPage('main')} />}
+        {currentPage === 'user-info' && (
+          <UserProfileForm
+            userEmail={userEmail}
+            onClose={() => setCurrentPage('main')}
+          />
+        )}
       </main>
     </div>
   );

@@ -2,24 +2,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #007bff;
-  padding: 10px 20px;
+  background: linear-gradient(135deg, #0026ff 0%, #0026ff 100%);
+  padding: 10px 24px;
   color: white;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Red Hat Display', sans-serif;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 60px;
   z-index: 1002;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
 }
 
 .logo {
   font-weight: 700;
-  font-size: 24px;
-  letter-spacing: 1.5px;
+  font-size: 1.5rem;
+  letter-spacing: 0.5px;
   cursor: default;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-family: 'Raleway', sans-serif;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-buttons button {
@@ -27,19 +37,37 @@
   border: none;
   color: white;
   font-size: 16px;
-  margin: 0 10px;
+  margin: 0 8px;
   cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+  padding: 8px 16px;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+  font-family: 'Red Hat Display', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .nav-buttons button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.nav-buttons button:active {
+  transform: translateY(0);
 }
 
 .user-email {
   font-size: 14px;
   font-weight: 600;
   opacity: 0.9;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-left: 16px;
+  transition: all 0.3s ease;
+}
+
+.user-email:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

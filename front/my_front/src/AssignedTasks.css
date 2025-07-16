@@ -4,6 +4,7 @@
   flex-direction: column;
   min-height: 100vh;
   background-color: #f5f7fa;
+  color: black;
 }
 
 .content-container {
@@ -276,5 +277,88 @@
 
 .tasks-scroll-container::-webkit-scrollbar-thumb:hover,
 .assignments-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+
+/* Main page layout */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  color: black;
+  width: 100vw; /* Добавляем полную ширину viewport */
+  margin: 0; /* Убираем возможные отступы */
+  padding: 0; /* Убираем возможные отступы */
+}
+
+/* Контейнер контента - теперь на всю доступную высоту */
+.content-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  margin-top: 60px; /* Space for header */
+  width: 100%; /* Занимает всю ширину */
+  height: calc(100vh - 60px); /* Высота минус header */
+}
+
+/* Для колонок статусов - растягиваем на всю высоту */
+.status-columns-container {
+  display: flex;
+  gap: 20px;
+  height: 100%; /* Занимает всю доступную высоту */
+  padding-bottom: 20px;
+}
+
+.status-column {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Занимает всю высоту родителя */
+}
+
+/* Контейнер задач теперь на всю высоту колонки */
+.tasks-scroll-container {
+  flex: 1; /* Занимает все доступное пространство */
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+  .status-columns-container {
+    flex-direction: column;
+    height: auto; /* Автоматическая высота на мобильных */
+  }
+  
+  .status-column {
+    height: auto;
+    min-height: 300px; /* Минимальная высота колонки */
+  }
+  
+  .content-container {
+    height: auto; /* Автоматическая высота контента */
+    min-height: calc(100vh - 60px);
+  }
+}
+
+/* Улучшенные стили для скроллбара */
+.tasks-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tasks-scroll-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.tasks-scroll-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.tasks-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #555;
 }

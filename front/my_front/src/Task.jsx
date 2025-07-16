@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import DeadlineProgressBar from './DeadlineProgressBar';
 import './components/Components.css';
 
-// Определяем режим разработки
+// eslint-disable-next-line no-undef
 const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
 const getPriorityClass = (priority) => {
@@ -14,12 +14,9 @@ const getPriorityClass = (priority) => {
 };
 
 function Task({ task, onDelete, creatorName, assigneeName, onDetails, onCompleteWork }) {
-  // Проверка данных при монтировании
   useEffect(() => {
     if (isDev) {
       console.groupCollapsed(`Task Data Validation (ID: ${task.id || 'unknown'})`);
-      
-      // Основная информация о задаче
       console.log('📌 Основные данные:', {
         'ID задачи': task.id,
         'Заголовок': task.title,
@@ -29,7 +26,6 @@ function Task({ task, onDelete, creatorName, assigneeName, onDetails, onComplete
         'Исполнитель': assigneeName || 'не указан'
       });
 
-      // Функция для логирования дат
       const logDateInfo = (dateValue, dateName) => {
         if (!dateValue) {
           console.log(`⏰ ${dateName}: не указана`);
@@ -64,21 +60,15 @@ function Task({ task, onDelete, creatorName, assigneeName, onDetails, onComplete
         }
       };
 
-      // Проверяем все возможные варианты поля created_at
       const creationDate = task.createdAt || task.created_at;
       logDateInfo(creationDate, 'Дата создания');
-
-      // Логируем дедлайн
       logDateInfo(task.deadline, 'Дедлайн');
-
-      // Логируем дату начала работы
       logDateInfo(task.in_progress_since, 'В работе с');
 
       console.groupEnd();
     }
   }, [task, creatorName, assigneeName]);
 
-  // Нормализация данных
   const normalizedTask = {
     ...task,
     createdAt: task.createdAt || task.created_at,
@@ -87,38 +77,36 @@ function Task({ task, onDelete, creatorName, assigneeName, onDetails, onComplete
   };
 
   const deadline = normalizedTask.deadline ? new Date(normalizedTask.deadline) : null;
-  const [, setElapsedTime] = useState('');
   const priorityClass = getPriorityClass(normalizedTask.priority);
+
+  // Новая логика определения просрочки
+  const isOverdue = deadline && 
+                   new Date() > deadline && 
+                   normalizedTask.status !== 'done';
 
   const formatDate = (date) => {
     if (!date) return 'Нет';
     return new Date(date).toLocaleString('ru-RU');
   };
 
-  const calculateElapsedTime = () => {
-    if (!normalizedTask.inProgressSince) {
-      setElapsedTime('');
-      return;
-    }
-    const diff = new Date() - new Date(normalizedTask.inProgressSince);
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    setElapsedTime(`${hours}ч ${minutes}м ${seconds}с`);
-  };
-
-  useEffect(() => {
-    if (normalizedTask.status === 'done') return;
-    calculateElapsedTime();
-    const interval = setInterval(calculateElapsedTime, 1000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalizedTask.inProgressSince, normalizedTask.status]);
+  // Стиль только для просроченных задач
+  const taskStyle = isOverdue ? {
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    borderLeft: '4px solid #ff0000'
+  } : {};
 
   return (
-    <article className={`task-card ${priorityClass}`}>
+    <article 
+      className={`task-card ${priorityClass}`}
+      style={taskStyle}
+    >
       <div className="task-header">
         <h2>{normalizedTask.title}</h2>
+        {isOverdue && (
+          <span className="late-badge" title="Задача просрочена">
+            Просрочено
+          </span>
+        )}
         <span className="task-priority">{normalizedTask.priority}</span>
       </div>
 
@@ -137,6 +125,12 @@ function Task({ task, onDelete, creatorName, assigneeName, onDetails, onComplete
           <span>Дедлайн:</span>
           <span>{formatDate(deadline)}</span>
         </div>
+        {normalizedTask.status === 'done' && (
+          <div className="meta-item">
+            <span>Завершено:</span>
+            <span>{formatDate(normalizedTask.completedAt)}</span>
+          </div>
+        )}
       </div>
 
       {normalizedTask.deadline ? (
@@ -151,7 +145,7 @@ function Task({ task, onDelete, creatorName, assigneeName, onDetails, onComplete
       )}
 
       <div className="task-actions">
-        <button onClick={() => onDetails(normalizedTask)}>Подробнее</button>
+        <button onClick={() => onDetails && onDetails(normalizedTask)}>Подробнее</button>
         {normalizedTask.status !== 'done' && (
           <button onClick={() => onCompleteWork(normalizedTask.id)}>Завершить</button>
         )}
@@ -175,16 +169,13 @@ Task.propTypes = {
       PropTypes.object
     ]),
     in_progress_since: PropTypes.string,
-    work_duration: PropTypes.number
+    work_duration: PropTypes.number,
+    completedAt: PropTypes.string
   }).isRequired,
-  statuses: PropTypes.array.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   creatorName: PropTypes.string,
   assigneeName: PropTypes.string,
-  onDetails: PropTypes.func.isRequired,
-  onStopWork: PropTypes.func.isRequired,
-  onResumeWork: PropTypes.func.isRequired,
+  onDetails: PropTypes.func,
   onCompleteWork: PropTypes.func.isRequired
 };
 
