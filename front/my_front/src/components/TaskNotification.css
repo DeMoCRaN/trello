@@ -172,3 +172,64 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+/* Добавим в TaskNotification.css */
+.notification-item .notification-subtitle {
+  color: #666;
+  font-size: 0.85em;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notification-icon-comment {
+  color: #17a2b8;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.notification-tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 12px;
+}
+
+.notification-tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.notification-tab.active {
+  color: #4361ee;
+  border-bottom-color: #4361ee;
+  font-weight: 500;
+}
+
+.notification-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notification-comment-text {
+  font-weight: 500;
+  color: #333;
+}
+
+.notification-comment-preview {
+  color: #666;
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.notification-comment-meta {
+  color: #999;
+  font-size: 12px;
+  margin: 0;
+}

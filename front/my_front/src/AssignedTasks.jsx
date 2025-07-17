@@ -6,6 +6,7 @@ import './AssignedTasks.css';
 
 function AssignedTasks({ userEmail }) {
   const [tasks, setTasks] = useState([]);
+  const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
@@ -118,6 +119,38 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
+const fetchComments = useCallback(async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No auth token found');
+    }
+    const response = await fetch('http://localhost:3000/api/comments/unread', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch comments: ' + response.status);
+    }
+    const data = await response.json();
+    console.log('Fetched comments:', data);
+    // Фильтруем комментарии, которые не принадлежат текущему пользователю
+    const filteredComments = data.filter(comment => 
+      comment.author_email !== userEmail
+    ).map(comment => ({
+      ...comment,
+      is_new: true
+    }));
+    console.log('Filtered comments:', filteredComments);
+    setComments(filteredComments);
+  } catch (error) {
+    console.error('Ошибка загрузки комментариев:', error);
+  }
+}, [userEmail]); 
+
   useEffect(() => {
     if ('Notification' in window && Notification.permission !== 'denied') {
       Notification.requestPermission();
@@ -125,7 +158,8 @@ function AssignedTasks({ userEmail }) {
 
     fetchTasks();
     fetchAssignmentNames();
-  }, [fetchTasks, fetchAssignmentNames]);
+    fetchComments();
+  }, [fetchTasks, fetchAssignmentNames, fetchComments]);
 
   useEffect(() => {
     const debouncedHandler = debouncedFetchTasks();
@@ -198,7 +232,6 @@ function AssignedTasks({ userEmail }) {
   const tasksGroupedByAssignment = React.useMemo(() => {
     const groups = {};
     
-    // Добавляем группу для задач без задания
     groups['none'] = {
       name: 'Без задания',
       tasks: []
@@ -274,6 +307,29 @@ function AssignedTasks({ userEmail }) {
       }, 2000);
     }
   }, []);
+
+const handleCommentClick = useCallback(async (comment) => {
+  try {
+    const token = localStorage.getItem('token');
+    // Отмечаем комментарий как прочитанный
+    await fetch('http://localhost:3000/api/comments/mark-read', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+      },
+      body: JSON.stringify({ commentIds: [comment.id] }),
+    });
+    
+    // Навигация к задаче
+    navigate(`/tasks/${comment.task_id}?highlightComment=${comment.id}`);
+    
+    // Обновляем список комментариев
+    fetchComments();
+  } catch (error) {
+    console.error('Ошибка при отметке комментария как прочитанного:', error);
+  }
+}, [navigate, fetchComments]);
 
   const formatDeadline = useCallback((deadline) => {
     const date = new Date(deadline);
@@ -413,8 +469,10 @@ function AssignedTasks({ userEmail }) {
       {showNotification && (
         <TaskNotification 
           tasks={tasks} 
+          comments={comments}
           onClose={() => setShowNotification(false)}
           onTaskClick={handleNotificationClick}
+          onCommentClick={handleCommentClick}
         />
       )}
       

@@ -338,6 +338,80 @@ router.get('/task_priorities', async (req, res) => {
 });
 
 
+const jwt = require('jsonwebtoken');
+
+router.get('/comments/unread/count', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const userId = decoded.userId;
+
+    const count = await commentsController.getUnreadCommentsCount(pool, userId);
+    res.json({ unread_count: count });
+  } catch (error) {
+    console.error('Ошибка при получении количества непрочитанных комментариев:', error);
+    res.status(500).json({ error: 'Ошибка при получении количества непрочитанных комментариев' });
+  }
+});
+
+router.get('/comments/unread', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const userId = decoded.userId;
+
+    const comments = await commentsController.getUnreadComments(pool, userId);
+    res.json(comments);
+  } catch (error) {
+    console.error('Ошибка при получении непрочитанных комментариев:', error);
+    res.status(500).json({ error: 'Ошибка при получении непрочитанных комментариев' });
+  }
+});
+
+router.patch('/comments/mark-read', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const { commentIds } = req.body;
+    if (!Array.isArray(commentIds) || commentIds.length === 0) {
+      return res.status(400).json({ error: 'commentIds должен быть непустым массивом' });
+    }
+
+    const updatedCount = await commentsController.markCommentsAsReadByIds(pool, commentIds);
+    res.json({ updated_count: updatedCount });
+  } catch (error) {
+    console.error('Ошибка при обновлении статуса прочтения комментариев:', error);
+    res.status(500).json({ error: 'Ошибка при обновлении статуса прочтения комментариев' });
+  }
+});
+
 module.exports = (app) => {
   app.use('/api', router);
 };

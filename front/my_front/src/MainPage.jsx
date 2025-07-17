@@ -243,31 +243,47 @@ function MainPage({ userEmail }) {
     setSelectedAssignment(assignment);
   }, []);
 
-  const handleCreateTask = useCallback(async (taskData) => {
-    if (!taskData.title.trim()) {
-      alert('Введите название задачи');
-      return;
+const handleCreateTask = useCallback(async (taskData) => {
+  if (!taskData.title.trim()) {
+    alert('Введите название задачи');
+    return;
+  }
+  if (!selectedAssignment) {
+    alert('Выберите задание для создания задачи');
+    return;
+  }
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Необходимо авторизоваться');
     }
-    if (!selectedAssignment) {
-      alert('Выберите задание для создания задачи');
-      return;
-    }
-    try {
-      const assigneeResponse = await fetch(`http://localhost:3000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`);
-      if (!assigneeResponse.ok) {
-        throw new Error('Ошибка при получении ID исполнителя');
+
+    // Добавляем токен в запрос для поиска пользователя по email
+    const assigneeResponse = await fetch(
+      `http://localhost:3000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       }
-      const assigneeData = await assigneeResponse.json();
-      const assigneeId = assigneeData.id;
+    );
+    
+    if (!assigneeResponse.ok) {
+      throw new Error('Ошибка при получении ID исполнителя');
+    }
+    const assigneeData = await assigneeResponse.json();
+    const assigneeId = assigneeData.id;
 
-      const deadline = taskData.deadline ? new Date(taskData.deadline).toISOString() : null;
-      const createdAt = new Date().toISOString();
+    const deadline = taskData.deadline ? new Date(taskData.deadline).toISOString() : null;
+    const createdAt = new Date().toISOString();
 
-      const response = await fetch(`http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`, {
+    const response = await fetch(
+      `http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`,
+      {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           title: taskData.title,
@@ -279,19 +295,20 @@ function MainPage({ userEmail }) {
           status_id: parseInt(taskData.statusId, 10),
           priority_id: parseInt(taskData.priorityId, 10),
         }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Ошибка при создании задачи');
       }
-      
-      await fetchAssignments();
-      setShowTaskForm(false);
-      window.dispatchEvent(new Event('taskUpdated'));
-    } catch (err) {
-      alert(err.message);
+    );
+    
+    if (!response.ok) {
+      throw new Error('Ошибка при создании задачи');
     }
-  }, [selectedAssignment, userId, fetchAssignments]);
+    
+    await fetchAssignments();
+    setShowTaskForm(false);
+    window.dispatchEvent(new Event('taskUpdated'));
+  } catch (err) {
+    alert(err.message);
+  }
+}, [selectedAssignment, userId, fetchAssignments]);
 
   const handleDeleteTask = useCallback(async (taskId) => {
     try {
