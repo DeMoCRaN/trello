@@ -226,7 +226,11 @@
 .assignments-ul li:nth-child(3) { animation-delay: 0.15s; }
 .assignments-ul li:nth-child(4) { animation-delay: 0.2s; }
 .assignments-ul li:nth-child(5) { animation-delay: 0.25s; }
-
+.assignments-ul li:nth-child(6) { animation-delay: 0.3s; }
+.assignments-ul li:nth-child(7) { animation-delay: 0.35s; }
+.assignments-ul li:nth-child(8) { animation-delay: 0.4s; }
+.assignments-ul li:nth-child(9) { animation-delay: 0.45s; }
+.assignments-ul li:nth-child(10) { animation-delay: 0.5s; }
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
   .assignments-list {

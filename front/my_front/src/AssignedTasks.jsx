@@ -15,14 +15,13 @@ function AssignedTasks({ userEmail }) {
   const [showNotification, setShowNotification] = useState(true);
   const navigate = useNavigate();
 
-  // Добавляем дебаунсинг для fetchTasks
   const debouncedFetchTasks = useCallback(() => {
     let timeoutId;
     return () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         fetchTasks();
-      }, 500); // Задержка 500 мс
+      }, 500);
     };
   }, []);
 
@@ -45,7 +44,7 @@ function AssignedTasks({ userEmail }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('User not logged in');
+        setError('Пользователь не авторизован');
         setLoading(false);
         return;
       }
@@ -58,7 +57,7 @@ function AssignedTasks({ userEmail }) {
       });
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error('Failed to fetch tasks: ' + errorText);
+        throw new Error('Ошибка загрузки задач: ' + errorText);
       }
       const data = await response.json();
 
@@ -106,21 +105,20 @@ function AssignedTasks({ userEmail }) {
           Authorization: 'Bearer ' + token,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch assignments');
+      if (!response.ok) throw new Error('Ошибка загрузки заданий');
       const assignments = await response.json();
       
       const namesMap = {};
       assignments.forEach(assignment => {
-        namesMap[assignment.id] = assignment.name || `Assignment ${assignment.id}`;
+        namesMap[assignment.id] = assignment.name || `Задание ${assignment.id}`;
       });
       setAssignmentNames(namesMap);
     } catch (err) {
-      console.error('Error fetching assignments:', err);
+      console.error('Ошибка загрузки заданий:', err);
     }
   }, []);
 
   useEffect(() => {
-    // Request notification permission
     if ('Notification' in window && Notification.permission !== 'denied') {
       Notification.requestPermission();
     }
@@ -142,29 +140,26 @@ function AssignedTasks({ userEmail }) {
     };
   }, [debouncedFetchTasks]);
 
-useEffect(() => {
-  if (tasks.length > 0) {
-    const newTasks = tasks.filter(task => task.status === 'new');
-    if (newTasks.length > 0) {
-      // Используем base64 encoded звук как fallback
-      const audio = new Audio();
-      audio.volume = 0.3;
-      
-      // Пробуем загрузить внешний файл
-      audio.src = '/front/my_front/src/notification-sound.mp3';
-      
-      // Добавляем обработчик ошибок
-      audio.onerror = () => {
-        // Если внешний файл не загрузился, используем встроенный звук
-        audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-        audio.play().catch(e => console.log('Fallback audio play failed:', e));
-      };
-      
-      // Пытаемся воспроизвести
-      audio.play().catch(e => console.log('Audio play failed:', e));
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const newTasks = tasks.filter(task => task.status === 'new');
+      if (newTasks.length > 0) {
+        const audio = new Audio();
+        audio.volume = 0.3;
+        try {
+          audio.src = '/notification.mp3';
+          audio.play().catch(e => {
+            console.log('Не удалось воспроизвести звук:', e);
+            const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+            beep.volume = 0.3;
+            beep.play();
+          });
+        } catch (e) {
+          console.log('Ошибка воспроизведения звука:', e);
+        }
+      }
     }
-  }
-}, [tasks]);
+  }, [tasks]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -203,11 +198,20 @@ useEffect(() => {
   const tasksGroupedByAssignment = React.useMemo(() => {
     const groups = {};
     
+    // Добавляем группу для задач без задания
+    groups['none'] = {
+      name: 'Без задания',
+      tasks: []
+    };
+
     tasks.forEach(task => {
-      const assignmentId = task.assignment_id || 'none';
+      const assignmentId = task.assignment_id !== undefined && task.assignment_id !== null 
+        ? task.assignment_id 
+        : 'none';
+      
       if (!groups[assignmentId]) {
         groups[assignmentId] = {
-          name: assignmentNames[assignmentId] || `Assignment ${assignmentId}`,
+          name: assignmentNames[assignmentId] || `Задание ${assignmentId}`,
           tasks: []
         };
       }
@@ -222,7 +226,7 @@ useEffect(() => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('User not logged in');
+        setError('Пользователь не авторизован');
         setUpdatingTaskId(null);
         return;
       }
@@ -236,7 +240,7 @@ useEffect(() => {
       });
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error('Failed to update task status: ' + errorText);
+        throw new Error('Ошибка обновления статуса: ' + errorText);
       }
       await fetchTasks();
       window.dispatchEvent(new Event('taskUpdated'));
@@ -271,10 +275,10 @@ useEffect(() => {
     }
   }, []);
 
-const formatDeadline = useCallback((deadline) => {
-  const date = new Date(deadline);
-  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-}, []);
+  const formatDeadline = useCallback((deadline) => {
+    const date = new Date(deadline);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+  }, []);
 
   const renderTaskCard = useCallback((task) => {
     const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
@@ -303,15 +307,20 @@ const formatDeadline = useCallback((deadline) => {
         <h4 style={{ marginTop: 0 }}>{task.title}</h4>
         <p>{task.description}</p>
         {task.assignment_id && (
-          <p><strong>Assignment:</strong> {assignmentNames[task.assignment_id] || `Assignment ${task.assignment_id}`}</p>
+          <p><strong>Задание:</strong> {assignmentNames[task.assignment_id] || `Задание ${task.assignment_id}`}</p>
         )}
-        <p><strong>Deadline:</strong> {task.deadline ? formatDeadline(task.deadline) : 'N/A'}</p>
-        <p><strong>Creator:</strong> {task.creator_email}</p>
-        <p><strong>Status:</strong> {task.status.replace('_', ' ')}</p>
-        <p><strong>Priority:</strong> {task.priority}</p>
-        <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
-        <p><strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}</p>
-        <p><strong>Work Time:</strong> {formatTime(timer.elapsedSeconds)}</p>
+        <p><strong>Срок:</strong> {task.deadline ? formatDeadline(task.deadline) : 'Нет'}</p>
+        <p><strong>Автор:</strong> {task.creator_email}</p>
+        <p><strong>Статус:</strong> {task.status === 'new' ? 'Новая' : 
+                                  task.status === 'in_progress' ? 'В работе' : 
+                                  'Завершена'}</p>
+        <p><strong>Приоритет:</strong> {task.priority === 'low' ? 'Низкий' : 
+                                      task.priority === 'medium' ? 'Средний' : 
+                                      task.priority === 'high' ? 'Высокий' : 
+                                      task.priority}</p>
+        <p><strong>Создана:</strong> {new Date(task.created_at).toLocaleString()}</p>
+        <p><strong>Обновлена:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+        <p><strong>Время работы:</strong> {formatTime(timer.elapsedSeconds)}</p>
         
         {task.status === 'new' && (
           <button
@@ -319,7 +328,7 @@ const formatDeadline = useCallback((deadline) => {
             disabled={updatingTaskId === task.id}
             className="task-button start-button"
           >
-            {updatingTaskId === task.id ? 'Starting...' : 'Start Work'}
+            {updatingTaskId === task.id ? 'Запуск...' : 'Начать работу'}
           </button>
         )}
         
@@ -330,28 +339,28 @@ const formatDeadline = useCallback((deadline) => {
               disabled={updatingTaskId === task.id}
               className="task-button stop-button"
             >
-              {updatingTaskId === task.id ? 'Stopping...' : 'Stop Work'}
+              {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 2, 'resume')}
               disabled={updatingTaskId === task.id}
               className="task-button resume-button"
             >
-              {updatingTaskId === task.id ? 'Resuming...' : 'Resume Work'}
+              {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 3, 'done')}
               disabled={updatingTaskId === task.id}
               className="task-button complete-button"
             >
-              {updatingTaskId === task.id ? 'Completing...' : 'Mark as Done'}
+              {updatingTaskId === task.id ? 'Завершение...' : 'Завершить'}
             </button>
           </div>
         )}
         
         {task.status === 'done' && (
           <p className="task-completed">
-            Task completed. Total work time: {formatTime(timer.elapsedSeconds)}
+            Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
           </p>
         )}
       </div>
@@ -364,7 +373,7 @@ const formatDeadline = useCallback((deadline) => {
         <Header userEmail={userEmail} onNavigate={onNavigate} />
         <div className="loading-container">
           <div className="spinner"></div>
-          <p>Loading tasks...</p>
+          <p>Загрузка задач...</p>
         </div>
       </div>
     );
@@ -375,9 +384,9 @@ const formatDeadline = useCallback((deadline) => {
       <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} />
         <div className="error-container">
-          <p>Error: {error}</p>
+          <p>Ошибка: {error}</p>
           <button onClick={fetchTasks} className="retry-button">
-            Retry
+            Повторить
           </button>
         </div>
       </div>
@@ -390,9 +399,9 @@ const formatDeadline = useCallback((deadline) => {
         <Header userEmail={userEmail} onNavigate={onNavigate} />
         <div className="no-tasks-container">
           <button onClick={goBack} className="back-button">
-            Back to Main
+            На главную
           </button>
-          <p>No tasks assigned to you.</p>
+          <p>Нет назначенных задач.</p>
         </div>
       </div>
     );
@@ -415,11 +424,11 @@ const formatDeadline = useCallback((deadline) => {
             onClick={() => setSortByAssignment(!sortByAssignment)}
             className="toggle-sort-button"
           >
-            {sortByAssignment ? 'Show by Status' : 'Group by Assignment'}
+            {sortByAssignment ? 'Сортировка по статусу' : 'Сортировка по заданиям'}
           </button>
           
           <button onClick={goBack} className="back-button">
-            Back to Main
+            На главную
           </button>
         </div>
 
@@ -428,10 +437,12 @@ const formatDeadline = useCallback((deadline) => {
             {Object.entries(tasksGroupedByStatus).map(([status, tasksList]) => (
               <div key={status} className="status-column">
                 <h3 className="status-header">
-                  {status.replace('_', ' ')}
+                  {status === 'new' ? 'Новые' : 
+                   status === 'in_progress' ? 'В работе' : 
+                   'Завершённые'}
                 </h3>
                 {tasksList.length === 0 ? (
-                  <p className="no-tasks-message">No tasks in this category</p>
+                  <p className="no-tasks-message">Нет задач в этой категории</p>
                 ) : (
                   tasksList.map(renderTaskCard)
                 )}
@@ -445,9 +456,13 @@ const formatDeadline = useCallback((deadline) => {
                 <h3 className="assignment-header">
                   {group.name}
                 </h3>
-                <div className="assignment-tasks-grid">
-                  {group.tasks.map(renderTaskCard)}
-                </div>
+                {group.tasks.length === 0 ? (
+                  <p className="no-tasks-message">Нет задач в этом задании</p>
+                ) : (
+                  <div className="assignment-tasks-grid">
+                    {group.tasks.map(renderTaskCard)}
+                  </div>
+                )}
               </div>
             ))}
           </div>

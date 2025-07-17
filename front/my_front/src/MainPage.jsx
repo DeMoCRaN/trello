@@ -46,6 +46,7 @@ function MainPage({ userEmail }) {
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [detailsFormTask, setDetailsFormTask] = useState(null);
   const [lastFetchTime, setLastFetchTime] = useState(0);
+  const [statusChangeLoading, setStatusChangeLoading] = useState({});
 
   const fetchAssignments = useCallback(async () => {
     try {
@@ -86,7 +87,6 @@ function MainPage({ userEmail }) {
 
   const fetchAssignedTasks = useCallback(async () => {
     const now = Date.now();
-    // Делаем запрос не чаще чем раз в 5 секунд
     if (now - lastFetchTime < 5000) return;
     
     setLoadingAssignedTasks(true);
@@ -170,7 +170,6 @@ function MainPage({ userEmail }) {
   }, [fetchAssignedTasks, fetchAssignments]);
 
   useEffect(() => {
-    // Загружаем данные только один раз при монтировании
     const loadInitialData = async () => {
       await Promise.all([
         fetchStatuses(),
@@ -183,31 +182,31 @@ function MainPage({ userEmail }) {
     loadInitialData();
   }, []);
 
-const handleCreateAssignment = async (assignmentData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:3000/api/assignments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(assignmentData)
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Ошибка при создании задания');
+  const handleCreateAssignment = async (assignmentData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/assignments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(assignmentData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка при создании задания');
+      }
+      
+      await fetchAssignments();
+      return true;
+    } catch (error) {
+      console.error('Ошибка при создании задания:', error);
+      alert(error.message);
+      return false;
     }
-    
-    await fetchAssignments(); // Refresh the assignments list
-    return true; // Indicate success
-  } catch (error) {
-    console.error('Ошибка при создании задания:', error);
-    alert(error.message);
-    return false; // Indicate failure
-  }
-};
+  };
 
   const handleDeleteAssignment = async (assignmentId) => {
     try {
@@ -221,7 +220,7 @@ const handleCreateAssignment = async (assignmentData) => {
       if (!response.ok) {
         throw new Error('Ошибка при удалении задания');
       }
-      await fetchAssignments(); // Обновляем список заданий
+      await fetchAssignments();
     } catch (error) {
       console.error('Ошибка при удалении задания:', error);
     }
@@ -314,6 +313,8 @@ const handleCreateAssignment = async (assignmentData) => {
   }, [fetchAssignments]);
 
   const handleStatusChange = useCallback(async (taskId, newStatusId) => {
+    setStatusChangeLoading(prev => ({ ...prev, [taskId]: true }));
+    
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
@@ -324,16 +325,25 @@ const handleCreateAssignment = async (assignmentData) => {
         },
         body: JSON.stringify({ status_id: newStatusId }),
       });
+      
       if (!response.ok) {
         throw new Error('Ошибка при обновлении статуса задачи');
       }
+      
+      // Обновляем данные
       await fetchAssignments();
+      await fetchAssignedTasks();
+      
+      // Оповещаем другие компоненты об изменении
       window.dispatchEvent(new Event('taskUpdated'));
+      
     } catch (err) {
       console.error('Error updating task status:', err);
       alert(err.message);
+    } finally {
+      setStatusChangeLoading(prev => ({ ...prev, [taskId]: false }));
     }
-  }, [fetchAssignments]);
+  }, [fetchAssignments, fetchAssignedTasks]);
 
   if (loading) {
     return <div className="loading-container">Загрузка заданий...</div>;
@@ -379,6 +389,7 @@ const handleCreateAssignment = async (assignmentData) => {
                   assignedTasks={assignedTasks}
                   loadingAssignedTasks={loadingAssignedTasks}
                   currentTab={currentTab}
+                  statusChangeLoading={statusChangeLoading}
                   onStartWork={async (taskId) => {
                     try {
                       const token = localStorage.getItem('token');
