@@ -1,0 +1,128 @@
+.comments-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.comments-section h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.error-message {
+  color: #d32f2f;
+  background-color: #fde0e0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.loading, .no-comments {
+  color: #666;
+  padding: 10px 0;
+  font-style: italic;
+}
+
+.comments-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  padding-right: 8px; /* Добавляем отступ для скроллбара */
+  
+  /* Стили для Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #3498db #f1f1f1;
+}
+
+/* Стили для WebKit (Chrome, Safari, Edge) */
+.comments-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background-color: #3498db;
+  border-radius: 4px;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+  background-color: #2980b9;
+}
+
+.comment {
+  background: white;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 0.85rem;
+}
+
+.comment-author {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.comment-date {
+  color: #7f8c8d;
+}
+
+.comment-text {
+  color: #34495e;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 60px;
+  margin-bottom: 10px;
+  font-family: inherit;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.comment-submit {
+  align-self: flex-end;
+  padding: 8px 16px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.comment-submit:hover {
+  background-color: #2980b9;
+}
+
+.comment-submit:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}

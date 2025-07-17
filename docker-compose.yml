@@ -1,0 +1,39 @@
+version: '3.5'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:14 # образ для построения нашего контейнера
+    environment: # переменные окружения для проброса внутрь контейнера
+      POSTGRES_USER: democran # имя пользователя по умолчанию
+      POSTGRES_PASSWORD: qweasd-123 # парооль по умолчанию
+      PGDATA: /data/postgres
+    volumes: # жесткий диск для записи данных
+      - postgres:/data/postgres # путь для локальной машины, совпадает с PGDATA
+    ports: # проброс портов
+      - 127.0.0.1:5433:5432
+    networks:
+      - trello
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: test@admin.container-name.com
+      PGADMIN_DEFAULT_PASSWORD: qweasd-123
+      PGADMIN_CONFIG-SERVER_MODE: 'false'
+    volumes:
+      - pgadmin:/var/www/trello/docker-volumes/pgadmin
+    ports:
+      - 0.0.0.0:5050:80
+    networks:
+      - trello
+    restart: unless-stopped
+
+networks:
+  trello:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:

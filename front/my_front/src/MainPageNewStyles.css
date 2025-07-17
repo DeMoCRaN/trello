@@ -1,0 +1,164 @@
+/* Main container styles */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  max-width: 1440px;
+  margin: 0 auto;
+  transition: margin 0.3s ease;
+}
+
+/* Column styles */
+.column {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+}
+
+.column-header {
+  font-size: 18px;
+  font-weight: bold;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #eee;
+  text-transform: uppercase;
+}
+
+/* Task card styles */
+.task-card {
+  background-color: #fff;
+  border-left: 4px solid #4CAF50; /* Green border by default */
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+}
+
+.task-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.task-card p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Priority-specific styles */
+.task-card.high-priority {
+  border-left-color: #F44336; /* Red for high priority */
+}
+
+.task-card.medium-priority {
+  border-left-color: #FFC107; /* Yellow for medium priority */
+}
+
+/* Status column colors */
+.column-tasks {
+  background-color: #E3F2FD; /* Light blue for Tasks */
+}
+
+.column-stb {
+  background-color: #FFF8E1; /* Light yellow for STB */
+}
+
+.column-desk {
+  background-color: #F1F8E9; /* Light green for Desk */
+}
+
+.column-done {
+  background-color: #E8F5E9; /* Very light green for DONE */
+}
+
+/* Urgent task style */
+.task-card.urgent {
+  background-color: #FFEBEE; /* Light red background */
+}
+
+/* Exit/configuration tags */
+.task-tag {
+  display: inline-block;
+  background-color: #E0E0E0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  margin-right: 5px;
+  color: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Header styles */
+.header {
+  background-color: #3F51B5;
+  color: white;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+/* Floating button for new task */
+.floating-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #4CAF50;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Collapsed right menu styles */
+.selected-assignment.collapsed {
+  width: 60px !important;
+  height: 60px !important;
+  position: fixed !important;
+  top: 80px !important;
+  right: 30px !important;
+  left: auto !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+  overflow: hidden !important;
+  background-color: #4CAF50 !important;
+  cursor: pointer;
+  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+  z-index: 1002 !important;
+}
+
+/* Center dashboard when right menu collapsed */
+.dashboard.right-menu-collapsed {
+  margin-right: 60px; /* space for collapsed button */
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 900px;
+  transition: margin 0.3s ease;
+}
