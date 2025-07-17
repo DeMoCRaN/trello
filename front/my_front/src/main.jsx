@@ -5,6 +5,7 @@ import './index.css'
 import LoginForm from './LoginForm/LoginForm.jsx'
 import MainPage from './MainPage.jsx'
 import AssignedTasksWrapper from './AssignedTasksWrapper.jsx'
+import Dashboard from '../src/components/Dashboard.jsx'
 
 function parseJwt(token) {
   try {
@@ -71,6 +72,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<LoginForm />} />
         <Route path="/main" element={<MainPageWrapper />} />
         <Route path="/tasks" element={<AssignedTasksWrapper />} />
+        <Route path="/dashboard" element={<Dashboard/>}/>
       </Routes>
     </BrowserRouter>
   </StrictMode>,

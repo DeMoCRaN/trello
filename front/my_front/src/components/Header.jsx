@@ -13,6 +13,7 @@ function Header({ userEmail, onNavigate,  }) {
       <nav className="nav-buttons">
         <button onClick={() => onNavigate('main')}>Главная</button>
         <Link to="/tasks"><button>Задачи</button></Link>
+        <Link to="/dashboard"><button>Дешборд</button></Link>
       </nav>
       <div
         className="user-email"

@@ -19,6 +19,37 @@ const pool = new Pool({
 
 const router = express.Router();
 
+router.get('/assignments/:id/tasks', async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id);
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    // Проверка аутентификации
+    const decoded = jwt.verify(token, 'your_jwt_secret_key');
+    
+    // Проверка доступа к заданию
+    const assignment = await pool.query(
+      'SELECT * FROM assignments WHERE id = $1 AND creator_id = $2',
+      [assignmentId, decoded.userId]
+    );
+    
+    if (assignment.rows.length === 0) {
+      return res.status(404).json([]);
+    }
+    
+    // Получение задач
+    const tasks = await pool.query(
+      'SELECT * FROM tasks WHERE assignment_id = $1',
+      [assignmentId]
+    );
+    
+    res.json(tasks.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.patch('/tasks/:id/progress', async (req, res) => {
   try {
     const taskId = parseInt(req.params.id, 10);
