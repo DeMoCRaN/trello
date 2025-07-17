@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import './Components.css';
+import './AssigmentsList.css';
 
 function AssignmentsList({ assignments, selectedAssignment, onSelect, onDelete, onCreate }) {
   const [collapsed, setCollapsed] = useState(false);
   const [newAssignmentTitle, setNewAssignmentTitle] = useState('');
-
-  const handleCreate = () => {
-    if (newAssignmentTitle.trim()) {
-      onCreate({ title: newAssignmentTitle });
-      setNewAssignmentTitle('');
-    }
-  };
 
   const handleKeyDown = (e, assignment) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -18,6 +11,17 @@ function AssignmentsList({ assignments, selectedAssignment, onSelect, onDelete, 
         onSelect(assignment);
       } else {
         handleCreate();
+      }
+    }
+  };
+
+  const handleCreate = async () => {
+    if (newAssignmentTitle.trim()) {
+      const assignmentData = { title: newAssignmentTitle };
+      const success = await onCreate(assignmentData);
+      if (success) {
+        setNewAssignmentTitle('');
+        // Additional success handling if needed
       }
     }
   };

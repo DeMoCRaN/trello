@@ -30,7 +30,6 @@ function parseJwt(token) {
   }
 }
 
-
 function MainPage({ userEmail }) {
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
@@ -184,6 +183,50 @@ function MainPage({ userEmail }) {
     loadInitialData();
   }, []);
 
+const handleCreateAssignment = async (assignmentData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/assignments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(assignmentData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Ошибка при создании задания');
+    }
+    
+    await fetchAssignments(); // Refresh the assignments list
+    return true; // Indicate success
+  } catch (error) {
+    console.error('Ошибка при создании задания:', error);
+    alert(error.message);
+    return false; // Indicate failure
+  }
+};
+
+  const handleDeleteAssignment = async (assignmentId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Ошибка при удалении задания');
+      }
+      await fetchAssignments(); // Обновляем список заданий
+    } catch (error) {
+      console.error('Ошибка при удалении задания:', error);
+    }
+  };
+
   const handleShowDetails = (task) => {
     setDetailsFormTask({
       ...task,
@@ -320,6 +363,8 @@ function MainPage({ userEmail }) {
               assignments={assignments}
               selectedAssignment={selectedAssignment}
               onSelect={handleAssignmentSelect}
+              onDelete={handleDeleteAssignment}
+              onCreate={handleCreateAssignment}
               currentTab={currentTab}
               setCurrentTab={setCurrentTab}
             />
@@ -379,15 +424,15 @@ function MainPage({ userEmail }) {
                     }
                   }}
                 />
-{showDetailsForm && detailsFormTask && (
-  <div className="details-form-container">
-    <TaskDetailsForm
-      task={detailsFormTask}
-      onClose={handleCloseDetails}
-      token={localStorage.getItem('token')}
-    />
-  </div>
-)}
+                {showDetailsForm && detailsFormTask && (
+                  <div className="details-form-container">
+                    <TaskDetailsForm
+                      task={detailsFormTask}
+                      onClose={handleCloseDetails}
+                      token={localStorage.getItem('token')}
+                    />
+                  </div>
+                )}
               </>
             )}
             <FloatingButton onClick={() => setShowTaskForm(true)} />
