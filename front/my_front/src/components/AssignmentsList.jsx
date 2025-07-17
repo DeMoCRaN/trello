@@ -1,8 +1,26 @@
 import React, { useState } from 'react';
 import './Components.css';
 
-function AssignmentsList({ assignments, selectedAssignment, onSelect }) {
+function AssignmentsList({ assignments, selectedAssignment, onSelect, onDelete, onCreate }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [newAssignmentTitle, setNewAssignmentTitle] = useState('');
+
+  const handleCreate = () => {
+    if (newAssignmentTitle.trim()) {
+      onCreate({ title: newAssignmentTitle });
+      setNewAssignmentTitle('');
+    }
+  };
+
+  const handleKeyDown = (e, assignment) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (assignment) {
+        onSelect(assignment);
+      } else {
+        handleCreate();
+      }
+    }
+  };
 
   return (
     <section className={`assignments-list ${collapsed ? 'collapsed' : ''}`}>
@@ -14,26 +32,57 @@ function AssignmentsList({ assignments, selectedAssignment, onSelect }) {
       >
         {collapsed ? '▶' : '◀'}
       </button>
+      
       {!collapsed && (
-        <ul>
-          {assignments.map((assignment) => (
-            <li
-              key={assignment.id}
-              className={selectedAssignment?.id === assignment.id ? 'selected' : ''}
-              onClick={() => onSelect(assignment)}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  onSelect(assignment);
-                }
-              }}
-              role="button"
-              aria-pressed={selectedAssignment?.id === assignment.id}
+        <div className="assignments-content">
+          <div className="assignment-actions">
+            <input
+              type="text"
+              value={newAssignmentTitle}
+              onChange={(e) => setNewAssignmentTitle(e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e)}
+              placeholder="Название задания"
+              className="assignment-input"
+            />
+            <button 
+              onClick={handleCreate}
+              className="assignment-action-btn create-btn"
+              disabled={!newAssignmentTitle.trim()}
             >
-              {assignment.title}
-            </li>
-          ))}
-        </ul>
+              +
+            </button>
+          </div>
+          
+          <ul className="assignments-ul">
+            {assignments.map((assignment) => (
+              <li
+                key={assignment.id}
+                className={selectedAssignment?.id === assignment.id ? 'selected' : ''}
+              >
+                <div 
+                  className="assignment-title"
+                  onClick={() => onSelect(assignment)}
+                  tabIndex={0}
+                  onKeyDown={(e) => handleKeyDown(e, assignment)}
+                  role="button"
+                  aria-pressed={selectedAssignment?.id === assignment.id}
+                >
+                  {assignment.title}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(assignment.id);
+                  }}
+                  className="assignment-action-btn delete-btn"
+                  title="Удалить задание"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );

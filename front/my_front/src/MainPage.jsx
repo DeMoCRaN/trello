@@ -379,14 +379,15 @@ function MainPage({ userEmail }) {
                     }
                   }}
                 />
-                {showDetailsForm && detailsFormTask && (
-                  <div className="details-form-container">
-                    <TaskDetailsForm
-                      task={detailsFormTask}
-                      onClose={handleCloseDetails}
-                    />
-                  </div>
-                )}
+{showDetailsForm && detailsFormTask && (
+  <div className="details-form-container">
+    <TaskDetailsForm
+      task={detailsFormTask}
+      onClose={handleCloseDetails}
+      token={localStorage.getItem('token')}
+    />
+  </div>
+)}
               </>
             )}
             <FloatingButton onClick={() => setShowTaskForm(true)} />

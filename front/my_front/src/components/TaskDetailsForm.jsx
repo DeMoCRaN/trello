@@ -1,5 +1,6 @@
 import React from 'react';
 import DeadlineProgressBar from '../DeadlineProgressBar';
+import TaskComments from './TaskComments';
 import '../components/Components.css';
 
 const formatWorkDuration = (seconds) => {
@@ -17,7 +18,7 @@ const formatWorkDuration = (seconds) => {
   return result.join(' ');
 };
 
-function TaskDetailsForm({ task, onClose }) {
+function TaskDetailsForm({ task, onClose, token }) {
   if (!task) return null;
 
   // Получаем email из данных задачи
@@ -87,6 +88,11 @@ function TaskDetailsForm({ task, onClose }) {
             status={task.status}
           />
         </div>
+
+        <div className="comments-section">
+          <TaskComments taskId={task.id} token={token} />
+        </div>
+        
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const tasksController = require('../controllers/tasks');
 const assignmentsController = require('../controllers/assignments');
+const commentsController = require('../controllers/comments');
 
 const { Pool } = require('pg');
 
@@ -20,7 +21,7 @@ const router = express.Router();
 router.patch('/tasks/:id/progress', async (req, res) => {
   try {
     const taskId = parseInt(req.params.id, 10);
-    const { progress_percentage } = req.body;
+   const { progress_percentage } = req.body;
     if (progress_percentage === undefined || progress_percentage < 0 || progress_percentage > 100) {
       return res.status(400).json({ error: 'Invalid progress_percentage value' });
     }
@@ -164,6 +165,46 @@ router.post('/tasks', async (req, res) => {
   } catch (error) {
     console.error('Ошибка при создании задачи:', error);
     res.status(500).json({ error: 'Ошибка при создании задачи' });
+  }
+});
+
+// Получить комментарии задачи
+router.get('/tasks/:id/comments', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id, 10);
+    const comments = await commentsController.getCommentsByTaskId(pool, taskId);
+    res.json(comments);
+  } catch (error) {
+    console.error('Ошибка при получении комментариев:', error);
+    res.status(500).json({ error: 'Ошибка при получении комментариев' });
+  }
+});
+
+// Добавить комментарий к задаче
+router.post('/tasks/:id/comments', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+      decoded = require('jsonwebtoken').verify(token, 'your_jwt_secret_key');
+    } catch (err) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+    const userId = decoded.userId;
+    const taskId = parseInt(req.params.id, 10);
+    const { text } = req.body;
+    if (!text || text.trim() === '') {
+      return res.status(400).json({ error: 'Текст комментария не может быть пустым' });
+    }
+    const newComment = await commentsController.createComment(pool, { task_id: taskId, user_id: userId, text });
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.error('Ошибка при добавлении комментария:', error);
+    res.status(500).json({ error: 'Ошибка при добавлении комментария' });
   }
 });
 

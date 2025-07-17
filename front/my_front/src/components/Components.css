@@ -1658,3 +1658,62 @@ body {
   opacity: 0;
 }
 
+/* Стили для кастомного скроллбара во всех scrollable-элементах */
+.modal-content {
+  scrollbar-width: thin;
+  scrollbar-color: #3498db #f1f1f1;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background-color: #3498db;
+  border-radius: 5px;
+  border: 2px solid #f1f1f1;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background-color: #2980b9;
+}
+
+/* Специфичные стили для отдельных скроллируемых секций */
+.task-details-grid,
+.description-section,
+.comments-section {
+  scrollbar-width: thin;
+  scrollbar-color: #3498db #f5f5f5;
+}
+
+.task-details-grid::-webkit-scrollbar,
+.description-section::-webkit-scrollbar,
+.comments-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.task-details-grid::-webkit-scrollbar-track,
+.description-section::-webkit-scrollbar-track,
+.comments-section::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.task-details-grid::-webkit-scrollbar-thumb,
+.description-section::-webkit-scrollbar-thumb,
+.comments-section::-webkit-scrollbar-thumb {
+  background-color: #3498db;
+  border-radius: 4px;
+}
+
+.task-details-grid::-webkit-scrollbar-thumb:hover,
+.description-section::-webkit-scrollbar-thumb:hover,
+.comments-section::-webkit-scrollbar-thumb:hover {
+  background-color: #2980b9;
+}
+
