@@ -10,7 +10,7 @@ import TaskCreationForm from './components/TaskCreationForm';
 import TaskDetailsForm from './components/TaskDetailsForm';
 import FloatingButton from './components/FloatingButton';
 import UserProfileForm from './components/UserProfileForm';
-import TaskNotification from './components/TaskNotification'; 
+import TaskNotification from './components/TaskNotification';
 
 function parseJwt(token) {
   try {
@@ -47,6 +47,10 @@ function MainPage({ userEmail }) {
   const [detailsFormTask, setDetailsFormTask] = useState(null);
   const [lastFetchTime, setLastFetchTime] = useState(0);
   const [statusChangeLoading, setStatusChangeLoading] = useState({});
+  const [comments, setComments] = useState([]);
+  const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
+  const [showNotification, setShowNotification] = useState(true);
+  const [timers, setTimers] = useState({});
 
   const fetchAssignments = useCallback(async () => {
     try {
@@ -101,6 +105,23 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при загрузке задач по исполнителю');
       }
       const data = await response.json();
+      
+      const newTimers = {};
+      data.forEach(task => {
+        let elapsedSeconds = Number(task.work_duration) || 0;
+        if (task.in_progress_since) {
+          const inProgressSince = new Date(task.in_progress_since);
+          const now = new Date();
+          elapsedSeconds += Math.floor((now - inProgressSince) / 1000);
+        }
+        newTimers[task.id] = {
+          elapsedSeconds,
+          isRunning: !!task.in_progress_since,
+          lastSyncTimestamp: Date.now(),
+        };
+      });
+      
+      setTimers(newTimers);
       setAssignedTasks(data);
       setLastFetchTime(now);
       window.dispatchEvent(new Event('taskUpdated'));
@@ -110,6 +131,66 @@ function MainPage({ userEmail }) {
       setLoadingAssignedTasks(false);
     }
   }, [lastFetchTime]);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+      const response = await fetch('http://localhost:3000/api/comments/unread', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments: ' + response.status);
+      }
+      const data = await response.json();
+      
+      const filteredComments = data.filter(comment => 
+        comment.author_email !== userEmail
+      ).map(comment => ({
+        ...comment,
+        is_new: true
+      }));
+
+      if (filteredComments.length > 0 && unreadCommentsCount !== filteredComments.length) {
+        setUnreadCommentsCount(filteredComments.length);
+        
+        if (Notification.permission === 'granted') {
+          new Notification('Новые комментарии', {
+            body: `У вас ${filteredComments.length} новых комментариев`,
+            icon: '/favicon.ico'
+          });
+        }
+        
+        playNotificationSound();
+      }
+
+      setComments(filteredComments);
+    } catch (error) {
+      console.error('Ошибка загрузки комментариев:', error);
+    }
+  }, [userEmail, unreadCommentsCount]);
+
+  const playNotificationSound = () => {
+    const audio = new Audio();
+    audio.volume = 0.3;
+    try {
+      audio.src = '/notification.mp3';
+      audio.play().catch(e => {
+        console.log('Не удалось воспроизвести звук:', e);
+        const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+        beep.volume = 0.3;
+        beep.play();
+      });
+    } catch (e) {
+      console.log('Ошибка воспроизведения звука:', e);
+    }
+  };
 
   const fetchStatuses = useCallback(async () => {
     try {
@@ -158,6 +239,7 @@ function MainPage({ userEmail }) {
     const handleTaskUpdate = () => {
       fetchAssignedTasks();
       fetchAssignments();
+      fetchComments();
     };
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
@@ -167,7 +249,7 @@ function MainPage({ userEmail }) {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
       clearInterval(intervalId);
     };
-  }, [fetchAssignedTasks, fetchAssignments]);
+  }, [fetchAssignedTasks, fetchAssignments, fetchComments]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -175,11 +257,32 @@ function MainPage({ userEmail }) {
         fetchStatuses(),
         fetchPriorities(),
         fetchAssignments(),
-        fetchAssignedTasks()
+        fetchAssignedTasks(),
+        fetchComments()
       ]);
     };
     
     loadInitialData();
+  }, []);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTimers(prevTimers => {
+        const newTimers = { ...prevTimers };
+        const now = Date.now();
+        Object.entries(newTimers).forEach(([taskId, timer]) => {
+          if (timer.isRunning) {
+            const elapsedSinceLastSync = Math.floor((now - (timer.lastSyncTimestamp || now)) / 1000);
+            if (elapsedSinceLastSync > 0) {
+              newTimers[taskId].elapsedSeconds += elapsedSinceLastSync;
+              newTimers[taskId].lastSyncTimestamp = now;
+            }
+          }
+        });
+        return newTimers;
+      });
+    }, 1000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleCreateAssignment = async (assignmentData) => {
@@ -243,72 +346,75 @@ function MainPage({ userEmail }) {
     setSelectedAssignment(assignment);
   }, []);
 
-const handleCreateTask = useCallback(async (taskData) => {
-  if (!taskData.title.trim()) {
-    alert('Введите название задачи');
-    return;
-  }
-  if (!selectedAssignment) {
-    alert('Выберите задание для создания задачи');
-    return;
-  }
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('Необходимо авторизоваться');
+  const handleCreateTask = useCallback(async (taskData) => {
+    if (!taskData.title.trim()) {
+      alert('Введите название задачи');
+      return;
     }
+    if (!selectedAssignment) {
+      alert('Выберите задание для создания задачи');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Необходимо авторизоваться');
+      }
 
-    // Добавляем токен в запрос для поиска пользователя по email
-    const assigneeResponse = await fetch(
-      `http://localhost:3000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const assigneeResponse = await fetch(
+        `http://localhost:3000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
+      );
+      
+      if (!assigneeResponse.ok) {
+        throw new Error('Ошибка при получении ID исполнителя');
       }
-    );
-    
-    if (!assigneeResponse.ok) {
-      throw new Error('Ошибка при получении ID исполнителя');
-    }
-    const assigneeData = await assigneeResponse.json();
-    const assigneeId = assigneeData.id;
+      const assigneeData = await assigneeResponse.json();
+      const assigneeId = assigneeData.id;
 
-    const deadline = taskData.deadline ? new Date(taskData.deadline).toISOString() : null;
-    const createdAt = new Date().toISOString();
+      const deadline = taskData.deadline ? new Date(taskData.deadline).toISOString() : null;
+      const createdAt = new Date().toISOString();
 
-    const response = await fetch(
-      `http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`,
-      {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: taskData.title,
-          description: taskData.description,
-          deadline: deadline,
-          created_at: createdAt,
-          creator_id: userId,
-          assignee_id: assigneeId,
-          status_id: parseInt(taskData.statusId, 10),
-          priority_id: parseInt(taskData.priorityId, 10),
-        }),
+      const response = await fetch(
+        `http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`,
+        {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title: taskData.title,
+            description: taskData.description,
+            deadline: deadline,
+            created_at: createdAt,
+            creator_id: userId,
+            assignee_id: assigneeId,
+            status_id: parseInt(taskData.statusId, 10),
+            priority_id: parseInt(taskData.priorityId, 10),
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Ошибка при создании задачи');
       }
-    );
-    
-    if (!response.ok) {
-      throw new Error('Ошибка при создании задачи');
+      
+      // Обновляем данные после создания задачи
+      await Promise.all([
+        fetchAssignments(),
+        fetchAssignedTasks()
+      ]);
+      window.dispatchEvent(new Event('taskUpdated'));
+      setShowTaskForm(false);
+    } catch (err) {
+      alert(err.message);
     }
-    
-    await fetchAssignments();
-    setShowTaskForm(false);
-    window.dispatchEvent(new Event('taskUpdated'));
-  } catch (err) {
-    alert(err.message);
-  }
-}, [selectedAssignment, userId, fetchAssignments]);
+  }, [selectedAssignment, userId, fetchAssignments, fetchAssignedTasks]);
 
   const handleDeleteTask = useCallback(async (taskId) => {
     try {
@@ -322,12 +428,17 @@ const handleCreateTask = useCallback(async (taskData) => {
       if (!response.ok) {
         throw new Error('Ошибка при удалении задачи');
       }
-      await fetchAssignments();
+      
+      // Обновляем данные после удаления задачи
+      await Promise.all([
+        fetchAssignments(),
+        fetchAssignedTasks()
+      ]);
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       alert(err.message);
     }
-  }, [fetchAssignments]);
+  }, [fetchAssignments, fetchAssignedTasks]);
 
   const handleStatusChange = useCallback(async (taskId, newStatusId) => {
     setStatusChangeLoading(prev => ({ ...prev, [taskId]: true }));
@@ -347,11 +458,11 @@ const handleCreateTask = useCallback(async (taskData) => {
         throw new Error('Ошибка при обновлении статуса задачи');
       }
       
-      // Обновляем данные
-      await fetchAssignments();
-      await fetchAssignedTasks();
-      
-      // Оповещаем другие компоненты об изменении
+      // Обновляем данные после изменения статуса
+      await Promise.all([
+        fetchAssignments(),
+        fetchAssignedTasks()
+      ]);
       window.dispatchEvent(new Event('taskUpdated'));
       
     } catch (err) {
@@ -361,6 +472,60 @@ const handleCreateTask = useCallback(async (taskData) => {
       setStatusChangeLoading(prev => ({ ...prev, [taskId]: false }));
     }
   }, [fetchAssignments, fetchAssignedTasks]);
+
+  const formatTime = useCallback((seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins
+      .toString()
+      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
+  const handleNotificationClick = useCallback((taskId) => {
+    const element = document.getElementById(`task-${taskId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.style.boxShadow = '0 0 0 3px rgba(67, 97, 238, 0.5)';
+      setTimeout(() => {
+        element.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      }, 2000);
+    }
+  }, []);
+
+  const handleCommentClick = useCallback(async (comment) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      await fetch('http://localhost:3000/api/comments/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+        },
+        body: JSON.stringify({ commentIds: [comment.id] }),
+      });
+      
+      setComments(prev => prev.filter(c => c.id !== comment.id));
+      setUnreadCommentsCount(prev => prev - 1);
+      
+      const taskResponse = await fetch(`http://localhost:3000/api/tasks/${comment.task_id}`, {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        },
+      });
+      
+      if (!taskResponse.ok) {
+        throw new Error('Failed to fetch task details');
+      }
+      
+      const taskData = await taskResponse.json();
+      setDetailsFormTask(taskData);
+      setShowDetailsForm(true);
+    } catch (error) {
+      console.error('Error handling comment click:', error);
+    }
+  }, []);
 
   if (loading) {
     return <div className="loading-container">Загрузка заданий...</div>;
@@ -372,21 +537,29 @@ const handleCreateTask = useCallback(async (taskData) => {
 
   return (
     <div className="app-container">
-      <Header userEmail={userEmail} onNavigate={(page) => setCurrentPage(page)} hideAssignmentsAndProfile={true} />
-      
-      <TaskNotification 
-        tasks={assignedTasks} 
-        onClose={() => {}} 
-        onTaskClick={(taskId) => {
-          const task = assignedTasks.find(t => t.id === taskId);
-          if (task) handleShowDetails(task);
-        }}
+      <Header 
+        userEmail={userEmail} 
+        onNavigate={(page) => setCurrentPage(page)} 
+        hideAssignmentsAndProfile={true}
+        unreadCommentsCount={unreadCommentsCount}
+        onCommentsClick={() => setShowNotification(true)}
       />
+      
+      {showNotification && (
+        <TaskNotification 
+          tasks={assignedTasks} 
+          comments={comments}
+          onClose={() => setShowNotification(false)}
+          onTaskClick={handleNotificationClick}
+          onCommentClick={handleCommentClick}
+        />
+      )}
 
       <main className="dashboard">
         {currentPage === 'main' && (
           <>
             <AssignmentsList
+              key={`${assignments.length}-${selectedAssignment?.id}`}
               assignments={assignments}
               selectedAssignment={selectedAssignment}
               onSelect={handleAssignmentSelect}
@@ -407,6 +580,8 @@ const handleCreateTask = useCallback(async (taskData) => {
                   loadingAssignedTasks={loadingAssignedTasks}
                   currentTab={currentTab}
                   statusChangeLoading={statusChangeLoading}
+                  timers={timers}
+                  formatTime={formatTime}
                   onStartWork={async (taskId) => {
                     try {
                       const token = localStorage.getItem('token');
@@ -423,7 +598,10 @@ const handleCreateTask = useCallback(async (taskData) => {
                         const errorText = await response.text();
                         throw new Error('Failed to start work: ' + errorText);
                       }
-                      await fetchAssignments();
+                      await Promise.all([
+                        fetchAssignments(),
+                        fetchAssignedTasks()
+                      ]);
                       window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
                       alert(err.message);
@@ -445,7 +623,10 @@ const handleCreateTask = useCallback(async (taskData) => {
                         const errorText = await response.text();
                         throw new Error('Failed to complete work: ' + errorText);
                       }
-                      await fetchAssignments();
+                      await Promise.all([
+                        fetchAssignments(),
+                        fetchAssignedTasks()
+                      ]);
                       window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
                       alert(err.message);

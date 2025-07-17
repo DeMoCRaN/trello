@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import Header from './components/Header';
 import TaskNotification from './components/TaskNotification';
+import TaskDetailsForm from './components/TaskDetailsForm';
 import './AssignedTasks.css';
 
 function AssignedTasks({ userEmail }) {
+  // Состояния компонента
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,8 +17,15 @@ function AssignedTasks({ userEmail }) {
   const [sortByAssignment, setSortByAssignment] = useState(false);
   const [assignmentNames, setAssignmentNames] = useState({});
   const [showNotification, setShowNotification] = useState(true);
+  const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  // eslint-disable-next-line no-unused-vars
+  const [highlightedCommentId, setHighlightedCommentId] = useState(null);
+
   const navigate = useNavigate();
 
+  // Дебаунс для запроса задач
   const debouncedFetchTasks = useCallback(() => {
     let timeoutId;
     return () => {
@@ -26,6 +36,7 @@ function AssignedTasks({ userEmail }) {
     };
   }, []);
 
+  // Навигация
   function onNavigate(page) {
     switch (page) {
       case 'main':
@@ -39,6 +50,7 @@ function AssignedTasks({ userEmail }) {
     }
   }
 
+  // Получение задач с сервера
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -96,6 +108,7 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
+  // Получение названий заданий
   const fetchAssignmentNames = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -119,38 +132,69 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
-const fetchComments = useCallback(async () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No auth token found');
-    }
-    const response = await fetch('http://localhost:3000/api/comments/unread', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch comments: ' + response.status);
-    }
-    const data = await response.json();
-    console.log('Fetched comments:', data);
-    // Фильтруем комментарии, которые не принадлежат текущему пользователю
-    const filteredComments = data.filter(comment => 
-      comment.author_email !== userEmail
-    ).map(comment => ({
-      ...comment,
-      is_new: true
-    }));
-    console.log('Filtered comments:', filteredComments);
-    setComments(filteredComments);
-  } catch (error) {
-    console.error('Ошибка загрузки комментариев:', error);
-  }
-}, [userEmail]); 
+  // Получение комментариев
+  const fetchComments = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+      const response = await fetch('http://localhost:3000/api/comments/unread', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments: ' + response.status);
+      }
+      const data = await response.json();
+      
+      const filteredComments = data.filter(comment => 
+        comment.author_email !== userEmail
+      ).map(comment => ({
+        ...comment,
+        is_new: true
+      }));
 
+      if (filteredComments.length > 0 && unreadCommentsCount !== filteredComments.length) {
+        setUnreadCommentsCount(filteredComments.length);
+        
+        if (Notification.permission === 'granted') {
+          new Notification('Новые комментарии', {
+            body: `У вас ${filteredComments.length} новых комментариев`,
+            icon: '/favicon.ico'
+          });
+        }
+        
+        playNotificationSound();
+      }
+
+      setComments(filteredComments);
+    } catch (error) {
+      console.error('Ошибка загрузки комментариев:', error);
+    }
+  }, [userEmail, unreadCommentsCount]);
+
+  // Воспроизведение звука уведомления
+  const playNotificationSound = () => {
+    const audio = new Audio();
+    audio.volume = 0.3;
+    try {
+      audio.src = '/notification.mp3';
+      audio.play().catch(e => {
+        console.log('Не удалось воспроизвести звук:', e);
+        const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+        beep.volume = 0.3;
+        beep.play();
+      });
+    } catch (e) {
+      console.log('Ошибка воспроизведения звука:', e);
+    }
+  };
+
+  // Эффекты
   useEffect(() => {
     if ('Notification' in window && Notification.permission !== 'denied') {
       Notification.requestPermission();
@@ -159,6 +203,14 @@ const fetchComments = useCallback(async () => {
     fetchTasks();
     fetchAssignmentNames();
     fetchComments();
+
+    const tasksInterval = setInterval(fetchTasks, 60000);
+    const commentsInterval = setInterval(fetchComments, 30000);
+
+    return () => {
+      clearInterval(tasksInterval);
+      clearInterval(commentsInterval);
+    };
   }, [fetchTasks, fetchAssignmentNames, fetchComments]);
 
   useEffect(() => {
@@ -178,19 +230,7 @@ const fetchComments = useCallback(async () => {
     if (tasks.length > 0) {
       const newTasks = tasks.filter(task => task.status === 'new');
       if (newTasks.length > 0) {
-        const audio = new Audio();
-        audio.volume = 0.3;
-        try {
-          audio.src = '/notification.mp3';
-          audio.play().catch(e => {
-            console.log('Не удалось воспроизвести звук:', e);
-            const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
-            beep.volume = 0.3;
-            beep.play();
-          });
-        } catch (e) {
-          console.log('Ошибка воспроизведения звука:', e);
-        }
+        playNotificationSound();
       }
     }
   }, [tasks]);
@@ -215,6 +255,7 @@ const fetchComments = useCallback(async () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Группировка задач по статусу
   const tasksGroupedByStatus = React.useMemo(() => {
     const groups = {
       new: [],
@@ -229,6 +270,7 @@ const fetchComments = useCallback(async () => {
     return groups;
   }, [tasks]);
 
+  // Группировка задач по заданиям
   const tasksGroupedByAssignment = React.useMemo(() => {
     const groups = {};
     
@@ -254,6 +296,7 @@ const fetchComments = useCallback(async () => {
     return groups;
   }, [tasks, assignmentNames]);
 
+  // Обновление статуса задачи
   const updateTaskStatus = useCallback(async (taskId, statusId, action) => {
     setUpdatingTaskId(taskId);
     try {
@@ -284,6 +327,7 @@ const fetchComments = useCallback(async () => {
     }
   }, [fetchTasks]);
 
+  // Форматирование времени
   const formatTime = useCallback((seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -293,10 +337,12 @@ const fetchComments = useCallback(async () => {
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
+  // Навигация назад
   const goBack = useCallback(() => {
     navigate('/main');
   }, [navigate]);
 
+  // Обработчик клика по уведомлению
   const handleNotificationClick = useCallback((taskId) => {
     const element = document.getElementById(`task-${taskId}`);
     if (element) {
@@ -308,125 +354,154 @@ const fetchComments = useCallback(async () => {
     }
   }, []);
 
-const handleCommentClick = useCallback(async (comment) => {
-  try {
-    const token = localStorage.getItem('token');
-    // Отмечаем комментарий как прочитанный
-    await fetch('http://localhost:3000/api/comments/mark-read', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token,
-      },
-      body: JSON.stringify({ commentIds: [comment.id] }),
-    });
-    
-    // Навигация к задаче
-    navigate(`/tasks/${comment.task_id}?highlightComment=${comment.id}`);
-    
-    // Обновляем список комментариев
-    fetchComments();
-  } catch (error) {
-    console.error('Ошибка при отметке комментария как прочитанного:', error);
-  }
-}, [navigate, fetchComments]);
+  // Обработчик клика по комментарию
+  const handleCommentClick = useCallback(async (comment) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      await fetch('http://localhost:3000/api/comments/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+        },
+        body: JSON.stringify({ commentIds: [comment.id] }),
+      });
+      
+      setComments(prev => prev.filter(c => c.id !== comment.id));
+      setUnreadCommentsCount(prev => prev - 1);
+      
+      const taskResponse = await fetch(`http://localhost:3000/api/tasks/${comment.task_id}`, {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        },
+      });
+      
+      if (!taskResponse.ok) {
+        throw new Error('Failed to fetch task details');
+      }
+      
+      const taskData = await taskResponse.json();
+      setSelectedTask(taskData);
+      setShowTaskModal(true);
+      
+      if (comment.id) {
+        setHighlightedCommentId(comment.id);
+      }
+    } catch (error) {
+      console.error('Error handling comment click:', error);
+    }
+  }, []);
 
+  // Форматирование дедлайна
   const formatDeadline = useCallback((deadline) => {
     const date = new Date(deadline);
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
   }, []);
 
-  const renderTaskCard = useCallback((task) => {
-    const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
-    const isInProgress = task.status === 'in_progress' || timer.isRunning;
-    
-    return (
-      <div
-        id={`task-${task.id}`}
-        key={task.id}
-        className="task-card"
-        style={{
-          borderLeft: '4px solid ' + (
-            task.priority.toLowerCase() === 'low' ? '#4caf50' :
-            task.priority.toLowerCase() === 'medium' ? '#ff9800' :
-            task.priority.toLowerCase() === 'high' ? '#f44336' :
-            '#9e9e9e'
-          ),
-          marginBottom: '16px',
-          padding: '16px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          backgroundColor: '#fff',
-          transition: 'box-shadow 0.3s ease',
-        }}
-      >
-        <h4 style={{ marginTop: 0 }}>{task.title}</h4>
-        <p>{task.description}</p>
-        {task.assignment_id && (
-          <p><strong>Задание:</strong> {assignmentNames[task.assignment_id] || `Задание ${task.assignment_id}`}</p>
-        )}
-        <p><strong>Срок:</strong> {task.deadline ? formatDeadline(task.deadline) : 'Нет'}</p>
-        <p><strong>Автор:</strong> {task.creator_email}</p>
-        <p><strong>Статус:</strong> {task.status === 'new' ? 'Новая' : 
-                                  task.status === 'in_progress' ? 'В работе' : 
-                                  'Завершена'}</p>
-        <p><strong>Приоритет:</strong> {task.priority === 'low' ? 'Низкий' : 
-                                      task.priority === 'medium' ? 'Средний' : 
-                                      task.priority === 'high' ? 'Высокий' : 
-                                      task.priority}</p>
-        <p><strong>Создана:</strong> {new Date(task.created_at).toLocaleString()}</p>
-        <p><strong>Обновлена:</strong> {new Date(task.updated_at).toLocaleString()}</p>
-        <p><strong>Время работы:</strong> {formatTime(timer.elapsedSeconds)}</p>
-        
-        {task.status === 'new' && (
+  // Рендер карточки задачи
+const renderTaskCard = useCallback((task) => {
+  const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
+  const isInProgress = task.status === 'in_progress' || timer.isRunning;
+  
+  return (
+    <div
+      id={`task-${task.id}`}
+      key={task.id}
+      className="task-card"
+      style={{
+        borderLeft: '4px solid ' + (
+          task.priority.toLowerCase() === 'low' ? '#4caf50' :
+          task.priority.toLowerCase() === 'medium' ? '#ff9800' :
+          task.priority.toLowerCase() === 'high' ? '#f44336' :
+          '#9e9e9e'
+        ),
+        marginBottom: '16px',
+        padding: '16px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        backgroundColor: '#fff',
+        transition: 'box-shadow 0.3s ease',
+      }}
+    >
+      <h4 style={{ marginTop: 0 }}>{task.title}</h4>
+      <p>{task.description}</p>
+      {task.assignment_id && (
+        <p><strong>Задание:</strong> {assignmentNames[task.assignment_id] || `Задание ${task.assignment_id}`}</p>
+      )}
+      <p><strong>Срок:</strong> {task.deadline ? formatDeadline(task.deadline) : 'Нет'}</p>
+      <p><strong>Автор:</strong> {task.creator_email}</p>
+      <p><strong>Статус:</strong> {task.status === 'new' ? 'Новая' : 
+                                task.status === 'in_progress' ? 'В работе' : 
+                                'Завершена'}</p>
+      <p><strong>Приоритет:</strong> {task.priority === 'low' ? 'Низкий' : 
+                                    task.priority === 'medium' ? 'Средний' : 
+                                    task.priority === 'high' ? 'Высокий' : 
+                                    task.priority}</p>
+      <p><strong>Создана:</strong> {new Date(task.created_at).toLocaleString()}</p>
+      <p><strong>Обновлена:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+      <p><strong>Время работы:</strong> {formatTime(timer.elapsedSeconds)}</p>
+      
+      {task.status === 'new' && (
+        <button
+          onClick={() => updateTaskStatus(task.id, 2, 'start')}
+          disabled={updatingTaskId === task.id}
+          className="task-button start-button"
+        >
+          {updatingTaskId === task.id ? 'Запуск...' : 'Начать работу'}
+        </button>
+      )}
+      
+      {isInProgress && (
+        <div className="task-buttons-container">
           <button
-            onClick={() => updateTaskStatus(task.id, 2, 'start')}
+            onClick={() => updateTaskStatus(task.id, 2, 'stop')}
             disabled={updatingTaskId === task.id}
-            className="task-button start-button"
+            className="task-button stop-button"
           >
-            {updatingTaskId === task.id ? 'Запуск...' : 'Начать работу'}
+            {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
           </button>
-        )}
-        
-        {isInProgress && (
-          <div className="task-buttons-container">
-            <button
-              onClick={() => updateTaskStatus(task.id, 2, 'stop')}
-              disabled={updatingTaskId === task.id}
-              className="task-button stop-button"
-            >
-              {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
-            </button>
-            <button
-              onClick={() => updateTaskStatus(task.id, 2, 'resume')}
-              disabled={updatingTaskId === task.id}
-              className="task-button resume-button"
-            >
-              {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
-            </button>
-            <button
-              onClick={() => updateTaskStatus(task.id, 3, 'done')}
-              disabled={updatingTaskId === task.id}
-              className="task-button complete-button"
-            >
-              {updatingTaskId === task.id ? 'Завершение...' : 'Завершить'}
-            </button>
-          </div>
-        )}
-        
-        {task.status === 'done' && (
-          <p className="task-completed">
-            Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
-          </p>
-        )}
-      </div>
-    );
-  }, [assignmentNames, formatTime, timers, updateTaskStatus, updatingTaskId]);
+          <button
+            onClick={() => updateTaskStatus(task.id, 2, 'resume')}
+            disabled={updatingTaskId === task.id}
+            className="task-button resume-button"
+          >
+            {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
+          </button>
+          <button
+            onClick={() => updateTaskStatus(task.id, 3, 'done')}
+            disabled={updatingTaskId === task.id}
+            className="task-button complete-button"
+          >
+            {updatingTaskId === task.id ? 'Завершение...' : 'Завершить'}
+          </button>
+          <button
+            onClick={() => {
+              setSelectedTask(task);
+              setShowTaskModal(true);
+            }}
+            className="task-button details-button"
+          >
+            Подробнее
+          </button>
+        </div>
+      )}
+      
+      {task.status === 'done' && (
+        <p className="task-completed">
+          Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
+        </p>
+      )}
+    </div>
+  );
+}, [assignmentNames, formatTime, timers, updateTaskStatus, updatingTaskId, formatDeadline]);
 
+
+  // Состояния загрузки
   if (loading) {
     return (
       <div className="page-container">
-        <Header userEmail={userEmail} onNavigate={onNavigate} />
+        <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="loading-container">
           <div className="spinner"></div>
           <p>Загрузка задач...</p>
@@ -435,10 +510,11 @@ const handleCommentClick = useCallback(async (comment) => {
     );
   }
 
+  // Ошибка
   if (error) {
     return (
       <div className="page-container">
-        <Header userEmail={userEmail} onNavigate={onNavigate} />
+        <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="error-container">
           <p>Ошибка: {error}</p>
           <button onClick={fetchTasks} className="retry-button">
@@ -449,10 +525,11 @@ const handleCommentClick = useCallback(async (comment) => {
     );
   }
 
+  // Нет задач
   if (!tasks || tasks.length === 0) {
     return (
       <div className="page-container">
-        <Header userEmail={userEmail} onNavigate={onNavigate} />
+        <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="no-tasks-container">
           <button onClick={goBack} className="back-button">
             На главную
@@ -463,9 +540,16 @@ const handleCommentClick = useCallback(async (comment) => {
     );
   }
 
+  // Основной рендер
   return (
     <div className="page-container">
-      <Header userEmail={userEmail} onNavigate={onNavigate} />
+      <Header 
+        userEmail={userEmail} 
+        onNavigate={onNavigate} 
+        unreadCommentsCount={unreadCommentsCount}
+        onCommentsClick={() => setShowNotification(true)}
+      />
+      
       {showNotification && (
         <TaskNotification 
           tasks={tasks} 
@@ -526,6 +610,18 @@ const handleCommentClick = useCallback(async (comment) => {
           </div>
         )}
       </div>
+
+      {showTaskModal && (
+        <TaskDetailsForm 
+          task={selectedTask} 
+          onClose={() => {
+            setShowTaskModal(false);
+            setSelectedTask(null);
+            setHighlightedCommentId(null);
+          }}
+          token={localStorage.getItem('token')}
+        />
+      )}
     </div>
   );
 }

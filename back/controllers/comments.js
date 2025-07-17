@@ -68,20 +68,29 @@ async function getUnreadCommentsCount(pool, userId) {
 async function getUnreadComments(pool, userId) {
   const client = await pool.connect();
   try {
-    const result = await client.query(
-      `SELECT c.id, c.text, c.created_at, t.id as task_id, t.title as task_title,
-              u.id as author_id, u.email as author_email
-       FROM task_comments c
-       JOIN tasks t ON c.task_id = t.id
-       JOIN users u ON c.user_id = u.id
-       WHERE t.assignee_id = $1 
-       AND c.is_read = FALSE 
-       AND c.user_id != $1
-       ORDER BY c.created_at DESC`,
-      [userId]
-    );
+    console.log(`Fetching unread comments for user ${userId}`); // Логирование
+    
+    const queryText = `
+      SELECT c.id, c.text, c.created_at, t.id as task_id, t.title as task_title,
+             u.id as author_id, u.email as author_email
+      FROM task_comments c
+      JOIN tasks t ON c.task_id = t.id
+      JOIN users u ON c.user_id = u.id
+      WHERE t.assignee_id = $1 
+      AND c.is_read = FALSE 
+      AND c.user_id != $1
+      ORDER BY c.created_at DESC
+    `;
+    
+    console.log('Executing query:', queryText); // Логирование запроса
+    
+    const result = await client.query(queryText, [userId]);
+    
+    console.log(`Found ${result.rows.length} unread comments`); // Логирование результата
+    
     return result.rows;
   } catch (error) {
+    console.error('Error in getUnreadComments:', error);
     throw error;
   } finally {
     client.release();
@@ -90,6 +99,7 @@ async function getUnreadComments(pool, userId) {
 
 async function markCommentsAsReadByIds(pool, commentIds) {
   if (!commentIds || commentIds.length === 0) {
+    console.log('No comment IDs provided to mark as read');
     return 0;
   }
   const client = await pool.connect();
@@ -99,9 +109,12 @@ async function markCommentsAsReadByIds(pool, commentIds) {
       SET is_read = TRUE
       WHERE id = ANY($1::int[])
     `;
+    console.log(`Marking comments as read: ${commentIds.join(', ')}`);
     const result = await client.query(queryText, [commentIds]);
+    console.log(`Marked ${result.rowCount} comments as read`);
     return result.rowCount;
   } catch (error) {
+    console.error('Error in markCommentsAsReadByIds:', error);
     throw error;
   } finally {
     client.release();

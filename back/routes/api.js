@@ -5,6 +5,7 @@ const tasksController = require('../controllers/tasks');
 const assignmentsController = require('../controllers/assignments');
 const commentsController = require('../controllers/comments');
 
+
 const { Pool } = require('pg');
 
 // Создаем пул подключения к базе данных для API
@@ -338,7 +339,6 @@ router.get('/task_priorities', async (req, res) => {
 });
 
 
-const jwt = require('jsonwebtoken');
 
 router.get('/comments/unread/count', async (req, res) => {
   try {
@@ -369,6 +369,7 @@ router.get('/comments/unread', async (req, res) => {
     if (!authHeader) {
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
+    
     const token = authHeader.split(' ')[1];
     let decoded;
     try {
@@ -376,9 +377,10 @@ router.get('/comments/unread', async (req, res) => {
     } catch (err) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
+    
     const userId = decoded.userId;
-
     const comments = await commentsController.getUnreadComments(pool, userId);
+    
     res.json(comments);
   } catch (error) {
     console.error('Ошибка при получении непрочитанных комментариев:', error);
@@ -386,7 +388,7 @@ router.get('/comments/unread', async (req, res) => {
   }
 });
 
-router.patch('/comments/mark-read', async (req, res) => {
+router.post('/comments/mark-read', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {

@@ -1,8 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Task from '../Task';
 import './Components.css';
 
-function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChange, onDelete, onDetails, onStartWork, onStopWork, onResumeWork, onCompleteWork }) {
+function SelectedAssignmentDetails({ 
+  selectedAssignment, 
+  statuses, 
+  onStatusChange, 
+  onDelete, 
+  onDetails, 
+  onStartWork, 
+  onStopWork, 
+  onResumeWork, 
+  onCompleteWork,
+  statusChangeLoading,
+  timers,
+  formatTime
+}) {
+  // Состояние для локального хранения задач
+  const [localTasks, setLocalTasks] = useState([]);
+  
   // Группируем задачи по статусам (английские ключи)
   const tasksByStatus = {
     'new': [],
@@ -17,31 +33,65 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
     'done': 'Завершённые'
   };
 
-  if (selectedAssignment && selectedAssignment.tasks) {
-    selectedAssignment.tasks.forEach((task) => {
+  // Обновляем локальные задачи при изменении selectedAssignment
+  useEffect(() => {
+    if (selectedAssignment?.tasks) {
+      setLocalTasks([...selectedAssignment.tasks]);
+    }
+  }, [selectedAssignment]);
+
+  // Обработчик для обновления локальной задачи
+  const updateLocalTask = (taskId, updates) => {
+    setLocalTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === taskId ? { ...task, ...updates } : task
+      )
+    );
+  };
+
+  // Обработчик для удаления локальной задачи
+  const deleteLocalTask = (taskId) => {
+    setLocalTasks(prevTasks => 
+      prevTasks.filter(task => task.id !== taskId)
+    );
+  };
+
+  // Модифицированные обработчики, которые обновляют локальное состояние
+  const handleStatusChange = async (taskId, newStatusId) => {
+    try {
+      await onStatusChange(taskId, newStatusId);
+      updateLocalTask(taskId, { status: newStatusId });
+    } catch (error) {
+      console.error('Failed to change status:', error);
+    }
+  };
+
+  const handleDelete = async (taskId) => {
+    try {
+      await onDelete(taskId);
+      deleteLocalTask(taskId);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+    }
+  };
+
+  const handleCompleteWork = async (taskId) => {
+    try {
+      await onCompleteWork(taskId);
+      updateLocalTask(taskId, { status: 'done' });
+    } catch (error) {
+      console.error('Failed to complete task:', error);
+    }
+  };
+
+  // Группировка задач для отображения
+  if (localTasks.length > 0) {
+    localTasks.forEach((task) => {
       if (tasksByStatus[task.status]) {
         tasksByStatus[task.status].push(task);
       }
     });
   }
-
-  useEffect(() => {
-    const handleTaskUpdate = () => {
-      // Можно добавить логику обновления, если нужно
-    };
-
-    window.addEventListener('taskUpdated', handleTaskUpdate);
-
-    return () => {
-      window.removeEventListener('taskUpdated', handleTaskUpdate);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (selectedAssignment?.tasks) {
-      console.log('Task data structure:', selectedAssignment.tasks[0]);
-    }
-  }, [selectedAssignment]);
 
   // Получаем массив статусов в правильном порядке для отображения
   const orderedStatuses = Object.keys(tasksByStatus);
@@ -60,16 +110,19 @@ function SelectedAssignmentDetails({ selectedAssignment, statuses, onStatusChang
                   key={task.id}
                   task={task}
                   statuses={statuses}
-                  onStatusChange={onStatusChange}
-                  onDelete={onDelete}
+                  onStatusChange={handleStatusChange}
+                  onDelete={handleDelete}
                   onDetails={onDetails}
                   onStartWork={onStartWork}
                   onStopWork={onStopWork}
                   onResumeWork={onResumeWork}
-                  onCompleteWork={onCompleteWork}
+                  onCompleteWork={handleCompleteWork}
                   creatorName={task.creator_name}
                   assigneeName={task.assignee_name}
                   createdAt={task.created_at}
+                  loading={statusChangeLoading[task.id]}
+                  timer={timers[task.id]}
+                  formatTime={formatTime}
                 />
               ))
             ) : (
