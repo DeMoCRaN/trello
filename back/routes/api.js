@@ -37,13 +37,25 @@ router.get('/assignments/:id/tasks', async (req, res) => {
       return res.status(404).json([]);
     }
     
-    // Получение задач
-    const tasks = await pool.query(
-      'SELECT * FROM tasks WHERE assignment_id = $1',
+    // Получение задач из tasks и archived_tasks с явным указанием колонок и приведением типов
+    const tasksResult = await pool.query(
+      `SELECT 
+         id::text, title, description, deadline, creator_id::text, assignee_id::text, NULL::text AS assignment_id, 
+         status_id::text, priority_id::text, created_at, updated_at, NULL::timestamp AS seen_at, NULL::timestamp AS in_progress_since, NULL::timestamp AS deleted_at, 
+         0::int AS work_duration, 0::int AS progress_percentage
+       FROM tasks
+       WHERE assignment_id = $1
+      UNION ALL
+      SELECT 
+         id::text, title, description, deadline, creator_id::text, assignee_id::text, assignment_id::text, 
+         status_id::text, priority_id::text, created_at, updated_at, seen_at, in_progress_since, deleted_at, 
+         work_duration::int, progress_percentage::int
+       FROM archived_tasks
+       WHERE assignment_id = $1`,
       [assignmentId]
     );
     
-    res.json(tasks.rows);
+    res.json(tasksResult.rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });

@@ -34,8 +34,41 @@ async function createTask(pool, { title, description, deadline, creator_id, assi
 async function deleteTask(pool, taskId) {
   const client = await pool.connect();
   try {
+    console.log(`deleteTask called with taskId: ${taskId}`);
+
+    // Fetch the task to be deleted
+    const taskResult = await client.query('SELECT * FROM tasks WHERE id = $1', [taskId]);
+    if (taskResult.rows.length === 0) {
+      console.log('Task not found');
+      throw new Error('Task not found');
+    }
+    const task = taskResult.rows[0];
+    console.log('Task fetched for archiving:', task);
+
+    // Insert the task into archived_tasks with deleted_at = now()
+    await client.query(
+      `INSERT INTO archived_tasks (
+        id, title, description, deadline, creator_id, assignee_id, assignment_id,
+        status_id, priority_id, created_at, updated_at, deleted_at,
+        in_progress_since, work_duration, progress_percentage
+      ) 
+      SELECT 
+        id, title, description, deadline, creator_id, assignee_id, assignment_id,
+        status_id, priority_id, created_at, updated_at, now(),
+        in_progress_since, work_duration, progress_percentage
+      FROM tasks 
+      WHERE id = $1`,
+      [taskId]
+    );
+    console.log('Task archived successfully');
+
+    // Delete the task from tasks table
     await client.query('DELETE FROM tasks WHERE id = $1', [taskId]);
+    console.log('Task deleted from tasks table');
+    
+    return { success: true };
   } catch (error) {
+    console.error('Error in deleteTask:', error);
     throw error;
   } finally {
     client.release();

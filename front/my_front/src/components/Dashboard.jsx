@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   Card, CardContent, Grid, Typography, CircularProgress, Box, 
-  MenuItem, Select, FormControl, InputLabel, Divider, Chip
+  MenuItem, Select, FormControl, InputLabel, Divider, Chip, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Header from '../components/Header';
@@ -89,13 +89,19 @@ const getPriorityById = (id) => {
   }
 };
 
-
-
 const formatTime = (seconds) => {
-  if (isNaN(seconds)) return '0s';
-  const mins = Math.floor(seconds / 60);
+  if (isNaN(seconds)) return '0m 0s';
+  
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  return `${mins}m ${secs}s`;
+  
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (mins > 0 || hours > 0) parts.push(`${mins}m`);
+  parts.push(`${secs}s`);
+  
+  return parts.join(' ');
 };
 
 const Dashboard = ({ userEmail: propUserEmail }) => {
@@ -109,6 +115,7 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
   const [showNotification, setShowNotification] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState('');
+  const [taskFilter, setTaskFilter] = useState('active'); // 'active', 'archived', 'all'
 
   const onNavigate = useCallback((page) => {
     navigate(`/${page}`);
@@ -176,8 +183,10 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
             'Authorization': `Bearer ${token}`,
           },
         }
+        
       );
-
+      
+      
       if (!response.ok) throw new Error(`Не удалось загрузить задачи: ${response.status}`);
       const data = await response.json();
       
@@ -187,7 +196,8 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
         status: getStatusById(task.status_id),
         priority: getPriorityById(task.priority_id),
         work_duration: Number(task.work_duration) || 0,
-        due_date: task.due_date || new Date().toISOString()
+        due_date: task.deadline || new Date().toISOString(),
+        isArchived: !!task.deleted_at // Помечаем архивированные задачи
       }));
       
       setTasks(processedTasks);
@@ -235,17 +245,30 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
     setSelectedAssignment(event.target.value);
   };
 
+  const handleTaskFilterChange = (event, newFilter) => {
+    if (newFilter !== null) {
+      setTaskFilter(newFilter);
+    }
+  };
+
+  // Filter tasks based on selection
+  const filteredTasks = tasks.filter(task => {
+    if (taskFilter === 'active') return !task.isArchived;
+    if (taskFilter === 'archived') return task.isArchived;
+    return true; // 'all'
+  });
+
   // Calculate statistics
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(task => task.status === 'done').length;
-  const inProgressTasks = tasks.filter(task => task.status === 'in_progress').length;
-  const notStartedTasks = tasks.filter(task => task.status === 'new').length;
-  const overdueTasks = tasks.filter(task => 
+  const totalTasks = filteredTasks.length;
+  const completedTasks = filteredTasks.filter(task => task.status === 'done').length;
+  const inProgressTasks = filteredTasks.filter(task => task.status === 'in_progress').length;
+  const notStartedTasks = filteredTasks.filter(task => task.status === 'new').length;
+  const overdueTasks = filteredTasks.filter(task => 
     new Date(task.due_date) < new Date() && task.status !== 'done'
   ).length;
 
   const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const totalTime = tasks.reduce((sum, task) => {
+  const totalTime = filteredTasks.reduce((sum, task) => {
     const duration = Number(task.work_duration) || 0;
     return sum + (isNaN(duration) ? 0 : duration);
   }, 0);
@@ -260,12 +283,12 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
   ];
 
   const priorityData = [
-    { name: 'Высокий', value: tasks.filter(task => task.priority === 'high').length, color: '#ff6b6b' },
-    { name: 'Средний', value: tasks.filter(task => task.priority === 'medium').length, color: '#ffd166' },
-    { name: 'Низкий', value: tasks.filter(task => task.priority === 'low').length, color: '#06d6a0' }
+    { name: 'Высокий', value: filteredTasks.filter(task => task.priority === 'high').length, color: '#ff6b6b' },
+    { name: 'Средний', value: filteredTasks.filter(task => task.priority === 'medium').length, color: '#ffd166' },
+    { name: 'Низкий', value: filteredTasks.filter(task => task.priority === 'low').length, color: '#06d6a0' }
   ];
 
-  const timePerTaskData = tasks.map(task => ({
+  const timePerTaskData = filteredTasks.map(task => ({
     name: task.title?.substring(0, 15) || 'Задача',
     time: Number(task.work_duration) || 0
   }));
@@ -339,6 +362,27 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
           </StyledSelect>
         </FormControl>
 
+        {selectedAssignment && tasks.length > 0 && (
+          <Box mt={2} mb={3}>
+            <ToggleButtonGroup
+              value={taskFilter}
+              onChange={handleTaskFilterChange}
+              exclusive
+              aria-label="Фильтр задач"
+            >
+              <ToggleButton value="active" aria-label="Активные">
+                Активные
+              </ToggleButton>
+              <ToggleButton value="archived" aria-label="Архив">
+                Архив
+              </ToggleButton>
+              <ToggleButton value="all" aria-label="Все">
+                Все
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+        )}
+
         {!selectedAssignment && assignments.length === 0 && !loading && (
           <Typography variant="body1" style={{ marginTop: 20 }}>
             Нет доступных заданий
@@ -410,19 +454,21 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
                       <AccessTimeIcon color="info" fontSize="small" />
                       <Typography variant="body2">Общее время: {formatTime(totalTime)}</Typography>
                     </MetricItem>
-                    <Box mt={1}>
-                      <Chip 
-                        label={`Быстрее всего: ${formatTime(Math.min(...tasks.map(t => Number(t.work_duration) || 0)))}`} 
-                        size="small" 
-                        color="success"
-                      />
-                      <Chip 
-                        label={`Дольше всего: ${formatTime(Math.max(...tasks.map(t => Number(t.work_duration) || 0)))}`} 
-                        size="small" 
-                        color="error"
-                        style={{ marginLeft: '8px' }}
-                      />
-                    </Box>
+                    {filteredTasks.length > 0 && (
+                      <Box mt={1}>
+                        <Chip 
+                          label={`Быстрее всего: ${formatTime(Math.min(...filteredTasks.map(t => Number(t.work_duration) || 0)))}`} 
+                            size="small" 
+                            color="success"
+                          />
+                        <Chip 
+                           label={`Дольше всего: ${formatTime(Math.max(...filteredTasks.map(t => Number(t.work_duration) || 0)))}`} 
+                             size="small" 
+                             color="error"
+                            style={{ marginLeft: '8px' }}
+                          />
+                      </Box>
+                    )}
                   </CardContent>
                 </StatsCard>
               </Grid>
@@ -432,39 +478,45 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
                   <CardContent>
                     <Typography color="textSecondary" gutterBottom>Задачи по приоритету</Typography>
                     <Box height={120}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={priorityData.filter(item => item.value > 0)}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={60}
-                            paddingAngle={2}
-                          >
-                            {priorityData.filter(item => item.value > 0).map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      {priorityData.some(item => item.value > 0) ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={priorityData.filter(item => item.value > 0)}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={40}
+                              outerRadius={60}
+                              paddingAngle={2}
+                            >
+                              {priorityData.filter(item => item.value > 0).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                          <Typography color="textSecondary">Нет данных</Typography>
+                        </Box>
+                      )}
                     </Box>
                     <Box display="flex" justifyContent="space-between" mt={1}>
                       <Chip 
-                        label={`Высокий: ${tasks.filter(task => task.priority === 'high').length}`} 
+                        label={`Высокий: ${filteredTasks.filter(task => task.priority === 'high').length}`} 
                         size="small" 
                         style={{ backgroundColor: '#ff6b6b', color: 'white' }} 
                       />
                       <Chip 
-                        label={`Средний: ${tasks.filter(task => task.priority === 'medium').length}`} 
+                        label={`Средний: ${filteredTasks.filter(task => task.priority === 'medium').length}`} 
                         size="small" 
                         style={{ backgroundColor: '#ffd166', color: 'black' }} 
                       />
                       <Chip 
-                        label={`Низкий: ${tasks.filter(task => task.priority === 'low').length}`} 
+                        label={`Низкий: ${filteredTasks.filter(task => task.priority === 'low').length}`} 
                         size="small" 
                         style={{ backgroundColor: '#06d6a0', color: 'white' }} 
                       />
@@ -513,105 +565,115 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
                 <ChartCard>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Время, затраченное на задачу</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={timePerTaskData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                        <XAxis dataKey="name" />
-                        <YAxis tickFormatter={(value) => formatTime(value).split(' ')[0]} />
-                        <Tooltip 
-                          formatter={(value) => [formatTime(value), 'Затраченное время']}
-                          labelFormatter={(value) => `Задача: ${value}`}
-                        />
-                        <Legend />
-                        <Bar 
-                          dataKey="time" 
-                          name="Затраченное время" 
-                          fill="#8884d8" 
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {timePerTaskData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={timePerTaskData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                          <XAxis dataKey="name" />
+                          <YAxis tickFormatter={(value) => formatTime(value).split(' ')[0]} />
+                          <Tooltip 
+                            formatter={(value) => [formatTime(value), 'Затраченное время']}
+                            labelFormatter={(value) => `Задача: ${value}`}
+                          />
+                          <Legend />
+                          <Bar 
+                            dataKey="time" 
+                            name="Затраченное время" 
+                            fill="#8884d8" 
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                        <Typography color="textSecondary">Нет данных для отображения</Typography>
+                      </Box>
+                    )}
                   </CardContent>
                 </ChartCard>
               </Grid>
             </Grid>
 
             {/* Дополнительные диаграммы */}
-            <Grid container spacing={3} style={{ marginTop: '16px' }}>
-              <Grid item xs={12} md={6}>
-                <ChartCard>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Динамика выполнения</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={[
-                        { name: 'Неделя 1', completed: 5, total: 10 },
-                        { name: 'Неделя 2', completed: 8, total: 12 },
-                        { name: 'Неделя 3', completed: 12, total: 15 },
-                        { name: 'Неделя 4', completed: 15, total: 18 },
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Area type="monotone" dataKey="completed" stackId="1" stroke="#8884d8" fill="#8884d8" name="Завершено" />
-                        <Area type="monotone" dataKey="total" stackId="2" stroke="#82ca9d" fill="#82ca9d" name="Всего задач" />
-                        <Legend />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </ChartCard>
-              </Grid>
+            {filteredTasks.length > 0 && (
+              <>
+                <Grid container spacing={3} style={{ marginTop: '16px' }}>
+                  <Grid item xs={12} md={6}>
+                    <ChartCard>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Динамика выполнения</Typography>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <AreaChart data={[
+                            { name: 'Неделя 1', completed: Math.round(completedTasks * 0.2), total: Math.round(totalTasks * 0.2) },
+                            { name: 'Неделя 2', completed: Math.round(completedTasks * 0.5), total: Math.round(totalTasks * 0.5) },
+                            { name: 'Неделя 3', completed: Math.round(completedTasks * 0.8), total: Math.round(totalTasks * 0.8) },
+                            { name: 'Неделя 4', completed: completedTasks, total: totalTasks },
+                          ]}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Area type="monotone" dataKey="completed" stackId="1" stroke="#8884d8" fill="#8884d8" name="Завершено" />
+                            <Area type="monotone" dataKey="total" stackId="2" stroke="#82ca9d" fill="#82ca9d" name="Всего задач" />
+                            <Legend />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </ChartCard>
+                  </Grid>
 
-              <Grid item xs={12} md={6}>
-                <ChartCard>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Показатели производительности</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <RadarChart outerRadius={90} data={[
-                        { subject: 'Эффективность', A: 90, fullMark: 100 },
-                        { subject: 'Продуктивность', A: 85, fullMark: 100 },
-                        { subject: 'Качество', A: 95, fullMark: 100 },
-                        { subject: 'Сроки', A: 80, fullMark: 100 },
-                        { subject: 'Сотрудничество', A: 88, fullMark: 100 },
-                      ]}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="subject" />
-                        <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                        <Radar name="Производительность" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                        <Legend />
-                        <Tooltip />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </ChartCard>
-              </Grid>
-            </Grid>
+                  <Grid item xs={12} md={6}>
+                    <ChartCard>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Показатели производительности</Typography>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <RadarChart outerRadius={90} data={[
+                            { subject: 'Эффективность', A: completionPercentage, fullMark: 100 },
+                            { subject: 'Продуктивность', A: Math.round((completedTasks / totalTasks) * 85), fullMark: 100 },
+                            { subject: 'Качество', A: Math.min(95, completionPercentage + 15), fullMark: 100 },
+                            { subject: 'Сроки', A: Math.max(80, 100 - (overdueTasks / totalTasks * 100)), fullMark: 100 },
+                            { subject: 'Сотрудничество', A: 88, fullMark: 100 },
+                          ]}>
+                            <PolarGrid />
+                            <PolarAngleAxis dataKey="subject" />
+                            <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                            <Radar name="Производительность" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                            <Legend />
+                            <Tooltip />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </ChartCard>
+                  </Grid>
+                </Grid>
 
-            {/* Распределение времени */}
-            <Grid container spacing={3} style={{ marginTop: '16px' }}>
-              <Grid item xs={12}>
-                <ChartCard>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Распределение времени по активности</Typography>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart data={[
-                        { name: 'Планирование', value: 15 },
-                        { name: 'Разработка', value: 40 },
-                        { name: 'Тестирование', value: 25 },
-                        { name: 'Ревью', value: 20 }
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis label={{ value: 'Время (%)', angle: -90, position: 'insideLeft' }} />
-                        <Tooltip formatter={(value) => [`${value}%`, 'Процент']} />
-                        <Legend />
-                        <Bar dataKey="value" fill="#82ca9d" name="Затраченное время" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </ChartCard>
-              </Grid>
-            </Grid>
+                {/* Распределение времени */}
+                <Grid container spacing={3} style={{ marginTop: '16px' }}>
+                  <Grid item xs={12}>
+                    <ChartCard>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Распределение времени по активности</Typography>
+                        <ResponsiveContainer width="100%" height={400}>
+                          <BarChart data={[
+                            { name: 'Планирование', value: 15 },
+                            { name: 'Разработка', value: 40 },
+                            { name: 'Тестирование', value: 25 },
+                            { name: 'Ревью', value: 20 }
+                          ]}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis label={{ value: 'Время (%)', angle: -90, position: 'insideLeft' }} />
+                            <Tooltip formatter={(value) => [`${value}%`, 'Процент']} />
+                            <Legend />
+                            <Bar dataKey="value" fill="#82ca9d" name="Затраченное время" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </ChartCard>
+                  </Grid>
+                </Grid>
+              </>
+            )}
           </>
         )}
       </ContentContainer>
