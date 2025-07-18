@@ -27,38 +27,98 @@ router.get('/assignments/:id/tasks', async (req, res) => {
     // Проверка аутентификации
     const decoded = jwt.verify(token, 'your_jwt_secret_key');
     
-    // Проверка доступа к заданию
+    // Проверка доступа к заданию (либо создатель, либо назначенный пользователь)
     const assignment = await pool.query(
-      'SELECT * FROM assignments WHERE id = $1 AND creator_id = $2',
+      `SELECT * FROM assignments 
+       WHERE id = $1 AND (creator_id = $2 OR $2 = ANY(assignees))`,
       [assignmentId, decoded.userId]
     );
     
     if (assignment.rows.length === 0) {
-      return res.status(404).json([]);
+      return res.status(403).json({ error: 'Доступ запрещен или задание не найдено' });
     }
     
-    // Получение задач из tasks и archived_tasks с явным указанием колонок и приведением типов
-    const tasksResult = await pool.query(
-      `SELECT 
-         id::text, title, description, deadline, creator_id::text, assignee_id::text, NULL::text AS assignment_id, 
-         status_id::text, priority_id::text, created_at, updated_at, NULL::timestamp AS seen_at, NULL::timestamp AS in_progress_since, NULL::timestamp AS deleted_at, 
-         0::int AS work_duration, 0::int AS progress_percentage
-       FROM tasks
-       WHERE assignment_id = $1
-      UNION ALL
+    // Улучшенный запрос с явным указанием полей и преобразованием типов
+    const tasksQuery = `
       SELECT 
-         id::text, title, description, deadline, creator_id::text, assignee_id::text, assignment_id::text, 
-         status_id::text, priority_id::text, created_at, updated_at, seen_at, in_progress_since, deleted_at, 
-         work_duration::int, progress_percentage::int
-       FROM archived_tasks
-       WHERE assignment_id = $1`,
-      [assignmentId]
-    );
+        t.id,
+        t.assignment_id,
+        t.title,
+        t.description,
+        t.deadline,
+        t.creator_id,
+        t.assignee_id,
+        t.status_id,
+        ts.name AS status,
+        t.priority_id,
+        tp.name AS priority,
+        t.created_at,
+        t.updated_at,
+        t.seen_at,
+        t.in_progress_since,
+        COALESCE(t.work_duration, 0) AS work_duration,
+        COALESCE(t.progress_percentage, 0) AS progress_percentage,
+        NULL AS deleted_at,
+        FALSE AS is_archived
+      FROM tasks t
+      LEFT JOIN task_statuses ts ON t.status_id = ts.id
+      LEFT JOIN task_priorities tp ON t.priority_id = tp.id
+      WHERE t.assignment_id = $1
+      
+      UNION ALL
+      
+      SELECT 
+        at.id,
+        at.assignment_id,
+        at.title,
+        at.description,
+        at.deadline,
+        at.creator_id,
+        at.assignee_id,
+        at.status_id,
+        ts.name AS status,
+        at.priority_id,
+        tp.name AS priority,
+        at.created_at,
+        at.updated_at,
+        at.seen_at,
+        at.in_progress_since,
+        COALESCE(at.work_duration, 0) AS work_duration,
+        COALESCE(at.progress_percentage, 0) AS progress_percentage,
+        at.deleted_at,
+        TRUE AS is_archived
+      FROM archived_tasks at
+      LEFT JOIN task_statuses ts ON at.status_id = ts.id
+      LEFT JOIN task_priorities tp ON at.priority_id = tp.id
+      WHERE at.assignment_id = $1
+      ORDER BY created_at DESC
+    `;
     
-    res.json(tasksResult.rows);
+    const tasksResult = await pool.query(tasksQuery, [assignmentId]);
+    
+    // Преобразование дат в ISO строки для фронтенда
+    const tasks = tasksResult.rows.map(task => ({
+      ...task,
+      deadline: task.deadline ? new Date(task.deadline).toISOString() : null,
+      created_at: new Date(task.created_at).toISOString(),
+      updated_at: new Date(task.updated_at).toISOString(),
+      seen_at: task.seen_at ? new Date(task.seen_at).toISOString() : null,
+      in_progress_since: task.in_progress_since ? new Date(task.in_progress_since).toISOString() : null,
+      deleted_at: task.deleted_at ? new Date(task.deleted_at).toISOString() : null
+    }));
+    
+    res.json(tasks);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching tasks:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Недействительный токен' });
+    }
+    
+    res.status(500).json({ 
+      error: 'Внутренняя ошибка сервера',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
