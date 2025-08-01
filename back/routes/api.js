@@ -30,7 +30,9 @@ router.get('/assignments/:id/tasks', async (req, res) => {
     // Проверка доступа к заданию (либо создатель, либо назначенный пользователь)
     const assignment = await pool.query(
       `SELECT * FROM assignments 
-       WHERE id = $1 AND (creator_id = $2 OR $2 = ANY(assignees))`,
+       WHERE id = $1 AND (creator_id = $2 OR EXISTS (
+         SELECT 1 FROM tasks WHERE assignment_id = $1 AND assignee_id = $2
+       ))`,
       [assignmentId, decoded.userId]
     );
     

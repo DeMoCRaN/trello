@@ -1,0 +1,31 @@
+IDEF0 Diagram - Task Management System
+
+A0: Manage Task System
+  Inputs: User requests, Task data
+  Controls: User roles, Business rules, Security policies
+  Outputs: Task status updates, Notifications, Reports
+  Mechanisms: Frontend UI, Backend API, Database
+
+A1: Authenticate User
+  Inputs: Credentials
+  Controls: Password policy, Authentication rules
+  Outputs: Authentication token (JWT)
+  Mechanisms: Login form, Authentication service
+
+A2: Manage Tasks
+  Inputs: Task creation/update requests
+  Controls: Validation rules, Access control
+  Outputs: Task records, Status changes
+  Mechanisms: API endpoints, Database
+
+A3: Monitor Progress
+  Inputs: Task updates
+  Controls: Status transition rules
+  Outputs: Progress reports, Notifications
+  Mechanisms: Backend logic, UI updates
+
+A4: Notify Users
+  Inputs: Comments, Task changes
+  Controls: Notification preferences
+  Outputs: Notifications
+  Mechanisms: Notification service, UI components

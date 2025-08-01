@@ -1,0 +1,67 @@
+SADT Diagram - Task Management System
+
++---------------------+
+|    Manage Tasks      |
++---------------------+
+| Inputs:             |
+| - User requests     |
+| - Task data         |
+| Controls:           |
+| - User roles        |
+| - Task status rules |
+| Mechanisms:         |
+| - Frontend UI       |
+| - Backend API       |
++---------------------+
+          |
+          v
++---------------------+
+|  Authenticate User  |
++---------------------+
+| Inputs:             |
+| - Credentials       |
+| Controls:           |
+| - Password policy   |
+| Mechanisms:         |
+| - Login form        |
+| - JWT token         |
++---------------------+
+          |
+          v
++---------------------+
+|  Create/Update Task |
++---------------------+
+| Inputs:             |
+| - Task details      |
+| Controls:           |
+| - Validation rules  |
+| Mechanisms:         |
+| - API endpoints     |
+| - Database          |
++---------------------+
+          |
+          v
++---------------------+
+|  Monitor Progress   |
++---------------------+
+| Inputs:             |
+| - Task updates      |
+| Controls:           |
+| - Status transitions|
+| Mechanisms:         |
+| - Backend logic     |
+| - UI updates        |
++---------------------+
+          |
+          v
++---------------------+
+|  Notify Users       |
++---------------------+
+| Inputs:             |
+| - Comments          |
+| Controls:           |
+| - Notification rules|
+| Mechanisms:         |
+| - Notification UI   |
+| - Backend services  |
++---------------------+

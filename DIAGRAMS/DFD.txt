@@ -1,0 +1,28 @@
+Data Flow Diagram (DFD) - Task Management System
+
+[User]
+   |
+   |---> (Login Request) ---> [Frontend React App]
+   |                            |
+   |                            |---> (POST /api/login with credentials) ---> [Backend Express Server]
+   |                            |                                         |
+   |                            |                                         |---> (Validate credentials, generate JWT)
+   |                            |                                         |---> (Return JWT token)
+   |                            |
+   |                            |<--- (JWT token) <------------------------
+   |
+   |---> (Use JWT token in Authorization header for API requests)
+   |
+   |---> (Request assignments, tasks, comments, etc.)
+                                |
+                                |---> [Backend Express Server]
+                                |         |
+                                |         |---> (Verify JWT token)
+                                |         |---> (Query PostgreSQL database)
+                                |         |---> (Return requested data)
+                                |
+                                |<--- (Data response) <-------------------
+
+[PostgreSQL Database]
+   |
+   |<---> (Data queries and updates from Backend)
