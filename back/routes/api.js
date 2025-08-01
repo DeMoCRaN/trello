@@ -50,6 +50,8 @@ router.get('/assignments/:id/tasks', async (req, res) => {
         t.deadline,
         t.creator_id,
         t.assignee_id,
+        u.email AS assignee_email,
+        u.username AS assignee_name,
         t.status_id,
         ts.name AS status,
         t.priority_id,
@@ -63,6 +65,7 @@ router.get('/assignments/:id/tasks', async (req, res) => {
         NULL AS deleted_at,
         FALSE AS is_archived
       FROM tasks t
+      LEFT JOIN users u ON t.assignee_id = u.id
       LEFT JOIN task_statuses ts ON t.status_id = ts.id
       LEFT JOIN task_priorities tp ON t.priority_id = tp.id
       WHERE t.assignment_id = $1
@@ -77,6 +80,8 @@ router.get('/assignments/:id/tasks', async (req, res) => {
         at.deadline,
         at.creator_id,
         at.assignee_id,
+        u.email AS assignee_email,
+        u.username AS assignee_name,
         at.status_id,
         ts.name AS status,
         at.priority_id,
@@ -90,6 +95,7 @@ router.get('/assignments/:id/tasks', async (req, res) => {
         at.deleted_at,
         TRUE AS is_archived
       FROM archived_tasks at
+      LEFT JOIN users u ON at.assignee_id = u.id
       LEFT JOIN task_statuses ts ON at.status_id = ts.id
       LEFT JOIN task_priorities tp ON at.priority_id = tp.id
       WHERE at.assignment_id = $1

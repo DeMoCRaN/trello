@@ -21,7 +21,6 @@ function AssignmentsList({ assignments, selectedAssignment, onSelect, onDelete, 
       const success = await onCreate(assignmentData);
       if (success) {
         setNewAssignmentTitle('');
-        // Additional success handling if needed
       }
     }
   };

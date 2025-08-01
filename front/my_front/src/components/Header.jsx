@@ -20,7 +20,7 @@ function Header({ userEmail, onNavigate,  }) {
         style={{ cursor: userEmail ? 'pointer' : 'default', textDecoration: userEmail ? 'underline' : 'none' }}
         onClick={() => {
           if (userEmail) {
-            onNavigate('user-info');
+            alert('не работает временно');
           }
         }}
       >
