@@ -73,6 +73,7 @@ function MainPage({ userEmail }) {
             assignee_name: task.assignee_name || 'Неизвестно',
             created_at: task.created_at || new Date().toISOString(),
             createdAt: task.created_at || task.createdAt || new Date().toISOString(),
+            isArchived: !!task.deleted_at || task.is_archived === true
           }));
         }
         return assignment;
