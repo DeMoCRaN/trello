@@ -68,6 +68,14 @@ const ChartCard = styled(Card)({
   padding: '16px',
   borderRadius: '12px',
   boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.08)',
+  display: 'flex',
+  flexDirection: 'column',
+});
+
+const ChartContainer = styled('div')({
+  flex: 1,
+  minHeight: '400px',
+  width: '100%',
 });
 
 const StyledSelect = styled(Select)({
@@ -88,10 +96,11 @@ const MetricItem = styled(Box)({
 });
 
 const CalendarWrapper = styled('div')({
-  height: '70vh',
-  marginTop: 16,
+  flex: 1,
+  minHeight: '500px',
   '& .rbc-month-view': {
-    height: '60vh',
+    height: '100%',
+    minHeight: '400px',
   },
   '& .rbc-event': {
     backgroundColor: '#1976d2',
@@ -135,7 +144,6 @@ const DeadlineCalendar = ({ events }) => {
     }));
   };
 
-  // Переносим логику стилей прямо в компонент Calendar
   const CustomEvent = ({ event }) => (
     <div 
       onClick={() => toggleExpand(event.start)}
@@ -196,6 +204,7 @@ const DeadlineCalendar = ({ events }) => {
     </CalendarWrapper>
   );
 };
+
 
 
 
@@ -468,7 +477,7 @@ const DeadlineChart = ({ data = [] }) => {
             <BarChart
               data={processedData}
               layout="vertical"
-              margin={{ top: 20, right: 30, left: 120, bottom: 40 }}
+              margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
               <XAxis
@@ -705,13 +714,13 @@ const getActivityTimeline = () => {
     return (
       <ChartCard>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h5" gutterBottom>
             <PeopleIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
             Исполнители и выполненные задачи
           </Typography>
           {performersData.length > 0 ? (
             <>
-              <TableContainer component={Paper} style={{ maxHeight: 400, overflowX: 'auto', width: '100%' }}>
+              <TableContainer component={Paper} style={{ maxHeight: 600, overflowX: 'auto', width: '100%' }}>
                 <Table stickyHeader size="small">
                   <TableHead>
                     <TableRow>
@@ -1048,7 +1057,7 @@ const getActivityTimeline = () => {
   <Grid container spacing={3}>
     <Grid item xs={12} md={7}>
       <ChartCard>
-        <CardContent>
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '500px' }}>
           <Typography variant="h6" gutterBottom>
             <EventIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
             Календарь дедлайнов
@@ -1058,86 +1067,207 @@ const getActivityTimeline = () => {
       </ChartCard>
     </Grid>
     <Grid item xs={12} md={5}>
-      <DeadlineChart data={deadlineData} />
+      <ChartCard>
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Typography variant="h6" gutterBottom>
+            <EventIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
+            График предстоящих дедлайнов
+          </Typography>
+          <ChartContainer>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={deadlineData}
+                layout="vertical"
+                margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                <XAxis
+                  type="number"
+                  dataKey="deadline"
+                  tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                  tick={{ fontSize: 12, fill: '#555' }}
+                  axisLine={{ stroke: '#ddd' }}
+                  label={{
+                    value: 'Дата выполнения',
+                    position: 'bottom',
+                    offset: 20,
+                    fontSize: 12,
+                    fill: '#555'
+                  }}
+                />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  width={110}
+                  tick={{ fontSize: 12, fill: '#333' }}
+                  tickFormatter={value => value.length > 15 ? `${value.substring(0, 12)}...` : value}
+                />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const task = payload[0].payload;
+                    const deadline = new Date(task.deadline);
+                    return (
+                      <div style={{
+                        background: '#fff',
+                        padding: '10px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}>
+                        <div style={{ fontWeight: 600, marginBottom: '5px' }}>{task.name}</div>
+                        <div style={{ marginBottom: '5px' }}>
+                          <strong>Срок:</strong> {deadline.toLocaleDateString('ru-RU')}
+                        </div>
+                        <div style={{ 
+                          color: task.overdue ? '#f44336' : task.status === 'done' ? '#4caf50' : '#2196f3'
+                        }}>
+                          {task.overdue ? 'Просрочено' : task.status === 'done' ? 'Завершено' : 'Активно'}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar dataKey="deadline" barSize={20} radius={[0, 4, 4, 0]}>
+                  {deadlineData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={
+                        entry.overdue ? '#f44336' :
+                        entry.status === 'done' ? '#4caf50' :
+                        '#2196f3'
+                      }
+                    />
+                  ))}
+                </Bar>
+                <ReferenceLine
+                  x={new Date().getTime()}
+                  stroke="#ff9800"
+                  strokeWidth={2}
+                  label={{
+                    value: 'Сегодня',
+                    position: 'right',
+                    fill: '#ff9800',
+                    fontSize: 12
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </ChartCard>
     </Grid>
   </Grid>
 </Box>
 
-              {/* Раздел: Статусы задач */}
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Статусы задач
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <ChartCard>
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>Распределение задач по статусу</Typography>
-                        {statusData.some(item => item.value > 0) ? (
-                          <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                              <Pie
-                                data={statusData.filter(item => item.value > 0)}
-                                dataKey="value"
-                                nameKey="name"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={80}
-                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                              >
-                                {statusData.filter(item => item.value > 0).map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip formatter={(value) => [`${value} задач`, 'Количество']} />
-                              <Legend />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                            <Typography color="textSecondary">Нет данных для отображения</Typography>
-                          </Box>
-                        )}
-                      </CardContent>
-                    </ChartCard>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <ChartCard>
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>Время, затраченное на задачу</Typography>
-                        {timePerTaskData.length > 0 ? (
-                          <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={timePerTaskData}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                              <XAxis dataKey="name" />
-                              <YAxis tickFormatter={(value) => formatTime(value).split(' ')[0]} />
-                              <Tooltip
-                                formatter={(value) => [formatTime(value), 'Затраченное время']}
-                                labelFormatter={(value) => `Задача: ${value}`}
-                              />
-                              <Legend />
-                              <Bar
-                                dataKey="time"
-                                name="Затраченное время"
-                                fill="#8884d8"
-                                radius={[4, 4, 0, 0]}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                            <Typography color="textSecondary">Нет данных для отображения</Typography>
-                          </Box>
-                        )}
-                      </CardContent>
-                    </ChartCard>
-                  </Grid>
-                </Grid>
-              </Box>
-
+{/* Раздел: Статусы задач */}
+<Box sx={{ mb: 4 }}>
+  <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
+    Статусы задач
+  </Typography>
+  <Grid container spacing={3}>
+    <Grid item xs={12} lg={6}> {/* Изменяем md на lg для лучшего контроля */}
+      <ChartCard sx={{ height: '500px' }}> {/* Фиксированная высота */}
+        <CardContent sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          padding: '20px' // Увеличиваем отступы
+        }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}> {/* Увеличиваем отступ */}
+            Распределение задач по статусу
+          </Typography>
+          <ChartContainer>
+            {statusData?.some(item => item.value > 0) && (
+              <ResponsiveContainer width={400} height="100%">
+                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  <Pie
+                    data={statusData.filter(item => item.value > 0)}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100} // Увеличиваем радиус
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {statusData.filter(item => item.value > 0).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => [`${value} задач`, 'Количество']}
+                    contentStyle={{ fontSize: '14px' }} // Увеличиваем шрифт
+                  />
+                  <Legend 
+                    layout="horizontal" 
+                    verticalAlign="bottom" 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </ChartContainer>
+        </CardContent>
+      </ChartCard>
+    </Grid>
+    
+    <Grid item xs={12} lg={6}>
+      <ChartCard sx={{ height: '500px' }}>
+        <CardContent sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          padding: '20px'
+        }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+            Время, затраченное на задачу
+          </Typography>
+          <ChartContainer>
+            {timePerTaskData?.length > 0 && (
+              <ResponsiveContainer width={500} height="100%">
+                <BarChart 
+                  data={timePerTaskData}
+                  margin={{ top: 20, right: 30, left: 30, bottom: 60 }} // Увеличиваем отступы
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis 
+                    dataKey="name" 
+                    tickFormatter={value => value.length > 10 ? `${value.substring(0, 8)}...` : value}
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => formatTime(value).split(' ')[0]}
+                    tick={{ fontSize: 12 }}
+                    width={80}
+                  />
+                  <Tooltip
+                    formatter={(value) => [formatTime(value), 'Затраченное время']}
+                    labelFormatter={(value) => `Задача: ${value}`}
+                    contentStyle={{ fontSize: '14px' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '10px' }}
+                  />
+                  <Bar
+                    dataKey="time"
+                    name="Затраченное время"
+                    fill="#8884d8"
+                    radius={[4, 4, 0, 0]}
+                    barSize={30} // Увеличиваем размер баров
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartContainer>
+        </CardContent>
+      </ChartCard>
+    </Grid>
+  </Grid>
+</Box>
               {/* Раздел: Работа команды */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
+                <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
                   Работа команды
                 </Typography>
                 <Grid container spacing={3}>
@@ -1149,16 +1279,16 @@ const getActivityTimeline = () => {
 
               {/* Раздел: Динамика выполнения */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
+                <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
                   Динамика выполнения
                 </Typography>
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
                     <ChartCard>
                       <CardContent>
-                        <Typography variant="h6" gutterBottom>По периоду задания</Typography>
+                        <Typography variant="h5" gutterBottom>По периоду задания</Typography>
                         {getActivityTimeline().length > 0 ? (
-                          <ResponsiveContainer width="100%" height={300}>
+                          <ResponsiveContainer width={1000} height={300}>
                             <AreaChart data={getActivityTimeline()}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis dataKey="name" />
@@ -1209,9 +1339,9 @@ const getActivityTimeline = () => {
                   <Grid item xs={12} md={6}>
                     <ChartCard>
                       <CardContent>
-                        <Typography variant="h6" gutterBottom>Последние 4 недели</Typography>
+                        <Typography variant="h5" gutterBottom>Последние 4 недели</Typography>
                         {getWeeklyProgress().length > 0 ? (
-                          <ResponsiveContainer width="100%" height={300}>
+                          <ResponsiveContainer width={1000} height={300}>
                             <AreaChart data={getWeeklyProgress()}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis dataKey="name" />
@@ -1254,7 +1384,7 @@ const getActivityTimeline = () => {
 
               {/* Раздел: Производительность */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
+                <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
                   Производительность
                 </Typography>
                 <Grid container spacing={3}>
