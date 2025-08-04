@@ -94,13 +94,13 @@ const MetricItem = styled(Box)({
   marginBottom: '8px',
   width: '100%'
 });
-
 const CalendarWrapper = styled('div')({
+  height: '70vh',
   flex: 1,
-  minHeight: '500px',
+  minHeight: '600px',
   '& .rbc-month-view': {
     height: '100%',
-    minHeight: '400px',
+    minHeight: '500px',
   },
   '& .rbc-event': {
     backgroundColor: '#1976d2',
@@ -112,6 +112,12 @@ const CalendarWrapper = styled('div')({
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
+    transition: 'all 0.2s ease',
+    '&:hover': {
+      transform: 'scale(1.02)',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      zIndex: 2
+    }
   },
   '& .rbc-event-overdue': {
     backgroundColor: '#ff6b6b',
@@ -130,51 +136,182 @@ const CalendarWrapper = styled('div')({
     fontSize: '0.7rem',
     color: '#1976d2',
     fontWeight: 'bold',
+    zIndex: 5
   },
+  '& .rbc-overflowing': {
+    marginRight: 0
+  }
 });
 
-// Удаляем неиспользуемую переменную eventStyleGetter из компонента DeadlineCalendar
-const DeadlineCalendar = ({ events }) => {
-  const [expandedEvents, setExpandedEvents] = useState({});
 
-  const toggleExpand = (date) => {
-    setExpandedEvents(prev => ({
+const DeadlineCalendar = ({ events }) => {
+  const [expandedEvent, setExpandedEvent] = useState(null);
+  const [showMoreEvents, setShowMoreEvents] = useState({});
+  const [hoveredEvent, setHoveredEvent] = useState(null);
+
+  // Обработчик клика по событию
+  const handleEventClick = (event, e) => {
+    e.stopPropagation();
+    setExpandedEvent(expandedEvent?.id === event.id ? null : event);
+  };
+
+  // Обработчик клика по кнопке "показать больше"
+  const handleShowMoreClick = (date, events, e) => {
+    e.stopPropagation();
+    setShowMoreEvents(prev => ({
       ...prev,
-      [date]: !prev[date]
+      [date.toISOString()]: !prev[date.toISOString()]
     }));
   };
 
-  const CustomEvent = ({ event }) => (
-    <div 
-      onClick={() => toggleExpand(event.start)}
-      style={{
-        backgroundColor: event.overdue 
-          ? '#ff6b6b' 
-          : event.status === 'done' 
-            ? '#4caf50' 
-            : '#1976d2',
-        color: 'white',
-        border: '0px',
-        borderRadius: '4px',
-        padding: '2px 4px',
-        height: expandedEvents[event.start] ? 'auto' : '24px',
-        whiteSpace: expandedEvents[event.start] ? 'normal' : 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        cursor: 'pointer'
-      }}
-    >
-      <div style={{ fontWeight: 'bold' }}>{event.title}</div>
-      {expandedEvents[event.start] && (
-        <div style={{ fontSize: '0.7rem', marginTop: '4px' }}>
-          {event.overdue && <span style={{ color: '#fff' }}>Просрочено</span>}
-          {event.status === 'done' && <span style={{ color: '#fff' }}>Завершено</span>}
-          {event.priority === 'high' && <span style={{ color: '#fff' }}> • Высокий приоритет</span>}
+  // Кастомный рендер события
+  const CustomEvent = ({ event }) => {
+    const isExpanded = expandedEvent?.id === event.id;
+    const isHovered = hoveredEvent?.id === event.id && !isExpanded;
+
+    return (
+      <div 
+        onClick={(e) => handleEventClick(event, e)}
+        onMouseEnter={() => setHoveredEvent(event)}
+        onMouseLeave={() => setHoveredEvent(null)}
+        style={{
+          backgroundColor: event.overdue 
+            ? '#ff6b6b' 
+            : event.status === 'done' 
+              ? '#4caf50' 
+              : '#1976d2',
+          color: 'white',
+          border: '0px',
+          borderRadius: '4px',
+          padding: '6px 8px',
+          marginBottom: '2px',
+          height: isExpanded ? 'auto' : '24px',
+          whiteSpace: isExpanded ? 'normal' : 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          transform: isHovered ? 'scale(1.02)' : 'none',
+          boxShadow: isHovered ? '0 2px 4px rgba(0,0,0,0.2)' : 'none',
+          position: 'relative',
+          zIndex: isExpanded || isHovered ? 2 : 1
+        }}
+      >
+        <div style={{ fontWeight: 'bold' }}>{event.title}</div>
+        {isExpanded && (
+          <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>
+            {event.overdue && <span style={{ display: 'block' }}>🔴 Просрочено</span>}
+            {event.status === 'done' && <span style={{ display: 'block' }}>✅ Завершено</span>}
+            {event.priority === 'high' && <span style={{ display: 'block' }}>⚠️ Высокий приоритет</span>}
+          </div>
+        )}
+        
+        {isHovered && !isExpanded && (
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            zIndex: 10,
+            background: 'white',
+            color: '#333',
+            padding: '8px',
+            borderRadius: '4px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            fontSize: '0.8rem',
+            width: '200px'
+          }}>
+            <div><strong>{event.title}</strong></div>
+            <div>Статус: {event.status === 'done' ? 'Завершено' : event.overdue ? 'Просрочено' : 'Активно'}</div>
+            {event.priority === 'high' && <div>Приоритет: Высокий</div>}
+            <div>Дата: {new Date(event.start).toLocaleDateString()}</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Кастомный рендер кнопки "показать больше"
+const CustomShowMore = ({ date, events }) => {
+  // Добавляем проверку на существование date
+  if (!date) return null;
+  
+  const dateKey = date.toISOString();
+  const isOpen = showMoreEvents[dateKey];
+  
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowMoreEvents(prev => ({
+            ...prev,
+            [dateKey]: !prev[dateKey]
+          }));
+        }}
+        style={{
+          background: 'rgba(255, 255, 255, 0.9)',
+          border: 'none',
+          borderRadius: '4px',
+          padding: '2px 6px',
+          fontSize: '0.7rem',
+          color: '#1976d2',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          marginTop: '4px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          transition: 'all 0.2s ease',
+          ':hover': {
+            background: 'rgba(255, 255, 255, 1)',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+          }
+        }}
+      >
+        {isOpen ? '▲ Скрыть' : `▼ +${events.length} еще`}
+      </button>
+      
+      {isOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          zIndex: 20,
+          background: 'white',
+          boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
+          borderRadius: '4px',
+          padding: '8px',
+          width: '220px',
+          maxHeight: '300px',
+          overflowY: 'auto'
+        }}>
+          {events.map(event => (
+            <div 
+              key={event.id}
+              style={{
+                padding: '6px',
+                marginBottom: '4px',
+                backgroundColor: '#f5f7fa',
+                borderRadius: '4px',
+                fontSize: '0.8rem',
+                borderLeft: `3px solid ${
+                  event.overdue 
+                    ? '#ff6b6b' 
+                    : event.status === 'done' 
+                      ? '#4caf50' 
+                      : '#1976d2'
+                }`
+              }}
+            >
+              <div style={{ fontWeight: 'bold' }}>{event.title}</div>
+              <div style={{ fontSize: '0.7rem', color: '#666' }}>
+                {new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
-
+};
   return (
     <CalendarWrapper>
       <Calendar
@@ -185,7 +322,20 @@ const DeadlineCalendar = ({ events }) => {
         defaultView="month"
         views={['month', 'week', 'agenda']}
         components={{
-          event: CustomEvent
+          event: CustomEvent,
+          week: {
+            event: CustomEvent
+          },
+          month: {
+            event: CustomEvent,
+            showMore: ({ date, events }) => (
+              <CustomShowMore 
+                date={date} 
+                events={events} 
+                onShowMore={handleShowMoreClick}
+              />
+            )
+          }
         }}
         messages={{
           today: 'Сегодня',
@@ -197,14 +347,25 @@ const DeadlineCalendar = ({ events }) => {
           date: 'Дата',
           time: 'Время',
           event: 'Событие',
-          noEventsInRange: 'Нет дедлайнов в этом периоде',
-          showMore: total => `+${total} еще`
+          noEventsInRange: 'Нет дедлайнов в этом периоде'
         }}
+        onSelectEvent={handleEventClick}
+        eventPropGetter={(event) => ({
+          style: {
+            backgroundColor: event.overdue 
+              ? '#ff6b6b' 
+              : event.status === 'done' 
+                ? '#4caf50' 
+                : '#1976d2',
+            color: 'white',
+            borderRadius: '4px',
+            border: 'none'
+          }
+        })}
       />
     </CalendarWrapper>
   );
 };
-
 
 
 
@@ -865,18 +1026,7 @@ const getActivityTimeline = () => {
                 </StyledSelect>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
-              {selectedAssignmentData && (
-                <Box display="flex" alignItems="center" height="100%">
-                  <Typography variant="subtitle1" color="textSecondary">
-                    Период: {moment(selectedAssignmentData.created_at).format('DD MMM YYYY')} - 
-                    {selectedAssignmentData.deadline ? 
-                      moment(selectedAssignmentData.deadline).format('DD MMM YYYY') : 
-                      'нет дедлайна'}
-                  </Typography>
-                </Box>
-              )}
-            </Grid>
+
             {selectedAssignment && tasks.length > 0 && (
               <Grid item xs={12}>
                 <ToggleButtonGroup
