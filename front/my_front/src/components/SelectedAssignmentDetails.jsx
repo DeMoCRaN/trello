@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Task from '../Task';
 import './Components.css';
 
@@ -14,98 +14,97 @@ function SelectedAssignmentDetails({
   onCompleteWork,
   statusChangeLoading,
   timers,
-  formatTime
+  formatTime,
+  activeTasks = [],
+  archivedTasks = []
 }) {
-  // Состояние для локального хранения задач
-  const [localTasks, setLocalTasks] = useState([]);
+  const [activeTab, setActiveTab] = useState('active');
   
-  // Группируем задачи по статусам (английские ключи)
-  const tasksByStatus = {
-    'new': [],
-    'in_progress': [],
-    'done': [],
-  };
-
-  // Перевод статусов на русский
   const statusTranslations = {
     'new': 'Новые',
     'in_progress': 'В работе',
     'done': 'Завершённые'
   };
 
-  // Обновляем локальные задачи при изменении selectedAssignment
-  useEffect(() => {
-    if (selectedAssignment?.tasks) {
-      setLocalTasks([...selectedAssignment.tasks]);
-    }
-  }, [selectedAssignment]);
 
-  // Обработчик для обновления локальной задачи
-  const updateLocalTask = (taskId, updates) => {
-    setLocalTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === taskId ? { ...task, ...updates } : task
-      )
-    );
-  };
-
-  // Обработчик для удаления локальной задачи
-  const deleteLocalTask = (taskId) => {
-    setLocalTasks(prevTasks => 
-      prevTasks.filter(task => task.id !== taskId)
-    );
-  };
-
-  // Модифицированные обработчики, которые обновляют локальное состояние
   const handleStatusChange = async (taskId, newStatusId) => {
     try {
       await onStatusChange(taskId, newStatusId);
-      updateLocalTask(taskId, { status: newStatusId });
     } catch (error) {
-      console.error('Failed to change status:', error);
+      console.error('Ошибка изменения статуса:', error);
+      alert(error.message);
     }
   };
 
   const handleDelete = async (taskId) => {
     try {
       await onDelete(taskId);
-      deleteLocalTask(taskId);
     } catch (error) {
-      console.error('Failed to delete task:', error);
+      console.error('Ошибка удаления задачи:', error);
+      alert(error.message);
     }
   };
 
   const handleCompleteWork = async (taskId) => {
     try {
       await onCompleteWork(taskId);
-      updateLocalTask(taskId, { status: 'done' });
     } catch (error) {
-      console.error('Failed to complete task:', error);
+      console.error('Ошибка завершения задачи:', error);
+      alert(error.message);
     }
   };
 
-  // Группировка задач для отображения
-  if (localTasks.length > 0) {
-    localTasks.forEach((task) => {
-      if (tasksByStatus[task.status]) {
-        tasksByStatus[task.status].push(task);
+  const groupTasksByStatus = (tasks) => {
+    const grouped = {
+      'new': [],
+      'in_progress': [],
+      'done': [],
+    };
+    
+    tasks.forEach(task => {
+      const statusKey = task.status || 'new';
+      if (grouped[statusKey]) {
+        grouped[statusKey].push(task);
       }
     });
-  }
+    
+    return grouped;
+  };
 
-  // Получаем массив статусов в правильном порядке для отображения
-  const orderedStatuses = Object.keys(tasksByStatus);
+  const currentTasks = activeTab === 'active' ? activeTasks : archivedTasks;
+  const groupedTasks = groupTasksByStatus(currentTasks);
+  const orderedStatuses = Object.keys(groupedTasks);
 
   return (
     <section className="selected-assignment">
       <h2>{selectedAssignment?.title || 'Название не указано'}</h2>
       <p>{selectedAssignment?.description || 'Описание отсутствует'}</p>
+      
+      <div className="task-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'active' ? 'active' : ''}`}
+          onClick={() => setActiveTab('active')}
+        >
+          Активные задачи ({activeTasks.length})
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'archived' ? 'active' : ''}`}
+          onClick={() => setActiveTab('archived')}
+        >
+          Архивные задачи ({archivedTasks.length})
+        </button>
+      </div>
+
       <div className="tasks-dashboard">
-        {orderedStatuses.map((statusKey) => (
+        {orderedStatuses.map(statusKey => (
           <div key={statusKey} className="tasks-column">
-            <h3>{statusTranslations[statusKey] || statusKey}</h3>
-            {tasksByStatus[statusKey].length > 0 ? (
-              tasksByStatus[statusKey].map((task) => (
+            <h3>
+              {statusTranslations[statusKey] || statusKey}
+              {activeTab === 'archived' && ' (Архив)'}
+            </h3>
+            
+            {groupedTasks[statusKey].length > 0 ? (
+              groupedTasks[statusKey].map(task => (
                 <Task
                   key={task.id}
                   task={task}
@@ -117,16 +116,19 @@ function SelectedAssignmentDetails({
                   onStopWork={onStopWork}
                   onResumeWork={onResumeWork}
                   onCompleteWork={handleCompleteWork}
-                  creatorName={task.creator_name}
-                  assigneeName={task.assignee_name}
+                  creatorName={task.creator_name || task.creator_id}
+                  assigneeName={task.assignee_name || task.assignee_id}
                   createdAt={task.created_at}
                   loading={statusChangeLoading[task.id]}
                   timer={timers[task.id]}
                   formatTime={formatTime}
+                  isArchived={activeTab === 'archived'}
                 />
               ))
             ) : (
-              <p>Задачи отсутствуют</p>
+              <p className="no-tasks-message">
+                {activeTab === 'archived' ? 'Нет архивных задач' : 'Нет задач'}
+              </p>
             )}
           </div>
         ))}

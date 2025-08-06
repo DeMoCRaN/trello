@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const tasksController = require('../controllers/tasks');
 const assignmentsController = require('../controllers/assignments');
 const commentsController = require('../controllers/comments');
-const archivedTasksController = require('../controllers/archivedTasks');
 
 
 const { Pool } = require('pg');
@@ -20,11 +19,11 @@ const pool = new Pool({
 
 const router = express.Router();
 
-// Добавляем новые роуты для работы с архивными задачами
-router.get('/assignments/:id/archived-tasks', async (req, res) => {
+router.get('/assignments/:id/tasks', async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.id);
     const token = req.headers.authorization?.split(' ')[1];
+    const includeArchived = req.query.include_archived === 'true';
     
     // Проверка аутентификации
     const decoded = jwt.verify(token, 'your_jwt_secret_key');
@@ -42,114 +41,8 @@ router.get('/assignments/:id/archived-tasks', async (req, res) => {
       return res.status(403).json({ error: 'Доступ запрещен или задание не найдено' });
     }
     
-    const archivedTasks = await archivedTasksController.getArchivedTasksByAssignment(pool, assignmentId);
-    res.json(archivedTasks);
-  } catch (error) {
-    console.error('Error fetching archived tasks:', error);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ error: 'Недействительный токен' });
-    }
-    
-    res.status(500).json({ 
-      error: 'Внутренняя ошибка сервера',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-router.patch('/archived-tasks/:id/status', async (req, res) => {
-  try {
-    console.log('PATCH /archived-tasks/:id/status called with params:', req.params, 'body:', req.body);
-    const taskId = parseInt(req.params.id, 10);
-    const { status_id, action } = req.body;
-    
-    if (!status_id) {
-      return res.status(400).json({ error: 'status_id is required' });
-    }
-    
-    const updatedTask = await archivedTasksController.updateArchivedTaskStatus(pool, taskId, status_id, action);
-    res.json(updatedTask);
-  } catch (error) {
-    console.error('Error updating archived task status:', error);
-    res.status(500).json({ error: 'Error updating archived task status' });
-  }
-});
-
-router.patch('/archived-tasks/:id/progress', async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.id, 10);
-    const { progress_percentage } = req.body;
-    
-    if (progress_percentage === undefined || progress_percentage < 0 || progress_percentage > 100) {
-      return res.status(400).json({ error: 'Invalid progress_percentage value' });
-    }
-    
-    const updatedTask = await archivedTasksController.updateArchivedTaskProgress(pool, taskId, progress_percentage);
-    res.json(updatedTask);
-  } catch (error) {
-    console.error('Error updating archived task progress:', error);
-    res.status(500).json({ error: 'Error updating archived task progress' });
-  }
-});
-
-router.patch('/archived-tasks/:id/seen', async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.id, 10);
-    const updatedTask = await archivedTasksController.markArchivedTaskAsSeen(pool, taskId);
-    res.json(updatedTask);
-  } catch (error) {
-    console.error('Error marking archived task as seen:', error);
-    res.status(500).json({ error: 'Error marking archived task as seen' });
-  }
-});
-
-router.delete('/archived-tasks/:id', async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.id, 10);
-    const result = await archivedTasksController.deleteArchivedTask(pool, taskId);
-    res.json(result);
-  } catch (error) {
-    console.error('Error deleting archived task:', error);
-    res.status(500).json({ error: 'Error deleting archived task' });
-  }
-});
-
-router.post('/archived-tasks/:id/restore', async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.id, 10);
-    const result = await archivedTasksController.restoreArchivedTask(pool, taskId);
-    res.json(result);
-  } catch (error) {
-    console.error('Error restoring archived task:', error);
-    res.status(500).json({ error: 'Error restoring archived task' });
-  }
-});
-
-
-router.get('/assignments/:id/tasks', async (req, res) => {
-  try {
-    const assignmentId = parseInt(req.params.id);
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    // Проверка аутентификации
-    const decoded = jwt.verify(token, 'your_jwt_secret_key');
-    
-    // Проверка доступа к заданию (либо создатель, либо назначенный пользователь)
-    const assignment = await pool.query(
-      `SELECT * FROM assignments 
-       WHERE id = $1 AND (creator_id = $2 OR EXISTS (
-         SELECT 1 FROM tasks WHERE assignment_id = $1 AND assignee_id = $2
-       ))`,
-      [assignmentId, decoded.userId]
-    );
-    
-    if (assignment.rows.length === 0) {
-      return res.status(403).json({ error: 'Доступ запрещен или задание не найдено' });
-    }
-    
-    // Clean endpoint for active tasks only
-    const tasksQuery = `
+    // Основной запрос для активных задач
+    let tasksQuery = `
       SELECT 
         t.id,
         t.assignment_id,
@@ -170,18 +63,54 @@ router.get('/assignments/:id/tasks', async (req, res) => {
         t.in_progress_since,
         COALESCE(t.work_duration, 0) AS work_duration,
         COALESCE(t.progress_percentage, 0) AS progress_percentage,
+        NULL AS deleted_at,
         FALSE AS is_archived
       FROM tasks t
       LEFT JOIN users u ON t.assignee_id = u.id
       LEFT JOIN task_statuses ts ON t.status_id = ts.id
       LEFT JOIN task_priorities tp ON t.priority_id = tp.id
       WHERE t.assignment_id = $1
-      ORDER BY t.created_at DESC
     `;
+    
+    // Если запрашивают архивные задачи, добавляем их через UNION
+    if (includeArchived) {
+      tasksQuery += `
+        UNION ALL
+        SELECT 
+          at.id,
+          at.assignment_id,
+          at.title,
+          at.description,
+          at.deadline,
+          at.creator_id,
+          at.assignee_id,
+          u.email AS assignee_email,
+          u.username AS assignee_name,
+          at.status_id,
+          ts.name AS status,
+          at.priority_id,
+          tp.name AS priority,
+          at.created_at,
+          at.updated_at,
+          at.seen_at,
+          at.in_progress_since,
+          COALESCE(at.work_duration, 0) AS work_duration,
+          COALESCE(at.progress_percentage, 0) AS progress_percentage,
+          at.deleted_at,
+          TRUE AS is_archived
+        FROM archived_tasks at
+        LEFT JOIN users u ON at.assignee_id = u.id
+        LEFT JOIN task_statuses ts ON at.status_id = ts.id
+        LEFT JOIN task_priorities tp ON at.priority_id = tp.id
+        WHERE at.assignment_id = $1
+      `;
+    }
+    
+    tasksQuery += ' ORDER BY created_at DESC';
     
     const tasksResult = await pool.query(tasksQuery, [assignmentId]);
     
-    // Преобразование дат в ISO строки для фронтенда
+    // Преобразование данных для фронтенда
     const tasks = tasksResult.rows.map(task => ({
       ...task,
       deadline: task.deadline ? new Date(task.deadline).toISOString() : null,
@@ -403,6 +332,7 @@ router.get('/assignments', async (req, res) => {
     if (!authHeader) {
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
+    
     const token = authHeader.split(' ')[1];
     let decoded;
     try {
@@ -410,9 +340,16 @@ router.get('/assignments', async (req, res) => {
     } catch (err) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
+    
     const userId = decoded.userId;
-
-    const assignments = await assignmentsController.getAssignments(pool, userId);
+    const includeArchived = req.query.include_archived === 'true'; // Новый параметр
+    
+    const assignments = await assignmentsController.getAssignments(
+      pool, 
+      userId,
+      includeArchived // Передаем параметр в контроллер
+    );
+    
     res.json(assignments);
   } catch (error) {
     console.error('Ошибка при получении заданий:', error);

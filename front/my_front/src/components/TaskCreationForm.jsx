@@ -80,7 +80,7 @@ function TaskCreationForm({
       setNewTaskDeadline('');
       setNewTaskStatus('1');
       setNewTaskPriority('1');
-      // Preserve creator email for next task creation
+      setNewTaskCreatorEmail('');
       setNewTaskAssigneeEmail('');
     }
   };

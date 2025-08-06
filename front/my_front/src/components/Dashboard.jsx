@@ -467,7 +467,7 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Пользователь не авторизован');
-      const response = await fetch(`http://localhost:3000/api/assignments/${selectedAssignment}/tasks`, {
+      const response = await fetch(`http://localhost:3000/api/assignments/${selectedAssignment}/tasks?include_archived=true`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

@@ -1717,3 +1717,78 @@ body {
   background-color: #2980b9;
 }
 
+.selected-assignment {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.selected-assignment h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.selected-assignment p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.task-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  position: relative;
+}
+
+.tab-button.active {
+  color: #4361ee;
+  font-weight: bold;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #4361ee;
+}
+
+.tasks-dashboard {
+  display: flex;
+  gap: 20px;
+}
+
+.tasks-column {
+  flex: 1;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+}
+
+.tasks-column h3 {
+  margin-top: 0;
+  font-size: 16px;
+  color: #333;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.no-tasks-message {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}

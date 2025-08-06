@@ -49,13 +49,28 @@ function MainPage({ userEmail }) {
   const [statusChangeLoading, setStatusChangeLoading] = useState({});
   const [comments, setComments] = useState([]);
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
-  const [showNotification, setShowNotification] = useState(true);
+  const [showNotification, setShowNotification] = useState(false);
   const [timers, setTimers] = useState({});
+
+  const processTasks = (tasks) => {
+    return tasks.map(task => ({
+      ...task,
+      status: statuses.find(s => s.id === task.status_id)?.name || 'new',
+      priority: priorities.find(p => p.id === task.priority_id)?.name || 'medium',
+      work_duration: Number(task.work_duration) || 0,
+      due_date: task.deadline || new Date().toISOString(),
+      isArchived: !!task.deleted_at,
+      creator_name: task.creator_name || 'Неизвестно',
+      assignee_name: task.assignee_name || 'Неизвестно',
+      created_at: task.created_at || new Date().toISOString(),
+      createdAt: task.created_at || task.createdAt || new Date().toISOString()
+    }));
+  };
 
   const fetchAssignments = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/assignments', {
+      const response = await fetch('http://localhost:3000/api/assignments?include_archived=true', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -88,11 +103,11 @@ function MainPage({ userEmail }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedAssignment]);
+  }, [selectedAssignment, statuses, priorities]);
 
   const fetchAssignedTasks = useCallback(async () => {
     const now = Date.now();
-    if (now - lastFetchTime < 5000) return;
+    if (now - lastFetchTime < 30000) return; // Увеличили минимальный интервал между запросами
     
     setLoadingAssignedTasks(true);
     try {
@@ -107,8 +122,10 @@ function MainPage({ userEmail }) {
       }
       const data = await response.json();
       
+      const processedTasks = processTasks(data);
+      
       const newTimers = {};
-      data.forEach(task => {
+      processedTasks.forEach(task => {
         let elapsedSeconds = Number(task.work_duration) || 0;
         if (task.in_progress_since) {
           const inProgressSince = new Date(task.in_progress_since);
@@ -123,7 +140,7 @@ function MainPage({ userEmail }) {
       });
       
       setTimers(newTimers);
-      setAssignedTasks(data);
+      setAssignedTasks(processedTasks);
       setLastFetchTime(now);
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
@@ -131,7 +148,7 @@ function MainPage({ userEmail }) {
     } finally {
       setLoadingAssignedTasks(false);
     }
-  }, [lastFetchTime]);
+  }, [lastFetchTime, statuses, priorities]);
 
   const fetchComments = useCallback(async () => {
     try {
@@ -153,14 +170,11 @@ function MainPage({ userEmail }) {
       
       const filteredComments = data.filter(comment => 
         comment.author_email !== userEmail
-      ).map(comment => ({
-        ...comment,
-        is_new: true
-      }));
+      );
 
-      if (filteredComments.length > 0 && unreadCommentsCount !== filteredComments.length) {
-        setUnreadCommentsCount(filteredComments.length);
-        
+      setUnreadCommentsCount(filteredComments.length);
+      
+      if (filteredComments.length > 0) {
         if (Notification.permission === 'granted') {
           new Notification('Новые комментарии', {
             body: `У вас ${filteredComments.length} новых комментариев`,
@@ -168,30 +182,14 @@ function MainPage({ userEmail }) {
           });
         }
         
-        playNotificationSound();
       }
 
       setComments(filteredComments);
     } catch (error) {
       console.error('Ошибка загрузки комментариев:', error);
     }
-  }, [userEmail, unreadCommentsCount]);
+  }, [userEmail]);
 
-  const playNotificationSound = () => {
-    const audio = new Audio();
-    audio.volume = 0.3;
-    try {
-      audio.src = '/notification.mp3';
-      audio.play().catch(e => {
-        console.log('Не удалось воспроизвести звук:', e);
-        const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
-        beep.volume = 0.3;
-        beep.play();
-      });
-    } catch (e) {
-      console.log('Ошибка воспроизведения звука:', e);
-    }
-  };
 
   const fetchStatuses = useCallback(async () => {
     try {
@@ -209,13 +207,13 @@ function MainPage({ userEmail }) {
   const fetchPriorities = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3000/api/task_priorities');
-      if (!response.ok) {
-        throw new Error('Ошибка при загрузке приоритетов');
-      }
+      if (!response.ok) throw new Error('Ошибка при загрузке приоритетов');
       const data = await response.json();
       setPriorities(data);
+      return data;
     } catch (err) {
       console.error(err);
+      return [];
     }
   }, []);
 
@@ -244,7 +242,8 @@ function MainPage({ userEmail }) {
     };
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
-    const intervalId = setInterval(handleTaskUpdate, 30000);
+    // Увеличили интервал опроса до 2 минут (120000 мс)
+    const intervalId = setInterval(handleTaskUpdate, 120000);
 
     return () => {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
@@ -405,7 +404,6 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при создании задачи');
       }
       
-      // Обновляем данные после создания задачи
       await Promise.all([
         fetchAssignments(),
         fetchAssignedTasks()
@@ -430,7 +428,6 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при удалении задачи');
       }
       
-      // Обновляем данные после удаления задачи
       await Promise.all([
         fetchAssignments(),
         fetchAssignedTasks()
@@ -459,7 +456,6 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при обновлении статуса задачи');
       }
       
-      // Обновляем данные после изменения статуса
       await Promise.all([
         fetchAssignments(),
         fetchAssignedTasks()
@@ -483,51 +479,6 @@ function MainPage({ userEmail }) {
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  const handleNotificationClick = useCallback((taskId) => {
-    const element = document.getElementById(`task-${taskId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      element.style.boxShadow = '0 0 0 3px rgba(67, 97, 238, 0.5)';
-      setTimeout(() => {
-        element.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-      }, 2000);
-    }
-  }, []);
-
-  const handleCommentClick = useCallback(async (comment) => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      await fetch('http://localhost:3000/api/comments/mark-read', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token,
-        },
-        body: JSON.stringify({ commentIds: [comment.id] }),
-      });
-      
-      setComments(prev => prev.filter(c => c.id !== comment.id));
-      setUnreadCommentsCount(prev => prev - 1);
-      
-      const taskResponse = await fetch(`http://localhost:3000/api/tasks/${comment.task_id}`, {
-        headers: {
-          'Authorization': 'Bearer ' + token,
-        },
-      });
-      
-      if (!taskResponse.ok) {
-        throw new Error('Failed to fetch task details');
-      }
-      
-      const taskData = await taskResponse.json();
-      setDetailsFormTask(taskData);
-      setShowDetailsForm(true);
-    } catch (error) {
-      console.error('Error handling comment click:', error);
-    }
-  }, []);
-
   if (loading) {
     return <div className="loading-container">Загрузка заданий...</div>;
   }
@@ -543,7 +494,7 @@ function MainPage({ userEmail }) {
         onNavigate={(page) => setCurrentPage(page)} 
         hideAssignmentsAndProfile={true}
         unreadCommentsCount={unreadCommentsCount}
-        onCommentsClick={() => setShowNotification(true)}
+        onCommentsClick={() => setShowNotification(!showNotification)}
       />
       
       {showNotification && (
@@ -551,8 +502,6 @@ function MainPage({ userEmail }) {
           tasks={assignedTasks} 
           comments={comments}
           onClose={() => setShowNotification(false)}
-          onTaskClick={handleNotificationClick}
-          onCommentClick={handleCommentClick}
         />
       )}
 
@@ -583,6 +532,8 @@ function MainPage({ userEmail }) {
                   statusChangeLoading={statusChangeLoading}
                   timers={timers}
                   formatTime={formatTime}
+                  activeTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived) || []}
+                  archivedTasks={selectedAssignment?.tasks?.filter(task => task.isArchived) || []}
                   onStartWork={async (taskId) => {
                     try {
                       const token = localStorage.getItem('token');

@@ -31,86 +31,95 @@ async function createTask(pool, { title, description, deadline, creator_id, assi
   }
 }
 
-async function deleteTask(pool, taskId) {
+async function deleteTask(pool, taskId, permanent = false) {
   const client = await pool.connect();
   try {
-    console.log(`deleteTask called with taskId: ${taskId}`);
+    await client.query('BEGIN');
 
-    // Fetch the task to be deleted
-    const taskResult = await client.query('SELECT * FROM tasks WHERE id = $1', [taskId]);
-    if (taskResult.rows.length === 0) {
-      console.log('Task not found');
-      throw new Error('Task not found');
-    }
-    const task = taskResult.rows[0];
-    console.log('Task fetched for archiving:', task);
-
-    // Insert the task into archived_tasks with deleted_at = now()
-    await client.query(
-      `INSERT INTO archived_tasks (
-        id, title, description, deadline, creator_id, assignee_id, assignment_id,
-        status_id, priority_id, created_at, updated_at, deleted_at,
-        in_progress_since, work_duration, progress_percentage
-      ) 
-      SELECT 
-        id, title, description, deadline, creator_id, assignee_id, assignment_id,
-        status_id, priority_id, created_at, updated_at, now(),
-        in_progress_since, work_duration, progress_percentage
-      FROM tasks 
-      WHERE id = $1`,
+    // Проверяем существование задачи
+    const taskCheck = await client.query(
+      `SELECT 'active' as type FROM tasks WHERE id = $1
+       UNION ALL
+       SELECT 'archived' as type FROM archived_tasks WHERE id = $1`,
       [taskId]
     );
-    console.log('Task archived successfully');
 
-    // Delete the task from tasks table
-    await client.query('DELETE FROM tasks WHERE id = $1', [taskId]);
-    console.log('Task deleted from tasks table');
-    
+    if (taskCheck.rows.length === 0) {
+      throw new Error('Task not found');
+    }
+
+    const taskType = taskCheck.rows[0].type;
+
+    if (taskType === 'active' && !permanent) {
+      // Переносим задачу в архив
+      await client.query(
+        `INSERT INTO archived_tasks 
+         SELECT *, now() as deleted_at FROM tasks WHERE id = $1`,
+        [taskId]
+      );
+      
+      // Удаляем задачу из активных
+      await client.query('DELETE FROM tasks WHERE id = $1', [taskId]);
+      
+      // Комментарии остаются в task_comments, ничего с ними не делаем
+    } else {
+      // Полное удаление задачи и её комментариев
+      await client.query('DELETE FROM task_comments WHERE task_id = $1', [taskId]);
+      await client.query(
+        `DELETE FROM ${taskType === 'active' ? 'tasks' : 'archived_tasks'} 
+         WHERE id = $1`,
+        [taskId]
+      );
+    }
+
+    await client.query('COMMIT');
     return { success: true };
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error in deleteTask:', error);
     throw error;
   } finally {
     client.release();
   }
 }
-
 async function updateTaskStatus(pool, taskId, statusId, action) {
   const client = await pool.connect();
   try {
+    // Проверяем, не архивная ли это задача
+    const archivedCheck = await client.query(
+      'SELECT 1 FROM archived_tasks WHERE id = $1',
+      [taskId]
+    );
+
+    if (archivedCheck.rows.length > 0) {
+      throw new Error('Cannot update status of archived task');
+    }
+
     console.log(`Updating task ${taskId} status to ${statusId} with action ${action}`);
     let query = `UPDATE tasks SET status_id = $1, updated_at = now()`;
     const params = [statusId];
     let paramIndex = 2;
 
-    // Fetch current task to get in_progress_since and work_duration
+    // Остальная логика функции остается без изменений
     const taskResult = await client.query('SELECT in_progress_since, work_duration, created_at FROM tasks WHERE id = $1', [taskId]);
     if (taskResult.rows.length === 0) {
       throw new Error('Task not found');
     }
     const task = taskResult.rows[0];
-const now = new Date();
+    const now = new Date();
 
-function toUTCDate(date) {
-  return new Date(date.toISOString());
-}
+    function toUTCDate(date) {
+      return new Date(date.toISOString());
+    }
 
-if (statusId === 2) { // in_progress
-  if (action === 'start') {
-    // Set in_progress_since to now explicitly
-    console.log('Action start: setting in_progress_since to now()');
-    query += `, in_progress_since = now()`;
-  } else if (action === 'stop') {
-        // Calculate elapsed time and add to work_duration, clear in_progress_since
+    if (statusId === 2) { // in_progress
+      if (action === 'start') {
+        query += `, in_progress_since = now()`;
+      } else if (action === 'stop') {
         if (task.in_progress_since) {
-          console.log(`Current work_duration: ${task.work_duration}, type: ${typeof task.work_duration}`);
           const elapsedSeconds = Math.floor((toUTCDate(now) - toUTCDate(new Date(task.in_progress_since))) / 1000);
           const currentWorkDuration = Number(task.work_duration);
-          if (isNaN(currentWorkDuration)) {
-            console.warn(`Warning: work_duration is NaN, resetting to 0. Original value: ${task.work_duration}`);
-          }
           const newWorkDuration = (isNaN(currentWorkDuration) ? 0 : currentWorkDuration) + elapsedSeconds;
-          console.log(`Elapsed seconds: ${elapsedSeconds}, new work duration: ${newWorkDuration}, type: ${typeof newWorkDuration}`);
           query += `, in_progress_since = NULL, work_duration = $${paramIndex}`;
           params.push(newWorkDuration);
           paramIndex++;
@@ -118,15 +127,12 @@ if (statusId === 2) { // in_progress
           query += `, in_progress_since = NULL`;
         }
       } else if (action === 'resume') {
-        // Set in_progress_since to now without changing status
         query += `, in_progress_since = now()`;
       }
     } else if (statusId === 3) { // done
-      // Calculate elapsed time if in_progress_since is set, add to work_duration, clear in_progress_since
       if (task.in_progress_since) {
         const elapsedSeconds = Math.floor((toUTCDate(now) - toUTCDate(new Date(task.in_progress_since))) / 1000);
         const newWorkDuration = (task.work_duration || 0) + elapsedSeconds;
-        console.log(`Elapsed seconds: ${elapsedSeconds}, new work duration: ${newWorkDuration}`);
         query += `, in_progress_since = NULL, work_duration = $${paramIndex}`;
         params.push(newWorkDuration);
         paramIndex++;
@@ -134,7 +140,6 @@ if (statusId === 2) { // in_progress
         query += `, in_progress_since = NULL`;
       }
     } else {
-      // Clear in_progress_since if status is not "in progress" or "done"
       query += `, in_progress_since = NULL`;
     }
 
@@ -142,7 +147,6 @@ if (statusId === 2) { // in_progress
     params.push(taskId);
 
     const result = await client.query(query, params);
-    console.log('Update result:', result.rows[0]);
     return result.rows[0];
   } catch (error) {
     console.error('Error in updateTaskStatus:', error);
@@ -155,6 +159,16 @@ if (statusId === 2) { // in_progress
 async function markTaskAsSeen(pool, taskId) {
   const client = await pool.connect();
   try {
+    // Проверяем, не архивная ли это задача
+    const archivedCheck = await client.query(
+      'SELECT 1 FROM archived_tasks WHERE id = $1',
+      [taskId]
+    );
+
+    if (archivedCheck.rows.length > 0) {
+      throw new Error('Cannot mark archived task as seen');
+    }
+
     const result = await client.query(
       `UPDATE tasks SET seen_at = now() WHERE id = $1 RETURNING *`,
       [taskId]
@@ -171,7 +185,8 @@ async function markTaskAsSeen(pool, taskId) {
 async function getTaskById(pool, taskId) {
   const client = await pool.connect();
   try {
-    const result = await client.query(
+    // Сначала проверяем активные задачи
+    let result = await client.query(
       `SELECT 
         t.id,
         t.title,
@@ -189,7 +204,8 @@ async function getTaskById(pool, taskId) {
         u1.email AS creator_name, 
         u2.email AS assignee_name,
         s.name AS status,
-        p.name AS priority
+        p.name AS priority,
+        false as is_archived
       FROM tasks t
       LEFT JOIN users u1 ON t.creator_id = u1.id
       LEFT JOIN users u2 ON t.assignee_id = u2.id
@@ -198,25 +214,58 @@ async function getTaskById(pool, taskId) {
       WHERE t.id = $1`,
       [taskId]
     );
-      const task = result.rows[0];
-  if (!task) return null;
-  
-  return {
-    ...task,
-    id: task.id.toString(),
-    created_at: task.created_at ? new Date(task.created_at).toISOString() : null,
-    updated_at: task.updated_at ? new Date(task.updated_at).toISOString() : null,
-    in_progress_since: task.in_progress_since ? new Date(task.in_progress_since).toISOString() : null,
-    deadline: task.deadline ? new Date(task.deadline).toISOString() : null,
-    progress_percentage: task.progress_percentage || 0
-  };
 
+    // Если не найдено в активных, проверяем архивные
+    if (result.rows.length === 0) {
+      result = await client.query(
+        `SELECT 
+          at.id,
+          at.title,
+          at.description,
+          at.deadline,
+          at.created_at, 
+          at.updated_at,
+          at.in_progress_since,
+          at.work_duration,
+          at.status_id,
+          at.priority_id,
+          at.creator_id,
+          at.assignee_id,
+          at.progress_percentage,
+          u1.email AS creator_name, 
+          u2.email AS assignee_name,
+          s.name AS status,
+          p.name AS priority,
+          true as is_archived,
+          at.deleted_at
+        FROM archived_tasks at
+        LEFT JOIN users u1 ON at.creator_id = u1.id
+        LEFT JOIN users u2 ON at.assignee_id = u2.id
+        LEFT JOIN task_statuses s ON at.status_id = s.id
+        LEFT JOIN task_priorities p ON at.priority_id = p.id
+        WHERE at.id = $1`,
+        [taskId]
+      );
+    }
+
+    const task = result.rows[0];
+    if (!task) return null;
+    
+    return {
+      ...task,
+      id: task.id.toString(),
+      created_at: task.created_at ? new Date(task.created_at).toISOString() : null,
+      updated_at: task.updated_at ? new Date(task.updated_at).toISOString() : null,
+      in_progress_since: task.in_progress_since ? new Date(task.in_progress_since).toISOString() : null,
+      deadline: task.deadline ? new Date(task.deadline).toISOString() : null,
+      progress_percentage: task.progress_percentage || 0,
+      deleted_at: task.deleted_at ? new Date(task.deleted_at).toISOString() : null
+    };
   } catch (error) {
     throw error;
   } finally {
     client.release();
   }
-  
 }
 
 async function getTasksByAssignee(pool, assigneeId) {
@@ -275,6 +324,16 @@ async function getTasksByAssignee(pool, assigneeId) {
 async function updateTaskProgress(pool, taskId, progressPercentage) {
   const client = await pool.connect();
   try {
+    // Сначала проверяем, не архивная ли это задача
+    const archivedCheck = await client.query(
+      'SELECT 1 FROM archived_tasks WHERE id = $1',
+      [taskId]
+    );
+
+    if (archivedCheck.rows.length > 0) {
+      throw new Error('Cannot update progress of archived task');
+    }
+
     const result = await client.query(
       'UPDATE tasks SET progress_percentage = $1, updated_at = now() WHERE id = $2 RETURNING *',
       [progressPercentage, taskId]
