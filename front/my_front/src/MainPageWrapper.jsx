@@ -1,53 +1,62 @@
-// src/MainPageWrapper.jsx
-import { useState, useEffect } from 'react'
-import { parseJwt } from './utils/wt'
-import MainPage from './MainPage' // Импортируем MainPage напрямую
-import AssignedTasks from './AssignedTasks' // Импорт AssignedTasks
+import { useState, useEffect } from 'react';
+import { parseJwt } from './utils/wt';
+import MainPage from './MainPage';
 
 export default function MainPageWrapper() {
-  const [userEmail, setUserEmail] = useState('')
+  const [userEmail, setUserEmail] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    const tokenExpiry = localStorage.getItem('tokenExpiry')
-    const now = new Date().getTime()
+    const token = localStorage.getItem('token');
+    const tokenExpiry = localStorage.getItem('tokenExpiry');
 
-    async function fetchUserEmail(userId) {
+    async function fetchUser() {
       try {
-        const response = await fetch(`http://localhost:3000/api/users/${userId}`)
+        // 1. Сначала проверяем токен локально
+        if (!token || !tokenExpiry || new Date().getTime() > parseInt(tokenExpiry, 10)) {
+          throw new Error('Токен недействителен или истёк');
+        }
+
+        // 2. Декодируем токен для получения userId
+        const decoded = parseJwt(token);
+        if (!decoded?.userId) {
+          throw new Error('Неверный формат токена');
+        }
+
+        // 3. Запрашиваем данные пользователя
+        const response = await fetch(`http://localhost:3000/api/users/${decoded.userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('tokenExpiry');
+          throw new Error('Требуется повторная авторизация');
+        }
+
         if (!response.ok) {
-          throw new Error('Ошибка при получении данных пользователя')
+          throw new Error(`Ошибка сервера: ${response.status}`);
         }
-        const userData = await response.json()
-        setUserEmail(userData.email || '')
+
+        const userData = await response.json();
+        setUserEmail(userData.email);
       } catch (error) {
-        console.error('Error fetching user email:', error)
-        setUserEmail('')
+        console.error('Ошибка загрузки пользователя:', error);
+        setUserEmail('');
+      } finally {
+        setLoading(false);
       }
     }
 
-    if (token && tokenExpiry && now < parseInt(tokenExpiry, 10)) {
-      const decoded = parseJwt(token)
-      if (decoded) {
-        if (decoded.userId) {
-          fetchUserEmail(decoded.userId)
-        }
-      }
-    } else {
-      localStorage.removeItem('token')
-      localStorage.removeItem('tokenExpiry')
-      setUserEmail('')
-    }
-  }, [])
+    fetchUser();
+  }, []);
 
-  if (!userEmail) {
-    return <div>Loading user data...</div>;
+  if (loading) {
+    return <div>Загрузка данных пользователя...</div>;
   }
 
-  return (
-    <>
-      <MainPage userEmail={userEmail} />
-    </>
-  )
-  
+  return <MainPage userEmail={userEmail} />;
 }

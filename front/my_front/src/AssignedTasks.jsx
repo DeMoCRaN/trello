@@ -168,7 +168,6 @@ function AssignedTasks({ userEmail }) {
           });
         }
         
-        playNotificationSound();
       }
 
       setComments(filteredComments);
@@ -176,23 +175,6 @@ function AssignedTasks({ userEmail }) {
       console.error('Ошибка загрузки комментариев:', error);
     }
   }, [userEmail, unreadCommentsCount]);
-
-  // Воспроизведение звука уведомления
-  const playNotificationSound = () => {
-    const audio = new Audio();
-    audio.volume = 0.3;
-    try {
-      audio.src = '/notification.mp3';
-      audio.play().catch(e => {
-        console.log('Не удалось воспроизвести звук:', e);
-        const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
-        beep.volume = 0.3;
-        beep.play();
-      });
-    } catch (e) {
-      console.log('Ошибка воспроизведения звука:', e);
-    }
-  };
 
   // Эффекты
   useEffect(() => {
@@ -230,7 +212,6 @@ function AssignedTasks({ userEmail }) {
     if (tasks.length > 0) {
       const newTasks = tasks.filter(task => task.status === 'new');
       if (newTasks.length > 0) {
-        playNotificationSound();
       }
     }
   }, [tasks]);

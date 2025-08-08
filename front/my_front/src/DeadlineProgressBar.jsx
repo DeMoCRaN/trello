@@ -27,18 +27,31 @@ function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
   };
 
   useEffect(() => {
-
     const fetchProgress = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch task progress');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Пользователь не авторизован');
+          return;
         }
+
+        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error('Ошибка загрузки прогресса: ' + errorText);
+        }
+
         const task = await response.json();
         setProgress(task.progress_percentage || 0);
       } catch (err) {
         console.error(err);
-        setError('Ошибка загрузки прогресса');
+        setError(err.message);
       }
     };
 
@@ -87,7 +100,6 @@ function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
         setProgress(currentProgress);
         setTimeLeft(`Осталось: ${formatTime(end - now)}`);
 
-        // Update progress in backend
         updateProgress(currentProgress);
 
       } catch (err) {
@@ -111,15 +123,24 @@ function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
 
     const updateProgress = async (progressValue) => {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Пользователь не авторизован');
+          return;
+        }
+
         const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/progress`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
           },
           body: JSON.stringify({ progress_percentage: progressValue }),
         });
+
         if (!response.ok) {
-          throw new Error('Failed to update progress');
+          const errorText = await response.text();
+          throw new Error('Ошибка обновления прогресса: ' + errorText);
         }
       } catch (err) {
         console.error('Error updating progress:', err);

@@ -5,7 +5,6 @@ const tasksController = require('../controllers/tasks');
 const assignmentsController = require('../controllers/assignments');
 const commentsController = require('../controllers/comments');
 
-
 const { Pool } = require('pg');
 
 // Создаем пул подключения к базе данных для API
@@ -19,14 +18,37 @@ const pool = new Pool({
 
 const router = express.Router();
 
-router.get('/assignments/:id/tasks', async (req, res) => {
+// Middleware для проверки аутентификации
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  jwt.verify(token, 'your_jwt_secret_key', (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ error: 'Неверный токен' });
+    }
+    req.user = decoded;
+    next();
+  });
+};
+
+// Middleware для проверки параметров ID
+const validateIdParam = (req, res, next) => {
+  const id = req.params.id;
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json({ error: 'Неверный формат ID' });
+  }
+  next();
+};
+
+router.get('/assignments/:id/tasks', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.id);
-    const token = req.headers.authorization?.split(' ')[1];
     const includeArchived = req.query.include_archived === 'true';
-    
-    // Проверка аутентификации
-    const decoded = jwt.verify(token, 'your_jwt_secret_key');
     
     // Проверка доступа к заданию
     const assignment = await pool.query(
@@ -34,7 +56,7 @@ router.get('/assignments/:id/tasks', async (req, res) => {
        WHERE id = $1 AND (creator_id = $2 OR EXISTS (
          SELECT 1 FROM tasks WHERE assignment_id = $1 AND assignee_id = $2
        ))`,
-      [assignmentId, decoded.userId]
+      [assignmentId, req.user.userId]
     );
     
     if (assignment.rows.length === 0) {
@@ -124,11 +146,6 @@ router.get('/assignments/:id/tasks', async (req, res) => {
     res.json(tasks);
   } catch (error) {
     console.error('Error fetching tasks:', error);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ error: 'Недействительный токен' });
-    }
-    
     res.status(500).json({ 
       error: 'Внутренняя ошибка сервера',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -136,14 +153,16 @@ router.get('/assignments/:id/tasks', async (req, res) => {
   }
 });
 
-router.patch('/tasks/:id/progress', async (req, res) => {
+router.patch('/tasks/:id/progress', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id, 10);
-   const { progress_percentage } = req.body;
+    const { progress_percentage } = req.body;
+    
     if (progress_percentage === undefined || progress_percentage < 0 || progress_percentage > 100) {
       return res.status(400).json({ error: 'Invalid progress_percentage value' });
     }
-    const updatedTask = await require('../controllers/tasks').updateTaskProgress(pool, taskId, progress_percentage);
+    
+    const updatedTask = await tasksController.updateTaskProgress(pool, taskId, progress_percentage);
     res.json(updatedTask);
   } catch (error) {
     console.error('Error updating task progress:', error);
@@ -163,21 +182,9 @@ router.get('/test', (req, res) => {
 });
 
 // Новый маршрут для получения информации о задачи по ID
-router.get('/tasks/assigned', async (req, res) => {
+router.get('/tasks/assigned', authenticateToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    const userId = decoded.userId;
-
+    const userId = req.user.userId;
     const tasks = await tasksController.getTasksByAssignee(pool, userId);
     res.json(tasks);
   } catch (error) {
@@ -186,19 +193,10 @@ router.get('/tasks/assigned', async (req, res) => {
   }
 });
 
-router.get('/tasks/:id', async (req, res) => {
+router.get('/tasks/:id', authenticateToken, validateIdParam, async (req, res) => {
   try {
-    let taskIdRaw = req.params.id;
-    console.log(`GET /tasks/:id called with id param: ${taskIdRaw}`);
-
-    // Sanitize and validate taskIdRaw
-    taskIdRaw = taskIdRaw.trim();
-    if (!/^\d+$/.test(taskIdRaw)) {
-      console.warn(`Invalid task ID received: ${taskIdRaw}`);
-      return res.status(400).json({ error: 'Invalid task ID' });
-    }
-
-    const taskId = parseInt(taskIdRaw, 10);
+    const taskId = parseInt(req.params.id, 10);
+    console.log(`GET /tasks/:id called with id param: ${taskId}`);
 
     const task = await tasksController.getTaskById(pool, taskId);
     if (!task) {
@@ -214,6 +212,11 @@ router.get('/tasks/:id', async (req, res) => {
 // Маршрут для логина
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+
+  // Валидация входных данных
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email и пароль обязательны' });
+  }
 
   try {
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -241,15 +244,23 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
-// Новый маршрут для получения информации о пользователе по ID
-router.get('/users/:id', async (req, res) => {
+router.get('/users/:id', authenticateToken, validateIdParam, async (req, res) => {
   const userId = req.params.id;
   try {
-    const userResult = await pool.query('SELECT id, email, role_id FROM users WHERE id = $1', [userId]);
+    // Проверяем, что пользователь запрашивает свои данные или имеет права администратора
+    if (req.user.userId !== parseInt(userId) && req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Доступ запрещен' });
+    }
+
+    const userResult = await pool.query(
+      'SELECT id, email, role_id FROM users WHERE id = $1', 
+      [userId]
+    );
+    
     if (userResult.rows.length === 0) {
       return res.status(404).json({ message: 'Пользователь не найден' });
     }
+    
     const user = userResult.rows[0];
     res.json(user);
   } catch (error) {
@@ -275,9 +286,15 @@ router.get('/users/email/:email', async (req, res) => {
 });
 
 // Роуты для задач и заданий
-router.post('/tasks', async (req, res) => {
+router.post('/tasks', authenticateToken, async (req, res) => {
   try {
     const taskData = req.body;
+    
+    // Валидация данных задачи
+    if (!taskData.title || !taskData.assignment_id) {
+      return res.status(400).json({ error: 'Название и ID задания обязательны' });
+    }
+    
     const newTask = await tasksController.createTask(pool, taskData);
     res.status(201).json(newTask);
   } catch (error) {
@@ -287,7 +304,7 @@ router.post('/tasks', async (req, res) => {
 });
 
 // Получить комментарии задачи
-router.get('/tasks/:id/comments', async (req, res) => {
+router.get('/tasks/:id/comments', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id, 10);
     const comments = await commentsController.getCommentsByTaskId(pool, taskId);
@@ -299,26 +316,22 @@ router.get('/tasks/:id/comments', async (req, res) => {
 });
 
 // Добавить комментарий к задаче
-router.post('/tasks/:id/comments', async (req, res) => {
+router.post('/tasks/:id/comments', authenticateToken, validateIdParam, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = require('jsonwebtoken').verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    const userId = decoded.userId;
+    const userId = req.user.userId;
     const taskId = parseInt(req.params.id, 10);
     const { text } = req.body;
+    
     if (!text || text.trim() === '') {
       return res.status(400).json({ error: 'Текст комментария не может быть пустым' });
     }
-    const newComment = await commentsController.createComment(pool, { task_id: taskId, user_id: userId, text });
+    
+    const newComment = await commentsController.createComment(pool, { 
+      task_id: taskId, 
+      user_id: userId, 
+      text 
+    });
+    
     res.status(201).json(newComment);
   } catch (error) {
     console.error('Ошибка при добавлении комментария:', error);
@@ -326,28 +339,15 @@ router.post('/tasks/:id/comments', async (req, res) => {
   }
 });
 
-router.get('/assignments', async (req, res) => {
+router.get('/assignments', authenticateToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    
-    const userId = decoded.userId;
-    const includeArchived = req.query.include_archived === 'true'; // Новый параметр
+    const userId = req.user.userId;
+    const includeArchived = req.query.include_archived === 'true';
     
     const assignments = await assignmentsController.getAssignments(
       pool, 
       userId,
-      includeArchived // Передаем параметр в контроллер
+      includeArchived
     );
     
     res.json(assignments);
@@ -357,22 +357,16 @@ router.get('/assignments', async (req, res) => {
   }
 });
 
-router.post('/assignments', async (req, res) => {
+router.post('/assignments', authenticateToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    const userId = decoded.userId;
-
+    const userId = req.user.userId;
     const assignmentData = req.body;
+    
+    // Валидация данных задания
+    if (!assignmentData.title) {
+      return res.status(400).json({ error: 'Название задания обязательно' });
+    }
+    
     assignmentData.creator_id = userId;
     const newAssignment = await assignmentsController.createAssignment(pool, assignmentData);
     res.status(201).json(newAssignment);
@@ -382,10 +376,16 @@ router.post('/assignments', async (req, res) => {
   }
 });
 
-router.post('/assignments/:id/tasks', async (req, res) => {
+router.post('/assignments/:id/tasks', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.id, 10);
     const taskData = req.body;
+    
+    // Валидация данных задачи
+    if (!taskData.title) {
+      return res.status(400).json({ error: 'Название задачи обязательно' });
+    }
+    
     const newTask = await assignmentsController.createTaskInAssignment(pool, assignmentId, taskData);
     res.status(201).json(newTask);
   } catch (error) {
@@ -394,7 +394,7 @@ router.post('/assignments/:id/tasks', async (req, res) => {
   }
 });
 
-router.delete('/tasks/:id', async (req, res) => {
+router.delete('/tasks/:id', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id, 10);
     await tasksController.deleteTask(pool, taskId);
@@ -405,7 +405,7 @@ router.delete('/tasks/:id', async (req, res) => {
   }
 });
 
-router.delete('/assignments/:id', async (req, res) => {
+router.delete('/assignments/:id', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.id, 10);
     await assignmentsController.deleteAssignment(pool, assignmentId);
@@ -416,14 +416,16 @@ router.delete('/assignments/:id', async (req, res) => {
   }
 });
 
-router.patch('/tasks/:id/status', async (req, res) => {
+router.patch('/tasks/:id/status', authenticateToken, validateIdParam, async (req, res) => {
   try {
     console.log('PATCH /tasks/:id/status called with params:', req.params, 'body:', req.body);
     const taskId = parseInt(req.params.id, 10);
     const { status_id, action } = req.body;
+    
     if (!status_id) {
       return res.status(400).json({ error: 'status_id is required' });
     }
+    
     const updatedTask = await tasksController.updateTaskStatus(pool, taskId, status_id, action);
     res.json(updatedTask);
   } catch (error) {
@@ -432,7 +434,7 @@ router.patch('/tasks/:id/status', async (req, res) => {
   }
 });
 
-router.patch('/tasks/:id/seen', async (req, res) => {
+router.patch('/tasks/:id/seen', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id, 10);
     const updatedTask = await tasksController.markTaskAsSeen(pool, taskId);
@@ -443,7 +445,7 @@ router.patch('/tasks/:id/seen', async (req, res) => {
   }
 });
 
-router.get('/task_statuses', async (req, res) => {
+router.get('/task_statuses', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM task_statuses ORDER BY id');
     res.json(result.rows);
@@ -453,7 +455,7 @@ router.get('/task_statuses', async (req, res) => {
   }
 });
 
-router.get('/task_priorities', async (req, res) => {
+router.get('/task_priorities', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM task_priorities ORDER BY id');
     res.json(result.rows);
@@ -463,23 +465,9 @@ router.get('/task_priorities', async (req, res) => {
   }
 });
 
-
-
-router.get('/comments/unread/count', async (req, res) => {
+router.get('/comments/unread/count', authenticateToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    const userId = decoded.userId;
-
+    const userId = req.user.userId;
     const count = await commentsController.getUnreadCommentsCount(pool, userId);
     res.json({ unread_count: count });
   } catch (error) {
@@ -488,24 +476,10 @@ router.get('/comments/unread/count', async (req, res) => {
   }
 });
 
-router.get('/comments/unread', async (req, res) => {
+router.get('/comments/unread', authenticateToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
-    
-    const userId = decoded.userId;
+    const userId = req.user.userId;
     const comments = await commentsController.getUnreadComments(pool, userId);
-    
     res.json(comments);
   } catch (error) {
     console.error('Ошибка при получении непрочитанных комментариев:', error);
@@ -513,22 +487,18 @@ router.get('/comments/unread', async (req, res) => {
   }
 });
 
-router.post('/comments/mark-read', async (req, res) => {
+router.post('/comments/mark-read', authenticateToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    const token = authHeader.split(' ')[1];
-    let decoded;
-    try {
-      decoded = jwt.verify(token, 'your_jwt_secret_key');
-    } catch (err) {
-      return res.status(401).json({ error: 'Неверный токен' });
-    }
     const { commentIds } = req.body;
-    if (!Array.isArray(commentIds) || commentIds.length === 0) {
-      return res.status(400).json({ error: 'commentIds должен быть непустым массивом' });
+    
+    if (!Array.isArray(commentIds)) {
+      return res.status(400).json({ error: 'commentIds должен быть массивом' });
+    }
+    
+    // Валидация ID комментариев
+    const invalidIds = commentIds.filter(id => !/^\d+$/.test(id));
+    if (invalidIds.length > 0) {
+      return res.status(400).json({ error: 'Некорректные ID комментариев' });
     }
 
     const updatedCount = await commentsController.markCommentsAsReadByIds(pool, commentIds);

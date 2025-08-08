@@ -178,7 +178,6 @@ function MainPage({ userEmail }) {
         if (Notification.permission === 'granted') {
           new Notification('Новые комментарии', {
             body: `У вас ${filteredComments.length} новых комментариев`,
-            icon: '/favicon.ico'
           });
         }
         
@@ -191,23 +190,35 @@ function MainPage({ userEmail }) {
   }, [userEmail]);
 
 
-  const fetchStatuses = useCallback(async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/task_statuses');
-      if (!response.ok) {
-        throw new Error('Ошибка при загрузке статусов');
-      }
-      const data = await response.json();
-      setStatuses(data);
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
+const fetchStatuses = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/task_statuses', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) throw new Error('Ошибка при загрузке статусов');
+    
+    const data = await response.json();
+    setStatuses(data);
+  } catch (err) {
+    console.error(err);
+    setError('Ошибка при загрузке статусов');
+  }
+};
 
   const fetchPriorities = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/task_priorities');
-      if (!response.ok) throw new Error('Ошибка при загрузке приоритетов');
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/task_priorities', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) throw new Error('Ошибка при загрузке статусов');
       const data = await response.json();
       setPriorities(data);
       return data;
