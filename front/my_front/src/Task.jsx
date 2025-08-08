@@ -14,60 +14,60 @@ const getPriorityClass = (priority) => {
 };
 
 function Task({ task, onDelete, creatorName, assigneeName, onDetails, onCompleteWork }) {
-  useEffect(() => {
-    if (isDev) {
-      console.groupCollapsed(`Task Data Validation (ID: ${task.id || 'unknown'})`);
-      console.log('📌 Основные данные:', {
-        'ID задачи': task.id,
-        'Заголовок': task.title,
-        'Статус': task.status,
-        'Приоритет': task.priority || 'не указан',
-        'Создатель': creatorName || 'не указан',
-        'Исполнитель': assigneeName || 'не указан'
-      });
+  // useEffect(() => {
+  //   if (isDev) {
+  //     console.groupCollapsed(`Task Data Validation (ID: ${task.id || 'unknown'})`);
+  //     console.log('📌 Основные данные:', {
+  //       'ID задачи': task.id,
+  //       'Заголовок': task.title,
+  //       'Статус': task.status,
+  //       'Приоритет': task.priority || 'не указан',
+  //       'Создатель': creatorName || 'не указан',
+  //       'Исполнитель': assigneeName || 'не указан'
+  //     });
 
-      const logDateInfo = (dateValue, dateName) => {
-        if (!dateValue) {
-          console.log(`⏰ ${dateName}: не указана`);
-          return null;
-        }
+  //     const logDateInfo = (dateValue, dateName) => {
+  //       if (!dateValue) {
+  //         console.log(`⏰ ${dateName}: не указана`);
+  //         return null;
+  //       }
 
-        try {
-          const dateObj = new Date(dateValue);
-          if (isNaN(dateObj.getTime())) {
-            console.error(`❌ ${dateName}: неверный формат даты`, dateValue);
-            return null;
-          }
+  //       try {
+  //         const dateObj = new Date(dateValue);
+  //         if (isNaN(dateObj.getTime())) {
+  //           console.error(`❌ ${dateName}: неверный формат даты`, dateValue);
+  //           return null;
+  //         }
 
-          const now = new Date();
-          const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          const diffHours = Math.floor((now - dateObj) / (1000 * 60 * 60));
+  //         const now = new Date();
+  //         const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+  //         const diffHours = Math.floor((now - dateObj) / (1000 * 60 * 60));
           
-          console.log(`⏰ ${dateName}:`, {
-            'Исходное значение': dateValue,
-            'Дата/время (ISO)': dateObj.toISOString(),
-            'Локальный формат': dateObj.toLocaleString('ru-RU'),
-            'Относительное время': diffDays > 0 
-              ? `${diffDays} дней назад` 
-              : `${diffHours} часов назад`,
-            'День недели': dateObj.toLocaleString('ru-RU', { weekday: 'long' })
-          });
+  //         console.log(`⏰ ${dateName}:`, {
+  //           'Исходное значение': dateValue,
+  //           'Дата/время (ISO)': dateObj.toISOString(),
+  //           'Локальный формат': dateObj.toLocaleString('ru-RU'),
+  //           'Относительное время': diffDays > 0 
+  //             ? `${diffDays} дней назад` 
+  //             : `${diffHours} часов назад`,
+  //           'День недели': dateObj.toLocaleString('ru-RU', { weekday: 'long' })
+  //         });
           
-          return dateObj;
-        } catch (error) {
-          console.error(`❌ Ошибка обработки ${dateName}:`, error);
-          return null;
-        }
-      };
+  //         return dateObj;
+  //       } catch (error) {
+  //         console.error(`❌ Ошибка обработки ${dateName}:`, error);
+  //         return null;
+  //       }
+  //     };
 
-      const creationDate = task.createdAt || task.created_at;
-      logDateInfo(creationDate, 'Дата создания');
-      logDateInfo(task.deadline, 'Дедлайн');
-      logDateInfo(task.in_progress_since, 'В работе с');
+  //     const creationDate = task.createdAt || task.created_at;
+  //     logDateInfo(creationDate, 'Дата создания');
+  //     logDateInfo(task.deadline, 'Дедлайн');
+  //     logDateInfo(task.in_progress_since, 'В работе с');
 
-      console.groupEnd();
-    }
-  }, [task, creatorName, assigneeName]);
+  //     console.groupEnd();
+  //   }
+  // }, [task, creatorName, assigneeName]);
 
   const normalizedTask = {
     ...task,

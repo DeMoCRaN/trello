@@ -4,7 +4,7 @@ import './Header.css';
 import { Link } from 'react-router-dom';
 
 function Header({ userEmail, onNavigate,  }) {
-  console.log('Header userEmail prop:', userEmail);
+  // console.log('Header userEmail prop:', userEmail);
   return (
     <header className="app-header">
       <div className="logo">

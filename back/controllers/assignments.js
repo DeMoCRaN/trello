@@ -1,3 +1,5 @@
+const { invalidateCache } = require('../config/redis');
+
 async function getAssignments(pool, creator_id, includeArchived = false) {
   const client = await pool.connect();
   try {
@@ -76,6 +78,7 @@ async function getAssignments(pool, creator_id, includeArchived = false) {
     client.release();
   }
 }
+
 async function createAssignment(pool, { title, description, creator_id }) {
   const client = await pool.connect();
   try {
@@ -85,6 +88,10 @@ async function createAssignment(pool, { title, description, creator_id }) {
       "RETURNING *",
       [title, description, creator_id]
     );
+    
+    // Invalidate assignments cache
+    await invalidateCache(['assignments:*']);
+    
     return result.rows[0];
   } finally {
     client.release();
@@ -108,6 +115,10 @@ async function createTaskInAssignment(pool, assignmentId, taskData) {
         assignmentId,
       ]
     );
+    
+    // Invalidate assignments cache
+    await invalidateCache(['assignments:*']);
+    
     return result.rows[0];
   } finally {
     client.release();
@@ -121,6 +132,9 @@ async function deleteAssignment(pool, assignmentId) {
     await client.query('DELETE FROM tasks WHERE assignment_id = $1', [assignmentId]);
     // Удаляем само задание
     await client.query('DELETE FROM assignments WHERE id = $1', [assignmentId]);
+    
+    // Invalidate assignments cache
+    await invalidateCache(['assignments:*']);
   } catch (error) {
     throw error;
   } finally {
