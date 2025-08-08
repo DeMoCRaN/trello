@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/home/democram/Рабочий стол/trello/back/logs/.04fbed624827d585461a276a92b943534b545672-audit.json",
+    "files": [
+        {
+            "date": 1754650907936,
+            "name": "/home/democram/Рабочий стол/trello/back/logs/application-2025-08-08.log",
+            "hash": "81fc9acc154dce6debd452b16068ca46dad8c8ddf377ca0e6e53c0f8a60bda01"
+        }
+    ],
+    "hashType": "sha256"
+}

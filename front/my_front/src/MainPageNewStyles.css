@@ -162,3 +162,80 @@ body {
   max-width: 900px;
   transition: margin 0.3s ease;
 }
+
+
+/* Стили для уведомлений */
+.notification-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  width: 350px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Анимация для плавного появления */
+.notification-container {
+  transition: all 0.3s ease;
+}
+
+/* Заголовок уведомления */
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Список уведомлений */
+.notification-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Отдельное уведомление */
+.notification-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  border-left: 3px solid #1976d2;
+}
+
+.notification-item.unread {
+  background-color: #e3f2fd;
+  border-left-color: #2196f3;
+}
+
+/* Кнопка закрытия */
+.notification-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+.notification-close:hover {
+  color: #333;
+}
+
+/* Время уведомления */
+.notification-time {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Контент уведомления */
+.notification-content {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}

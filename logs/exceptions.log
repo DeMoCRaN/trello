@@ -1,0 +1,274 @@
+2025-08-08 14:00:45 [error]: uncaughtException: markTaskAsSeen is not defined
+ReferenceError: markTaskAsSeen is not defined
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/controllers/tasks.js:335:3)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1449:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/routes/api.js:4:25)
+ReferenceError: markTaskAsSeen is not defined
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/controllers/tasks.js:335:3)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1449:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/routes/api.js:4:25)
+{
+  "error": {},
+  "exception": true,
+  "date": "Fri Aug 08 2025 14:00:45 GMT+0300 (Москва, стандартное время)",
+  "process": {
+    "pid": 33692,
+    "uid": 1000,
+    "gid": 1000,
+    "cwd": "/home/democram/Рабочий стол/trello/back",
+    "execPath": "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+    "version": "v24.3.0",
+    "argv": [
+      "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+      "/home/democram/Рабочий стол/trello/back/back"
+    ],
+    "memoryUsage": {
+      "rss": 81485824,
+      "heapTotal": 21929984,
+      "heapUsed": 14455272,
+      "external": 2070720,
+      "arrayBuffers": 18675
+    }
+  },
+  "os": {
+    "loadavg": [
+      1.06,
+      1.42,
+      1.52
+    ],
+    "uptime": 3708.65
+  },
+  "trace": [
+    {
+      "column": 3,
+      "file": "/home/democram/Рабочий стол/trello/back/controllers/tasks.js",
+      "function": null,
+      "line": 335,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 14,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module._compile",
+      "line": 1692,
+      "method": "_compile",
+      "native": false
+    },
+    {
+      "column": 10,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Object..js",
+      "line": 1824,
+      "method": ".js",
+      "native": false
+    },
+    {
+      "column": 32,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module.load",
+      "line": 1427,
+      "method": "load",
+      "native": false
+    },
+    {
+      "column": 12,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module._load",
+      "line": 1250,
+      "method": "_load",
+      "native": false
+    },
+    {
+      "column": 14,
+      "file": "node:diagnostics_channel",
+      "function": "TracingChannel.traceSync",
+      "line": 322,
+      "method": "traceSync",
+      "native": false
+    },
+    {
+      "column": 24,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "wrapModuleLoad",
+      "line": 235,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 12,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module.require",
+      "line": 1449,
+      "method": "require",
+      "native": false
+    },
+    {
+      "column": 16,
+      "file": "node:internal/modules/helpers",
+      "function": "require",
+      "line": 135,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 25,
+      "file": "/home/democram/Рабочий стол/trello/back/routes/api.js",
+      "function": null,
+      "line": 4,
+      "method": null,
+      "native": false
+    }
+  ]
+}
+2025-08-08 14:00:52 [error]: uncaughtException: markTaskAsSeen is not defined
+ReferenceError: markTaskAsSeen is not defined
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/controllers/tasks.js:335:3)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1449:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/routes/api.js:4:25)
+ReferenceError: markTaskAsSeen is not defined
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/controllers/tasks.js:335:3)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1449:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/home/democram/Рабочий стол/trello/back/routes/api.js:4:25)
+{
+  "error": {},
+  "exception": true,
+  "date": "Fri Aug 08 2025 14:00:52 GMT+0300 (Москва, стандартное время)",
+  "process": {
+    "pid": 33759,
+    "uid": 1000,
+    "gid": 1000,
+    "cwd": "/home/democram/Рабочий стол/trello/back",
+    "execPath": "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+    "version": "v24.3.0",
+    "argv": [
+      "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+      "/home/democram/Рабочий стол/trello/back/back.js"
+    ],
+    "memoryUsage": {
+      "rss": 81358848,
+      "heapTotal": 21929984,
+      "heapUsed": 14408200,
+      "external": 2070720,
+      "arrayBuffers": 18675
+    }
+  },
+  "os": {
+    "loadavg": [
+      0.98,
+      1.39,
+      1.51
+    ],
+    "uptime": 3715.06
+  },
+  "trace": [
+    {
+      "column": 3,
+      "file": "/home/democram/Рабочий стол/trello/back/controllers/tasks.js",
+      "function": null,
+      "line": 335,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 14,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module._compile",
+      "line": 1692,
+      "method": "_compile",
+      "native": false
+    },
+    {
+      "column": 10,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Object..js",
+      "line": 1824,
+      "method": ".js",
+      "native": false
+    },
+    {
+      "column": 32,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module.load",
+      "line": 1427,
+      "method": "load",
+      "native": false
+    },
+    {
+      "column": 12,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module._load",
+      "line": 1250,
+      "method": "_load",
+      "native": false
+    },
+    {
+      "column": 14,
+      "file": "node:diagnostics_channel",
+      "function": "TracingChannel.traceSync",
+      "line": 322,
+      "method": "traceSync",
+      "native": false
+    },
+    {
+      "column": 24,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "wrapModuleLoad",
+      "line": 235,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 12,
+      "file": "node:internal/modules/cjs/loader",
+      "function": "Module.require",
+      "line": 1449,
+      "method": "require",
+      "native": false
+    },
+    {
+      "column": 16,
+      "file": "node:internal/modules/helpers",
+      "function": "require",
+      "line": 135,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 25,
+      "file": "/home/democram/Рабочий стол/trello/back/routes/api.js",
+      "function": null,
+      "line": 4,
+      "method": null,
+      "native": false
+    }
+  ]
+}

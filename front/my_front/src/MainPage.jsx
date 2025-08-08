@@ -496,14 +496,22 @@ function MainPage({ userEmail }) {
         unreadCommentsCount={unreadCommentsCount}
         onCommentsClick={() => setShowNotification(!showNotification)}
       />
-      
-      {showNotification && (
-        <TaskNotification 
-          tasks={assignedTasks} 
-          comments={comments}
-          onClose={() => setShowNotification(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showNotification && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className="notification-container"
+          >
+            <TaskNotification 
+              tasks={assignedTasks} 
+              comments={comments}
+              onClose={() => setShowNotification(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="dashboard">
         {currentPage === 'main' && (
