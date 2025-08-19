@@ -8,6 +8,7 @@ import AssignmentsList from './components/AssignmentsList';
 import SelectedAssignmentDetails from './components/SelectedAssignmentDetails';
 import TaskCreationForm from './components/TaskCreationForm';
 import TaskDetailsForm from './components/TaskDetailsForm';
+import AssignmentCreationForm from './components/AssignmentCreationForm';
 import FloatingButton from './components/FloatingButton';
 import UserProfileForm from './components/UserProfileForm';
 import TaskNotification from './components/TaskNotification';
@@ -45,6 +46,7 @@ function MainPage({ userEmail }) {
   const [currentTab, setCurrentTab] = useState('assignments');
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [detailsFormTask, setDetailsFormTask] = useState(null);
+  const [showAssignmentCreationForm, setShowAssignmentCreationForm] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState(0);
   const [statusChangeLoading, setStatusChangeLoading] = useState({});
   const [comments, setComments] = useState([]);
@@ -253,8 +255,9 @@ const fetchStatuses = async () => {
     };
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
-    // Увеличили интервал опроса до 2 минут (120000 мс)
-    const intervalId = setInterval(handleTaskUpdate, 120000);
+    
+    // Уменьшаем интервал опроса до 30 секунд для более быстрого обновления
+    const intervalId = setInterval(handleTaskUpdate, 30000);
 
     return () => {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
@@ -534,6 +537,7 @@ const fetchStatuses = async () => {
               onSelect={handleAssignmentSelect}
               onDelete={handleDeleteAssignment}
               onCreate={handleCreateAssignment}
+              onShowCreateForm={() => setShowAssignmentCreationForm(true)}
               currentTab={currentTab}
               setCurrentTab={setCurrentTab}
             />
@@ -623,6 +627,12 @@ const fetchStatuses = async () => {
                 priorities={priorities}
                 onClose={() => setShowTaskForm(false)}
                 initialCreatorEmail={userEmail}
+              />
+            </div>
+            <div className={`task-form-overlay ${showAssignmentCreationForm ? '' : 'hidden'}`}>
+              <AssignmentCreationForm
+                onCreateAssignment={handleCreateAssignment}
+                onClose={() => setShowAssignmentCreationForm(false)}
               />
             </div>
           </>

@@ -71,18 +71,23 @@ function TaskCreationForm({
       assigneeEmail: newTaskAssigneeEmail,
     };
 
-    onCreateTask(taskData);
+      onCreateTask(taskData);
 
-    if (!task) {
-      // Сброс формы только при создании новой задачи
-      setNewTaskTitle('');
-      setNewTaskDescription('');
-      setNewTaskDeadline('');
-      setNewTaskStatus('1');
-      setNewTaskPriority('1');
-      setNewTaskCreatorEmail('');
-      setNewTaskAssigneeEmail('');
-    }
+      // Emit event for immediate refresh
+      import('./../utils/eventBus').then(({ default: eventBus }) => {
+        eventBus.emit('taskCreated', taskData);
+      });
+
+      if (!task) {
+        // Сброс формы только при создании новой задачи
+        setNewTaskTitle('');
+        setNewTaskDescription('');
+        setNewTaskDeadline('');
+        setNewTaskStatus('1');
+        setNewTaskPriority('1');
+        setNewTaskCreatorEmail('');
+        setNewTaskAssigneeEmail('');
+      }
   };
 
   return (
