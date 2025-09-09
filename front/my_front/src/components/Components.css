@@ -1859,3 +1859,362 @@ body {
   40% { content: '..'; }
   60%, 100% { content: '...'; }
 }
+
+/* ===== TEAM MEMBERS PANEL STYLES ===== */
+.team-members-panel {
+  max-width: 600px;
+}
+
+.team-stats {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.team-stats p {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin: 0;
+}
+
+.invite-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.invite-section h4 {
+  color: var(--primary-dark);
+  margin: 0 0 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.invite-section form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.invite-section input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--primary-light);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+.invite-section input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.15);
+}
+
+.invite-section button {
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(63, 81, 181, 0.2);
+}
+
+.invite-section button:hover {
+  background: linear-gradient(45deg, #303f9f, var(--primary-color));
+  box-shadow: 0 6px 12px rgba(63, 81, 181, 0.3);
+  transform: translateY(-2px);
+}
+
+.cancel-button {
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--primary-light);
+  background: white;
+  color: var(--text-light);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-button:hover {
+  background: #f5f5f5;
+  border-color: var(--text-light);
+  color: var(--text-medium);
+}
+
+.team-members-list {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.team-members-list h4 {
+  color: var(--primary-dark);
+  margin: 0 0 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.team-members-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.team-member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.team-member-item:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+}
+
+.team-member-item:last-child {
+  margin-bottom: 0;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-info strong {
+  display: block;
+  color: var(--primary-dark);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.member-email {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.member-status {
+  margin-right: 16px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.member-invited-by {
+  color: var(--text-light);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ===== FLOATING BUTTONS STYLES ===== */
+.floating-button {
+  position: fixed;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(63, 81, 181, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(63, 81, 181, 0.4);
+}
+
+.floating-button:active {
+  transform: scale(0.95);
+}
+
+/* First floating button (task creation) */
+.floating-button:first-child {
+  bottom: 20px;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+}
+
+/* Second floating button (team members) */
+.floating-button:nth-child(2) {
+  bottom: 90px;
+  background: linear-gradient(45deg, #ff9800, #ff5722);
+  font-size: 20px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .floating-buttons-group {
+    right: 15px;
+    bottom: 15px;
+    gap: 12px;
+  }
+
+  .floating-button {
+    width: 55px;
+    height: 55px;
+    font-size: 22px;
+  }
+
+  .team-button {
+    font-size: 18px;
+  }
+}
+
+
+
+/* Стили для формы приглашения */
+.invite-form {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.invite-form h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #495057;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.email-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.email-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.email-input::placeholder {
+  color: #6c757d;
+}
+
+.invite-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .invite-buttons {
+    flex-direction: column;
+  }
+  
+  .invite-buttons button {
+    width: 100%;
+  }
+}
+
+/* Стили для панели команды */
+.team-members-panel {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.team-stats {
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #e8f5e8;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.team-stats p {
+  margin: 0;
+  font-weight: 500;
+  color: #28a745;
+}
+
+.team-members-list {
+  margin: 20px 0;
+}
+
+.team-members-list h4 {
+  margin-bottom: 15px;
+  color: #495057;
+}
+
+.team-member-item {
+  padding: 15px;
+  margin-bottom: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.member-info {
+  margin-bottom: 8px;
+}
+
+.member-info strong {
+  color: #212529;
+  font-size: 16px;
+}
+
+.member-email {
+  color: #6c757d;
+  font-size: 14px;
+  margin-left: 8px;
+}
+
+.member-status {
+  margin-bottom: 8px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.member-invited-by {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+}

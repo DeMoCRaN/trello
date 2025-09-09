@@ -145,8 +145,8 @@ router.get('/assignments/:id/tasks', authenticateToken, validateIdParam, async (
     
     res.json(tasks);
   } catch (error) {
-    console.error('Error fetching tasks:', error);
-    res.status(500).json({ 
+    console.error('Ошибка при получении задач:', error);
+    res.status(500).json({
       error: 'Внутренняя ошибка сервера',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -416,6 +416,73 @@ router.delete('/assignments/:id', authenticateToken, validateIdParam, async (req
   }
 });
 
+// Роуты для управления командой проекта
+router.post('/assignments/:id/invite', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id, 10);
+    const { user_email } = req.body;
+    const invitedBy = req.user.userId;
+
+    if (!user_email) {
+      return res.status(400).json({ error: 'Email пользователя обязателен' });
+    }
+
+    // Получаем ID пользователя по email
+    const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [user_email]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Пользователь с таким email не найден' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    const invitation = await assignmentsController.inviteUserToAssignment(pool, assignmentId, userId, invitedBy);
+    res.status(201).json(invitation);
+  } catch (error) {
+    console.error('Ошибка при приглашении пользователя:', error);
+    res.status(500).json({ error: 'Ошибка при приглашении пользователя' });
+  }
+});
+
+router.get('/assignments/:id/team', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id, 10);
+    const teamMembers = await assignmentsController.getTeamMembers(pool, assignmentId);
+    res.json(teamMembers);
+  } catch (error) {
+    console.error('Ошибка при получении состава команды:', error);
+    res.status(500).json({ error: 'Ошибка при получении состава команды' });
+  }
+});
+
+router.post('/assignments/:assignmentId/invitations/:invitationId/respond', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const invitationId = parseInt(req.params.invitationId, 10);
+    const { status } = req.body;
+    const userId = req.user.userId;
+
+    if (!['accepted', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Статус должен быть "accepted" или "rejected"' });
+    }
+
+    const response = await assignmentsController.respondToInvitation(pool, invitationId, userId, status);
+    res.json(response);
+  } catch (error) {
+    console.error('Ошибка при ответе на приглашение:', error);
+    res.status(500).json({ error: 'Ошибка при ответе на приглашение' });
+  }
+});
+
+router.get('/users/me/invitations', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const invitations = await assignmentsController.getPendingInvitations(pool, userId);
+    res.json(invitations);
+  } catch (error) {
+    console.error('Ошибка при получении приглашений:', error);
+    res.status(500).json({ error: 'Ошибка при получении приглашений' });
+  }
+});
+
 router.patch('/tasks/:id/status', authenticateToken, validateIdParam, async (req, res) => {
   try {
     console.log('PATCH /tasks/:id/status called with params:', req.params, 'body:', req.body);
@@ -490,11 +557,11 @@ router.get('/comments/unread', authenticateToken, async (req, res) => {
 router.post('/comments/mark-read', authenticateToken, async (req, res) => {
   try {
     const { commentIds } = req.body;
-    
+
     if (!Array.isArray(commentIds)) {
       return res.status(400).json({ error: 'commentIds должен быть массивом' });
     }
-    
+
     // Валидация ID комментариев
     const invalidIds = commentIds.filter(id => !/^\d+$/.test(id));
     if (invalidIds.length > 0) {
@@ -506,6 +573,70 @@ router.post('/comments/mark-read', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Ошибка при обновлении статуса прочтения комментариев:', error);
     res.status(500).json({ error: 'Ошибка при обновлении статуса прочтения комментариев' });
+  }
+});
+
+// Get team members for an assignment
+router.get('/assignments/:id/team', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id);
+    const userId = req.user.userId;
+
+    // Check if user has access to the assignment
+    const assignment = await pool.query(
+      `SELECT * FROM assignments
+       WHERE id = $1 AND (creator_id = $2 OR EXISTS (
+         SELECT 1 FROM assignment_members WHERE assignment_id = $1 AND user_id = $2
+       ))`,
+      [assignmentId, userId]
+    );
+
+    if (assignment.rows.length === 0) {
+      return res.status(403).json({ error: 'Доступ запрещен или задание не найдено' });
+    }
+
+    const teamMembers = await assignmentsController.getTeamMembers(pool, assignmentId);
+    res.json(teamMembers);
+  } catch (error) {
+    console.error('Ошибка при получении состава команды:', error);
+    res.status(500).json({ error: 'Ошибка при получении состава команды' });
+  }
+});
+
+// Invite user to assignment
+router.post('/assignments/:id/invite', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id);
+    const userId = req.user.userId;
+    const { user_email } = req.body;
+
+    if (!user_email) {
+      return res.status(400).json({ error: 'Email пользователя обязателен' });
+    }
+
+    // Check if user has permission to invite (creator or admin)
+    const assignment = await pool.query(
+      `SELECT * FROM assignments WHERE id = $1 AND creator_id = $2`,
+      [assignmentId, userId]
+    );
+
+    if (assignment.rows.length === 0) {
+      return res.status(403).json({ error: 'Только создатель проекта может приглашать участников' });
+    }
+
+    // Get user ID from email
+    const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [user_email]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Пользователь с таким email не найден' });
+    }
+
+    const inviteeUserId = userResult.rows[0].id;
+
+    const result = await assignmentsController.inviteUserToAssignment(pool, assignmentId, inviteeUserId, userId);
+    res.json(result);
+  } catch (error) {
+    console.error('Ошибка при приглашении пользователя:', error);
+    res.status(500).json({ error: error.message || 'Ошибка при приглашении пользователя' });
   }
 });
 

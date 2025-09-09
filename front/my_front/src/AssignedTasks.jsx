@@ -10,6 +10,7 @@ function AssignedTasks({ userEmail }) {
   // Состояния компонента
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
+  const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
@@ -20,6 +21,8 @@ function AssignedTasks({ userEmail }) {
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
   const [selectedTask, setSelectedTask] = useState(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showInvitationForm, setShowInvitationForm] = useState(false);
+  const [selectedInvitation, setSelectedInvitation] = useState(null);
   // eslint-disable-next-line no-unused-vars
   const [highlightedCommentId, setHighlightedCommentId] = useState(null);
 
@@ -150,8 +153,8 @@ function AssignedTasks({ userEmail }) {
         throw new Error('Failed to fetch comments: ' + response.status);
       }
       const data = await response.json();
-      
-      const filteredComments = data.filter(comment => 
+
+      const filteredComments = data.filter(comment =>
         comment.author_email !== userEmail
       ).map(comment => ({
         ...comment,
@@ -160,14 +163,14 @@ function AssignedTasks({ userEmail }) {
 
       if (filteredComments.length > 0 && unreadCommentsCount !== filteredComments.length) {
         setUnreadCommentsCount(filteredComments.length);
-        
+
         if (Notification.permission === 'granted') {
           new Notification('Новые комментарии', {
             body: `У вас ${filteredComments.length} новых комментариев`,
             icon: '/favicon.ico'
           });
         }
-        
+
       }
 
       setComments(filteredComments);
@@ -175,6 +178,39 @@ function AssignedTasks({ userEmail }) {
       console.error('Ошибка загрузки комментариев:', error);
     }
   }, [userEmail, unreadCommentsCount]);
+
+  // Получение приглашений
+  const fetchInvitations = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+      const response = await fetch('http://localhost:3000/api/users/me/invitations', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch invitations: ' + response.status);
+      }
+      const data = await response.json();
+
+      setInvitations(data);
+
+      if (data.length > 0) {
+        if (Notification.permission === 'granted') {
+          new Notification('Новые приглашения', {
+            body: `У вас ${data.length} новых приглашений в проекты`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки приглашений:', error);
+    }
+  }, []);
 
   // Эффекты
   useEffect(() => {
@@ -185,6 +221,7 @@ function AssignedTasks({ userEmail }) {
     fetchTasks();
     fetchAssignmentNames();
     fetchComments();
+    fetchInvitations();
 
     const tasksInterval = setInterval(fetchTasks, 60000);
     const commentsInterval = setInterval(fetchComments, 30000);
@@ -193,7 +230,7 @@ function AssignedTasks({ userEmail }) {
       clearInterval(tasksInterval);
       clearInterval(commentsInterval);
     };
-  }, [fetchTasks, fetchAssignmentNames, fetchComments]);
+  }, [fetchTasks, fetchAssignmentNames, fetchComments, fetchInvitations]);
 
   useEffect(() => {
     const debouncedHandler = debouncedFetchTasks();
@@ -212,6 +249,7 @@ function AssignedTasks({ userEmail }) {
     if (tasks.length > 0) {
       const newTasks = tasks.filter(task => task.status === 'new');
       if (newTasks.length > 0) {
+        // Handle new tasks if needed
       }
     }
   }, [tasks]);
@@ -339,7 +377,7 @@ function AssignedTasks({ userEmail }) {
   const handleCommentClick = useCallback(async (comment) => {
     try {
       const token = localStorage.getItem('token');
-      
+
       await fetch('http://localhost:3000/api/comments/mark-read', {
         method: 'POST',
         headers: {
@@ -348,24 +386,24 @@ function AssignedTasks({ userEmail }) {
         },
         body: JSON.stringify({ commentIds: [comment.id] }),
       });
-      
+
       setComments(prev => prev.filter(c => c.id !== comment.id));
       setUnreadCommentsCount(prev => prev - 1);
-      
+
       const taskResponse = await fetch(`http://localhost:3000/api/tasks/${comment.task_id}`, {
         headers: {
           'Authorization': 'Bearer ' + token,
         },
       });
-      
+
       if (!taskResponse.ok) {
         throw new Error('Failed to fetch task details');
       }
-      
+
       const taskData = await taskResponse.json();
       setSelectedTask(taskData);
       setShowTaskModal(true);
-      
+
       if (comment.id) {
         setHighlightedCommentId(comment.id);
       }
@@ -373,6 +411,39 @@ function AssignedTasks({ userEmail }) {
       console.error('Error handling comment click:', error);
     }
   }, []);
+
+  // Обработчик клика по приглашению
+  const handleInvitationClick = useCallback((invitation) => {
+    setSelectedInvitation(invitation);
+    setShowInvitationForm(true);
+  }, []);
+
+  // Обработчик ответа на приглашение
+  const handleRespondToInvitation = useCallback(async (invitationId, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:3000/api/assignments/${selectedInvitation.assignment_id}/invitations/${invitationId}/respond`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка при ответе на приглашение');
+      }
+
+      // Обновляем список приглашений
+      await fetchInvitations();
+      setShowInvitationForm(false);
+      setSelectedInvitation(null);
+    } catch (error) {
+      console.error('Ошибка при ответе на приглашение:', error);
+      throw error;
+    }
+  }, [selectedInvitation, fetchInvitations]);
 
   // Форматирование дедлайна
   const formatDeadline = useCallback((deadline) => {
@@ -532,12 +603,14 @@ const renderTaskCard = useCallback((task) => {
       />
       
       {showNotification && (
-        <TaskNotification 
-          tasks={tasks} 
+        <TaskNotification
+          tasks={tasks}
           comments={comments}
+          invitations={invitations}
           onClose={() => setShowNotification(false)}
           onTaskClick={handleNotificationClick}
           onCommentClick={handleCommentClick}
+          onInvitationClick={handleInvitationClick}
         />
       )}
       
@@ -593,14 +666,26 @@ const renderTaskCard = useCallback((task) => {
       </div>
 
       {showTaskModal && (
-        <TaskDetailsForm 
-          task={selectedTask} 
+        <TaskDetailsForm
+          task={selectedTask}
           onClose={() => {
             setShowTaskModal(false);
             setSelectedTask(null);
             setHighlightedCommentId(null);
           }}
           token={localStorage.getItem('token')}
+        />
+      )}
+
+      {/* Форма ответа на приглашение */}
+      {showInvitationForm && selectedInvitation && (
+        <InvitationResponseForm
+          invitation={selectedInvitation}
+          onClose={() => {
+            setShowInvitationForm(false);
+            setSelectedInvitation(null);
+          }}
+          onRespond={handleRespondToInvitation}
         />
       )}
     </div>

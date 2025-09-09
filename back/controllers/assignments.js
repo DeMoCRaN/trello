@@ -379,11 +379,235 @@ async function deleteAssignment(pool, assignmentId) {
     }
 }
 
+async function inviteUserToAssignment(pool, assignmentId, userId, invitedBy) {
+    const client = await pool.connect();
+    try {
+        logger.info('Приглашение пользователя в команду проекта', { 
+            assignmentId, 
+            userId, 
+            invitedBy 
+        });
+
+        // Валидация данных
+        const validatedAssignmentId = validateId(assignmentId, 'ID проекта');
+        const validatedUserId = validateId(userId, 'ID пользователя');
+        const validatedInvitedBy = validateId(invitedBy, 'ID приглашающего');
+
+        // Проверяем, что приглашающий имеет права (создатель проекта или admin)
+        const permissionCheck = await safeQuery(
+            client,
+            `SELECT a.creator_id, u.role_id, r.name as role_name 
+             FROM assignments a 
+             JOIN users u ON u.id = $1 
+             JOIN roles r ON r.id = u.role_id 
+             WHERE a.id = $2`,
+            [validatedInvitedBy, validatedAssignmentId]
+        );
+
+        if (permissionCheck.rows.length === 0) {
+            throw new Error('Проект не найден');
+        }
+
+        const { creator_id, role_name } = permissionCheck.rows[0];
+        if (creator_id !== validatedInvitedBy && role_name !== 'admin') {
+            throw new Error('Недостаточно прав для приглашения пользователей');
+        }
+
+        // Проверяем, что пользователь не является создателем проекта
+        if (creator_id === validatedUserId) {
+            throw new Error('Создатель проекта уже является членом команды');
+        }
+
+        // Проверяем, что пользователь не уже приглашен
+        const existingInvitation = await safeQuery(
+            client,
+            'SELECT id FROM assignment_members WHERE assignment_id = $1 AND user_id = $2',
+            [validatedAssignmentId, validatedUserId]
+        );
+
+        if (existingInvitation.rows.length > 0) {
+            throw new Error('Пользователь уже приглашен в этот проект');
+        }
+
+        // Создаем приглашение
+        const result = await safeQuery(
+            client,
+            `INSERT INTO assignment_members 
+                (assignment_id, user_id, invited_by, status, invited_at) 
+             VALUES ($1, $2, $3, 'pending', now()) 
+             RETURNING *`,
+            [validatedAssignmentId, validatedUserId, validatedInvitedBy]
+        );
+
+        logger.info('Пользователь успешно приглашен в проект', { 
+            invitationId: result.rows[0].id,
+            assignmentId: validatedAssignmentId,
+            userId: validatedUserId
+        });
+
+        return result.rows[0];
+    } catch (error) {
+        logger.error('Ошибка при приглашении пользователя в проект', {
+            error: error.message,
+            stack: error.stack,
+            assignmentId,
+            userId,
+            invitedBy
+        });
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+async function getTeamMembers(pool, assignmentId) {
+    const client = await pool.connect();
+    try {
+        const validatedAssignmentId = validateId(assignmentId, 'ID проекта');
+        logger.info('Получение состава команды проекта', { assignmentId: validatedAssignmentId });
+
+        const result = await safeQuery(
+            client,
+            `SELECT 
+                am.id,
+                am.assignment_id,
+                am.user_id,
+                am.invited_by,
+                am.status,
+                am.invited_at,
+                am.responded_at,
+                u.email as user_email,
+                u.username as user_name,
+                inviter.email as invited_by_email,
+                inviter.username as invited_by_name
+             FROM assignment_members am
+             JOIN users u ON am.user_id = u.id
+             JOIN users inviter ON am.invited_by = inviter.id
+             WHERE am.assignment_id = $1
+             ORDER BY am.invited_at DESC`,
+            [validatedAssignmentId]
+        );
+
+        logger.debug(`Найдено членов команды: ${result.rows.length}`);
+        return result.rows;
+    } catch (error) {
+        logger.error('Ошибка при получении состава команды', {
+            error: error.message,
+            stack: error.stack,
+            assignmentId
+        });
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+async function respondToInvitation(pool, invitationId, userId, status) {
+    const client = await pool.connect();
+    try {
+        logger.info('Ответ на приглашение в проект', { 
+            invitationId, 
+            userId, 
+            status 
+        });
+
+        const validatedInvitationId = validateId(invitationId, 'ID приглашения');
+        const validatedUserId = validateId(userId, 'ID пользователя');
+
+        if (!['accepted', 'rejected'].includes(status)) {
+            throw new Error('Неверный статус ответа');
+        }
+
+        // Проверяем, что приглашение принадлежит пользователю
+        const invitationCheck = await safeQuery(
+            client,
+            'SELECT id FROM assignment_members WHERE id = $1 AND user_id = $2 AND status = $3',
+            [validatedInvitationId, validatedUserId, 'pending']
+        );
+
+        if (invitationCheck.rows.length === 0) {
+            throw new Error('Приглашение не найдено или уже обработано');
+        }
+
+        // Обновляем статус приглашения
+        const result = await safeQuery(
+            client,
+            `UPDATE assignment_members 
+             SET status = $1, responded_at = now() 
+             WHERE id = $2 
+             RETURNING *`,
+            [status, validatedInvitationId]
+        );
+
+        logger.info('Ответ на приглашение обработан', { 
+            invitationId: validatedInvitationId,
+            status 
+        });
+
+        return result.rows[0];
+    } catch (error) {
+        logger.error('Ошибка при ответе на приглашение', {
+            error: error.message,
+            stack: error.stack,
+            invitationId,
+            userId,
+            status
+        });
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+async function getPendingInvitations(pool, userId) {
+    const client = await pool.connect();
+    try {
+        const validatedUserId = validateId(userId, 'ID пользователя');
+        logger.info('Получение ожидающих приглашений пользователя', { userId: validatedUserId });
+
+        const result = await safeQuery(
+            client,
+            `SELECT
+                am.id,
+                am.assignment_id,
+                am.invited_by,
+                am.invited_at,
+                am.status,
+                a.title as assignment_title,
+                a.description as assignment_description,
+                inviter.email as invited_by_email,
+                inviter.username as invited_by_name
+             FROM assignment_members am
+             JOIN assignments a ON am.assignment_id = a.id
+             JOIN users inviter ON am.invited_by = inviter.id
+             WHERE am.user_id = $1 AND am.status = 'pending'
+             ORDER BY am.invited_at DESC`,
+            [validatedUserId]
+        );
+
+        logger.debug(`Найдено ожидающих приглашений: ${result.rows.length}`);
+        return result.rows;
+    } catch (error) {
+        logger.error('Ошибка при получении приглашений', {
+            error: error.message,
+            stack: error.stack,
+            userId
+        });
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     getAssignments,
     createAssignment,
     createTaskInAssignment,
     deleteAssignment,
+    inviteUserToAssignment,
+    getTeamMembers,
+    respondToInvitation,
+    getPendingInvitations,
     // Экспортируем утилиты для тестирования
     _test: {
         safeQuery,

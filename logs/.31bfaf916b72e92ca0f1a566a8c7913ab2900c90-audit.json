@@ -6,14 +6,14 @@
     "auditLog": "/home/democram/Рабочий стол/trello/logs/.31bfaf916b72e92ca0f1a566a8c7913ab2900c90-audit.json",
     "files": [
         {
-            "date": 1754650845984,
-            "name": "/home/democram/Рабочий стол/trello/logs/application-2025-08-08.log",
-            "hash": "46c96c8159ef010930346223e4dec8e9605b48ca58ad46caa9c0c8f131c8bdbb"
-        },
-        {
             "date": 1755610098939,
             "name": "/home/democram/Рабочий стол/trello/logs/application-2025-08-19.log",
             "hash": "75eeefab1b8abedec64c34006e62676543a2e0e22c77ffebea8816135fbb1ce7"
+        },
+        {
+            "date": 1757414121410,
+            "name": "/home/democram/Рабочий стол/trello/logs/application-2025-09-09.log",
+            "hash": "284bcb5c64f488240368f4d4a4668fb1ff6543525a6c1f532b34b2ec80510286"
         }
     ],
     "hashType": "sha256"

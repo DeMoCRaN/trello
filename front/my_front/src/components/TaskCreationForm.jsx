@@ -10,6 +10,7 @@ function TaskCreationForm({
   initialAssigneeEmail = '',
   task = null,
   isDetailsView = false,
+  teamMembers = [],
 }) {
   const [newTaskTitle, setNewTaskTitle] = useState(task ? task.title : '');
   const [newTaskDescription, setNewTaskDescription] = useState(task ? task.description : '');
@@ -142,15 +143,22 @@ function TaskCreationForm({
         </label>
 
         <label>
-          Исполнитель (Email):
-          <input
-            type="email"
+          Исполнитель:
+          <select
             value={newTaskAssigneeEmail}
             onChange={(e) => setNewTaskAssigneeEmail(e.target.value)}
-            placeholder="Введите email исполнителя"
             required
-            readOnly={isDetailsView}
-          />
+            disabled={isDetailsView}
+          >
+            <option value="">Выберите исполнителя</option>
+            {teamMembers
+              .filter(member => member.status === 'accepted')
+              .map((member) => (
+                <option key={member.id} value={member.user_email}>
+                  {member.user_name || member.user_email}
+                </option>
+              ))}
+          </select>
         </label>
 
         <label>

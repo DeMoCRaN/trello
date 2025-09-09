@@ -10,8 +10,10 @@ import TaskCreationForm from './components/TaskCreationForm';
 import TaskDetailsForm from './components/TaskDetailsForm';
 import AssignmentCreationForm from './components/AssignmentCreationForm';
 import FloatingButton from './components/FloatingButton';
+import TeamMembersPanel from './components/TeamMembersPanel';
 import UserProfileForm from './components/UserProfileForm';
 import TaskNotification from './components/TaskNotification';
+import InvitationResponseForm from './components/InvitationResponseForm';
 
 function parseJwt(token) {
   try {
@@ -47,12 +49,31 @@ function MainPage({ userEmail }) {
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [detailsFormTask, setDetailsFormTask] = useState(null);
   const [showAssignmentCreationForm, setShowAssignmentCreationForm] = useState(false);
+  const [showTeamMembersPanel, setShowTeamMembersPanel] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState(0);
   const [statusChangeLoading, setStatusChangeLoading] = useState({});
   const [comments, setComments] = useState([]);
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [showNotification, setShowNotification] = useState(false);
   const [timers, setTimers] = useState({});
+  const [invitations, setInvitations] = useState([]);
+  const [showInvitationForm, setShowInvitationForm] = useState(false);
+  const [selectedInvitation, setSelectedInvitation] = useState(null);
+
+  // Fix for task status mapping to string for notification filtering
+  const mappedAssignedTasks = assignedTasks.map(task => ({
+    ...task,
+    status: typeof task.status === 'number' ? 
+      statuses.find(s => s.id === task.status)?.name || 'new' : task.status
+  }));
+
+  // eslint-disable-next-line no-unused-vars
+  const newTasks = mappedAssignedTasks.filter(task => task.status === 'new');
+  // eslint-disable-next-line no-unused-vars
+  const newComments = comments.filter(comment => comment.is_new);
+  // eslint-disable-next-line no-unused-vars
+  const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
 
   const processTasks = (tasks) => {
     return tasks.map(task => ({
@@ -169,20 +190,20 @@ function MainPage({ userEmail }) {
         throw new Error('Failed to fetch comments: ' + response.status);
       }
       const data = await response.json();
-      
-      const filteredComments = data.filter(comment => 
+
+      const filteredComments = data.filter(comment =>
         comment.author_email !== userEmail
       );
 
       setUnreadCommentsCount(filteredComments.length);
-      
+
       if (filteredComments.length > 0) {
         if (Notification.permission === 'granted') {
           new Notification('Новые комментарии', {
             body: `У вас ${filteredComments.length} новых комментариев`,
           });
         }
-        
+
       }
 
       setComments(filteredComments);
@@ -190,6 +211,64 @@ function MainPage({ userEmail }) {
       console.error('Ошибка загрузки комментариев:', error);
     }
   }, [userEmail]);
+
+  const fetchInvitations = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+      const response = await fetch('http://localhost:3000/api/users/me/invitations', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch invitations: ' + response.status);
+      }
+      const data = await response.json();
+
+      setInvitations(data);
+
+      if (data.length > 0) {
+        if (Notification.permission === 'granted') {
+          new Notification('Новые приглашения', {
+            body: `У вас ${data.length} новых приглашений в проекты`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки приглашений:', error);
+    }
+  }, []);
+
+  const fetchTeamMembers = useCallback(async (assignmentId) => {
+    if (!assignmentId) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/team`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch team members: ' + response.status);
+      }
+      const data = await response.json();
+      setTeamMembers(data);
+    } catch (error) {
+      console.error('Ошибка загрузки состава команды:', error);
+      setTeamMembers([]);
+    }
+  }, []);
 
 
 const fetchStatuses = async () => {
@@ -252,10 +331,11 @@ const fetchStatuses = async () => {
       fetchAssignedTasks();
       fetchAssignments();
       fetchComments();
+      fetchInvitations();
     };
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
-    
+
     // Уменьшаем интервал опроса до 30 секунд для более быстрого обновления
     const intervalId = setInterval(handleTaskUpdate, 30000);
 
@@ -263,19 +343,42 @@ const fetchStatuses = async () => {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
       clearInterval(intervalId);
     };
-  }, [fetchAssignedTasks, fetchAssignments, fetchComments]);
+  }, [fetchAssignedTasks, fetchAssignments, fetchComments, fetchInvitations]);
+
+  useEffect(() => {
+    if (selectedAssignment) {
+      fetchTeamMembers(selectedAssignment.id);
+    }
+  }, [selectedAssignment, fetchTeamMembers]);
 
   useEffect(() => {
     const loadInitialData = async () => {
+      // Запрос разрешения на уведомления при первой загрузке
+      if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+          try {
+            const permission = await Notification.requestPermission();
+            console.log('Notification permission:', permission);
+          } catch (error) {
+            console.error('Error requesting notification permission:', error);
+          }
+        } else if (Notification.permission === 'denied') {
+          console.warn('Browser notifications are blocked. Please enable them in browser settings.');
+        }
+      } else {
+        console.warn('This browser does not support notifications');
+      }
+
       await Promise.all([
         fetchStatuses(),
         fetchPriorities(),
         fetchAssignments(),
         fetchAssignedTasks(),
-        fetchComments()
+        fetchComments(),
+        fetchInvitations()
       ]);
     };
-    
+
     loadInitialData();
   }, []);
 
@@ -493,6 +596,36 @@ const fetchStatuses = async () => {
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
+  const handleInvitationClick = useCallback((invitation) => {
+    setSelectedInvitation(invitation);
+    setShowInvitationForm(true);
+  }, []);
+
+  const handleRespondToInvitation = useCallback(async (invitationId, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:3000/api/assignments/${selectedInvitation.assignment_id}/invitations/${invitationId}/respond`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка при ответе на приглашение');
+      }
+
+      // Обновляем список приглашений
+      await fetchInvitations();
+      window.dispatchEvent(new Event('taskUpdated'));
+    } catch (error) {
+      console.error('Ошибка при ответе на приглашение:', error);
+      throw error;
+    }
+  }, [selectedInvitation, fetchInvitations]);
+
   if (loading) {
     return <div className="loading-container">Загрузка заданий...</div>;
   }
@@ -510,22 +643,17 @@ const fetchStatuses = async () => {
         unreadCommentsCount={unreadCommentsCount}
         onCommentsClick={() => setShowNotification(!showNotification)}
       />
-      <AnimatePresence>
-        {showNotification && (
-          <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 100 }}
-            className="notification-container"
-          >
-            <TaskNotification 
-              tasks={assignedTasks} 
-              comments={comments}
-              onClose={() => setShowNotification(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      
+      {/* Уведомления теперь рендерятся как выпадающее меню из хедера */}
+      {showNotification && (
+        <TaskNotification
+          tasks={assignedTasks}
+          comments={comments}
+          invitations={invitations}
+          onClose={() => setShowNotification(false)}
+          onInvitationClick={handleInvitationClick}
+        />
+      )}
 
       <main className="dashboard">
         {currentPage === 'main' && (
@@ -619,7 +747,20 @@ const fetchStatuses = async () => {
                 )}
               </>
             )}
-            <FloatingButton onClick={() => setShowTaskForm(true)} />
+            <div className="floating-buttons-group">
+              {/* Кнопка состава команды - выше */}
+              <button
+                className="floating-button team-button"
+                onClick={() => setShowTeamMembersPanel(true)}
+                aria-label="Управление командой"
+                title="Состав команды"
+              >
+                👥
+              </button>
+
+              {/* Кнопка создания задачи - ниже */}
+              <FloatingButton onClick={() => setShowTaskForm(true)} />
+            </div>
             <div className={`task-form-overlay ${showTaskForm ? '' : 'hidden'}`}>
               <TaskCreationForm
                 onCreateTask={handleCreateTask}
@@ -627,6 +768,13 @@ const fetchStatuses = async () => {
                 priorities={priorities}
                 onClose={() => setShowTaskForm(false)}
                 initialCreatorEmail={userEmail}
+                teamMembers={teamMembers}
+              />
+            </div>
+            <div className={`task-form-overlay ${showTeamMembersPanel ? '' : 'hidden'}`}>
+              <TeamMembersPanel
+                assignmentId={selectedAssignment?.id}
+                onClose={() => setShowTeamMembersPanel(false)}
               />
             </div>
             <div className={`task-form-overlay ${showAssignmentCreationForm ? '' : 'hidden'}`}>
@@ -641,6 +789,18 @@ const fetchStatuses = async () => {
           <UserProfileForm
             userEmail={userEmail}
             onClose={() => setCurrentPage('main')}
+          />
+        )}
+
+        {/* Форма ответа на приглашение */}
+        {showInvitationForm && selectedInvitation && (
+          <InvitationResponseForm
+            invitation={selectedInvitation}
+            onClose={() => {
+              setShowInvitationForm(false);
+              setSelectedInvitation(null);
+            }}
+            onRespond={handleRespondToInvitation}
           />
         )}
       </main>
