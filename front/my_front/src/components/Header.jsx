@@ -1,9 +1,10 @@
 import React from 'react';
 import './Header.css';
-
 import { Link } from 'react-router-dom';
+import { FiBell } from 'react-icons/fi';
 
-function Header({ userEmail, onNavigate,  }) {
+// eslint-disable-next-line no-unused-vars
+function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClick, totalNotifications = 0 }) {
   // console.log('Header userEmail prop:', userEmail);
   return (
     <header className="app-header">
@@ -15,16 +16,32 @@ function Header({ userEmail, onNavigate,  }) {
         <Link to="/tasks"><button>Задачи</button></Link>
         <Link to="/dashboard"><button>Дешборд</button></Link>
       </nav>
-      <div
-        className="user-email"
-        style={{ cursor: userEmail ? 'pointer' : 'default', textDecoration: userEmail ? 'underline' : 'none' }}
-        onClick={() => {
-          if (userEmail) {
-            alert('не работает временно');
-          }
-        }}
-      >
-        {userEmail ? userEmail : 'Не авторизован'}
+      <div className="header-right">
+        {/* Notification Bell */}
+        {onCommentsClick && (
+          <button
+            className="notification-bell"
+            onClick={onCommentsClick}
+            title="Уведомления"
+          >
+            <FiBell size={20} />
+            {unreadCommentsCount > 0 && (
+              <span className="notification-badge">{unreadCommentsCount}</span>
+            )}
+          </button>
+        )}
+
+        <div
+          className="user-email"
+          style={{ cursor: userEmail ? 'pointer' : 'default', textDecoration: userEmail ? 'underline' : 'none' }}
+          onClick={() => {
+            if (userEmail) {
+              alert('не работает временно');
+            }
+          }}
+        >
+          {userEmail ? userEmail : 'Не авторизован'}
+        </div>
       </div>
     </header>
   );

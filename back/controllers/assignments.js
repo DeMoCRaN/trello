@@ -502,46 +502,77 @@ async function getTeamMembers(pool, assignmentId) {
     }
 }
 
-async function respondToInvitation(pool, invitationId, userId, status) {
+async function respondToInvitation(pool, invitationId, userId, status, assignmentId = null) {
     const client = await pool.connect();
     try {
-        logger.info('Ответ на приглашение в проект', { 
-            invitationId, 
-            userId, 
-            status 
+        logger.info('Ответ на приглашение в проект', {
+            invitationId,
+            userId,
+            status,
+            assignmentId
         });
 
         const validatedInvitationId = validateId(invitationId, 'ID приглашения');
         const validatedUserId = validateId(userId, 'ID пользователя');
 
         if (!['accepted', 'rejected'].includes(status)) {
-            throw new Error('Неверный статус ответа');
+            throw new Error('Неверный статус ответа. Допустимые значения: "accepted" или "rejected"');
         }
 
-        // Проверяем, что приглашение принадлежит пользователю
-        const invitationCheck = await safeQuery(
-            client,
-            'SELECT id FROM assignment_members WHERE id = $1 AND user_id = $2 AND status = $3',
-            [validatedInvitationId, validatedUserId, 'pending']
-        );
+        // Улучшенная проверка: убеждаемся, что приглашение принадлежит пользователю и проекту
+        let query = `
+            SELECT am.id, am.assignment_id, am.user_id, am.status, a.title as assignment_title
+            FROM assignment_members am
+            JOIN assignments a ON am.assignment_id = a.id
+            WHERE am.id = $1 AND am.user_id = $2 AND am.status = 'pending'
+        `;
+        let params = [validatedInvitationId, validatedUserId];
+
+        // Если передан assignmentId, добавляем дополнительную проверку
+        if (assignmentId !== null) {
+            const validatedAssignmentId = validateId(assignmentId, 'ID проекта');
+            query += ' AND am.assignment_id = $3';
+            params.push(validatedAssignmentId);
+        }
+
+        const invitationCheck = await safeQuery(client, query, params);
 
         if (invitationCheck.rows.length === 0) {
-            throw new Error('Приглашение не найдено или уже обработано');
+            throw new Error('Приглашение не найдено, уже обработано или не принадлежит вам');
         }
+
+        const invitation = invitationCheck.rows[0];
 
         // Обновляем статус приглашения
         const result = await safeQuery(
             client,
-            `UPDATE assignment_members 
-             SET status = $1, responded_at = now() 
-             WHERE id = $2 
+            `UPDATE assignment_members
+             SET status = $1, responded_at = now()
+             WHERE id = $2
              RETURNING *`,
             [status, validatedInvitationId]
         );
 
-        logger.info('Ответ на приглашение обработан', { 
+        // Если приглашение принято, можно добавить дополнительную логику
+        // например, отправку уведомлений другим членам команды
+        if (status === 'accepted') {
+            logger.info('Пользователь принял приглашение в проект', {
+                userId: validatedUserId,
+                assignmentId: invitation.assignment_id,
+                assignmentTitle: invitation.assignment_title
+            });
+        } else {
+            logger.info('Пользователь отклонил приглашение в проект', {
+                userId: validatedUserId,
+                assignmentId: invitation.assignment_id,
+                assignmentTitle: invitation.assignment_title
+            });
+        }
+
+        logger.info('Ответ на приглашение обработан', {
             invitationId: validatedInvitationId,
-            status 
+            status,
+            assignmentTitle: invitation.assignment_title
         });
 
         return result.rows[0];
@@ -551,7 +582,8 @@ async function respondToInvitation(pool, invitationId, userId, status) {
             stack: error.stack,
             invitationId,
             userId,
-            status
+            status,
+            assignmentId
         });
         throw error;
     } finally {
@@ -608,7 +640,6 @@ module.exports = {
     getTeamMembers,
     respondToInvitation,
     getPendingInvitations,
-    // Экспортируем утилиты для тестирования
     _test: {
         safeQuery,
         validateId,

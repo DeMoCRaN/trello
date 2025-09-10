@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import TaskNotification from './components/TaskNotification';
 import TaskDetailsForm from './components/TaskDetailsForm';
+import InvitationResponseForm from './components/InvitationResponseForm';
 import './AssignedTasks.css';
 
 function AssignedTasks({ userEmail }) {
@@ -422,7 +423,25 @@ function AssignedTasks({ userEmail }) {
   const handleRespondToInvitation = useCallback(async (invitationId, status) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/assignments/${selectedInvitation.assignment_id}/invitations/${invitationId}/respond`, {
+      if (!token) {
+        throw new Error('Токен авторизации не найден');
+      }
+
+      // Получаем assignmentId из selectedInvitation
+      const assignmentId = selectedInvitation?.assignment_id;
+      if (!assignmentId) {
+        console.error('selectedInvitation:', selectedInvitation);
+        throw new Error('Не удалось получить ID задания для приглашения. Проверьте, что приглашение выбрано правильно.');
+      }
+
+      console.log('Отправка ответа на приглашение:', {
+        invitationId,
+        assignmentId,
+        status,
+        selectedInvitation
+      });
+
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -432,8 +451,17 @@ function AssignedTasks({ userEmail }) {
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка при ответе на приглашение');
+        const errorText = await response.text();
+        console.error('Ошибка сервера при ответе на приглашение:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}. ${errorText}`);
       }
+
+      const result = await response.json();
+      console.log('Успешный ответ на приглашение:', result);
 
       // Обновляем список приглашений
       await fetchInvitations();
@@ -441,6 +469,7 @@ function AssignedTasks({ userEmail }) {
       setSelectedInvitation(null);
     } catch (error) {
       console.error('Ошибка при ответе на приглашение:', error);
+      alert(`Ошибка при ответе на приглашение: ${error.message}`);
       throw error;
     }
   }, [selectedInvitation, fetchInvitations]);

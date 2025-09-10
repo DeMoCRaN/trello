@@ -61,7 +61,6 @@ function MainPage({ userEmail }) {
   const [showInvitationForm, setShowInvitationForm] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState(null);
 
-  // Fix for task status mapping to string for notification filtering
   const mappedAssignedTasks = assignedTasks.map(task => ({
     ...task,
     status: typeof task.status === 'number' ? 
@@ -130,7 +129,7 @@ function MainPage({ userEmail }) {
 
   const fetchAssignedTasks = useCallback(async () => {
     const now = Date.now();
-    if (now - lastFetchTime < 30000) return; // Увеличили минимальный интервал между запросами
+    if (now - lastFetchTime < 30000) return; 
     
     setLoadingAssignedTasks(true);
     try {
@@ -231,14 +230,6 @@ function MainPage({ userEmail }) {
       const data = await response.json();
 
       setInvitations(data);
-
-      if (data.length > 0) {
-        if (Notification.permission === 'granted') {
-          new Notification('Новые приглашения', {
-            body: `У вас ${data.length} новых приглашений в проекты`,
-          });
-        }
-      }
     } catch (error) {
       console.error('Ошибка загрузки приглашений:', error);
     }
@@ -336,7 +327,6 @@ const fetchStatuses = async () => {
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
 
-    // Уменьшаем интервал опроса до 30 секунд для более быстрого обновления
     const intervalId = setInterval(handleTaskUpdate, 30000);
 
     return () => {
@@ -353,7 +343,7 @@ const fetchStatuses = async () => {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      // Запрос разрешения на уведомления при первой загрузке
+
       if ('Notification' in window) {
         if (Notification.permission === 'default') {
           try {
@@ -604,7 +594,25 @@ const fetchStatuses = async () => {
   const handleRespondToInvitation = useCallback(async (invitationId, status) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/assignments/${selectedInvitation.assignment_id}/invitations/${invitationId}/respond`, {
+      if (!token) {
+        throw new Error('Токен авторизации не найден');
+      }
+
+      // Получаем assignmentId из selectedInvitation
+      const assignmentId = selectedInvitation?.assignment_id;
+      if (!assignmentId) {
+        console.error('selectedInvitation:', selectedInvitation);
+        throw new Error('Не удалось получить ID задания для приглашения. Проверьте, что приглашение выбрано правильно.');
+      }
+
+      console.log('Отправка ответа на приглашение:', {
+        invitationId,
+        assignmentId,
+        status,
+        selectedInvitation
+      });
+
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -614,14 +622,26 @@ const fetchStatuses = async () => {
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка при ответе на приглашение');
+        const errorText = await response.text();
+        console.error('Ошибка сервера при ответе на приглашение:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}. ${errorText}`);
       }
+
+      const result = await response.json();
+      console.log('Успешный ответ на приглашение:', result);
 
       // Обновляем список приглашений
       await fetchInvitations();
+      setShowInvitationForm(false);
+      setSelectedInvitation(null);
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (error) {
       console.error('Ошибка при ответе на приглашение:', error);
+      alert(`Ошибка при ответе на приглашение: ${error.message}`);
       throw error;
     }
   }, [selectedInvitation, fetchInvitations]);

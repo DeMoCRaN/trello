@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Components.css';
+import './TeamMembersPanel.css';
 
 function TeamMembersPanel({ assignmentId, onClose }) {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -142,35 +142,35 @@ function TeamMembersPanel({ assignmentId, onClose }) {
             </button>
           ) : (
             <div className="invite-form">
-              <h4>Пригласить нового участника</h4>
-              <form onSubmit={handleInvite}>
-                <div className="form-group">
-                  <input
-                    type="email"
-                    placeholder="Введите email пользователя"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    required
-                    className="email-input"
-                  />
-                </div>
-                <div className="invite-buttons">
-                  <button type="submit" className="submit-button" disabled={inviting}>
-                    {inviting ? 'Отправка...' : 'Пригласить'}
-                  </button>
-                  <button
-                    type="button"
-                    className="cancel-button"
-                    onClick={() => {
-                      setShowInviteForm(false);
-                      setInviteEmail('');
-                    }}
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </form>
-            </div>
+  <h4>Пригласить нового участника</h4>
+  <form onSubmit={handleInvite}>
+    <div className="form-group">
+      <input
+        type="email"
+        placeholder="Введите email пользователя"
+        value={inviteEmail}
+        onChange={(e) => setInviteEmail(e.target.value)}
+        required
+        className="email-input"
+      />
+    </div>
+    <div className="invite-buttons">
+      <button type="submit" className="submit-button" disabled={inviting}>
+        {inviting ? 'Отправка...' : 'Пригласить'}
+      </button>
+      <button
+        type="button"
+        className="cancel-button"
+        onClick={() => {
+          setShowInviteForm(false);
+          setInviteEmail('');
+        }}
+      >
+        Отмена
+      </button>
+    </div>
+  </form>
+</div>
           )}
         </div>
 
