@@ -8,7 +8,6 @@ import InvitationResponseForm from './components/InvitationResponseForm';
 import './AssignedTasks.css';
 
 function AssignedTasks({ userEmail }) {
-  // Состояния компонента
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
   const [invitations, setInvitations] = useState([]);
@@ -213,7 +212,6 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
-  // Эффекты
   useEffect(() => {
     if ('Notification' in window && Notification.permission !== 'denied') {
       Notification.requestPermission();

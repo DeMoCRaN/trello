@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const auditController = require('./audit-backend');
 
 // Вспомогательная функция для валидации ID
 function isValidId(id) {
@@ -11,25 +12,8 @@ function isValidCommentText(text) {
 }
 
 async function createComment(pool, { task_id, user_id, text }) {
-  // Валидация входных данных
-  if (!isValidId(task_id)) throw new Error('Invalid task ID'); // <-- Добавлена недостающая скобка
-  if (!isValidId(user_id)) throw new Error('Invalid user ID');
-  if (!isValidCommentText(text)) throw new Error('Invalid comment text');
-
-  const client = await pool.connect();
-  try {
-    const result = await client.query(
-      `INSERT INTO task_comments (task_id, user_id, text, created_at, is_read)
-       VALUES ($1, $2, $3, now(), FALSE)
-       RETURNING *`,
-      [task_id, user_id, text.trim()]
-    );
-    return result.rows[0];
-  } catch (error) {
-    throw error;
-  } finally {
-    client.release();
-  }
+  // Используем функцию с аудитом
+  return await auditController.createCommentWithAudit(pool, { task_id, text }, user_id);
 }
 
 async function getCommentsByTaskId(pool, taskId, userId) {

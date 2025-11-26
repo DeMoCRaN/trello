@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const logger = require('../logger');
+const auditController = require('./audit-backend');
 
 // =============================================
 // БЕЗОПАСНЫЕ УТИЛИТЫ И ВАЛИДАЦИЯ
@@ -81,130 +82,18 @@ function normalizeTask(task) {
 // =============================================
 
 async function createTask(pool, taskData) {
-  const client = await pool.connect();
-  try {
-    const validatedData = {
-      title: validateText(taskData.title, 'Title'),
-      description: validateText(taskData.description || '', 'Description', 2000),
-      deadline: validateDate(taskData.deadline, 'Deadline'),
-      creator_id: validateId(taskData.creator_id, 'Creator ID'),
-      assignee_id: validateId(taskData.assignee_id, 'Assignee ID'),
-      status_id: validateId(taskData.status_id, 'Status ID'),
-      priority_id: validateId(taskData.priority_id, 'Priority ID')
-    };
-
-    const result = await safeQuery(client,
-      `INSERT INTO tasks (
-        title, description, deadline, 
-        creator_id, assignee_id, 
-        status_id, priority_id, 
-        created_at, updated_at,
-        progress_percentage
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), 0)
-      RETURNING *`,
-      Object.values(validatedData)
-    );
-    
-    return normalizeTask(result.rows[0]);
-  } finally {
-    client.release();
-  }
+  // Используем функцию с аудитом
+  return await auditController.createTaskWithAudit(pool, taskData, taskData.creator_id);
 }
 
-async function deleteTask(pool, taskId, permanent = false) {
-  const validatedId = validateId(taskId);
-  const client = await pool.connect();
-  
-  try {
-    await safeQuery(client, 'BEGIN');
-
-    const taskCheck = await safeQuery(client,
-      `SELECT 'active' as type FROM tasks WHERE id = $1
-       UNION ALL
-       SELECT 'archived' as type FROM archived_tasks WHERE id = $1`,
-      [validatedId]
-    );
-
-    if (taskCheck.rows.length === 0) throw new Error('Task not found');
-
-    const taskType = taskCheck.rows[0].type;
-
-    if (taskType === 'active' && !permanent) {
-      await safeQuery(client,
-        `INSERT INTO archived_tasks 
-         SELECT *, NOW() as deleted_at FROM tasks WHERE id = $1`,
-        [validatedId]
-      );
-      await safeQuery(client, 'DELETE FROM tasks WHERE id = $1', [validatedId]);
-    } else {
-      await safeQuery(client, 'DELETE FROM task_comments WHERE task_id = $1', [validatedId]);
-      await safeQuery(client,
-        `DELETE FROM ${taskType === 'active' ? 'tasks' : 'archived_tasks'} 
-         WHERE id = $1`,
-        [validatedId]
-      );
-    }
-
-    await safeQuery(client, 'COMMIT');
-    return { success: true };
-  } catch (error) {
-    await safeQuery(client, 'ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+async function deleteTask(pool, taskId, permanent = false, currentUserId) {
+  // Используем функцию с аудитом
+  return await auditController.deleteTaskWithAudit(pool, taskId, permanent, currentUserId);
 }
 
-async function updateTaskStatus(pool, taskId, statusId, action = null) {
-  const validatedTaskId = validateId(taskId);
-  const validatedStatusId = validateId(statusId);
-  const client = await pool.connect();
-  
-  try {
-    const archivedCheck = await safeQuery(client,
-      'SELECT 1 FROM archived_tasks WHERE id = $1',
-      [validatedTaskId]
-    );
-    if (archivedCheck.rows.length > 0) throw new Error('Cannot update archived task');
-
-    const taskResult = await safeQuery(client,
-      'SELECT in_progress_since, work_duration FROM tasks WHERE id = $1',
-      [validatedTaskId]
-    );
-    if (taskResult.rows.length === 0) throw new Error('Task not found');
-
-    const task = taskResult.rows[0];
-    let query = 'UPDATE tasks SET status_id = $1, updated_at = NOW()';
-    const params = [validatedStatusId];
-    let paramIndex = 2;
-
-    const now = new Date();
-    if (validatedStatusId === 2) { // in_progress
-      if (action === 'start' || action === 'resume') {
-        query += `, in_progress_since = NOW()`;
-      } else if (action === 'stop' && task.in_progress_since) {
-        const elapsedMs = now - new Date(task.in_progress_since);
-        const newDuration = (task.work_duration || 0) + Math.floor(elapsedMs / 1000);
-        query += `, in_progress_since = NULL, work_duration = $${paramIndex}`;
-        params.push(newDuration);
-        paramIndex++;
-      }
-    } else if (validatedStatusId === 3 && task.in_progress_since) { // done
-      const elapsedMs = now - new Date(task.in_progress_since);
-      const newDuration = (task.work_duration || 0) + Math.floor(elapsedMs / 1000);
-      query += `, in_progress_since = NULL, work_duration = $${paramIndex}`;
-      params.push(newDuration);
-      paramIndex++;
-    }
-
-    query += ` WHERE id = $${paramIndex} RETURNING *`;
-    params.push(validatedTaskId);
-
-    const result = await safeQuery(client, query, params);
-    return normalizeTask(result.rows[0]);
-  } finally {
-    client.release();
-  }
+async function updateTaskStatus(pool, taskId, statusId, action = null, currentUserId) {
+  // Используем функцию с аудитом
+  return await auditController.updateTaskStatusWithAudit(pool, taskId, statusId, action, currentUserId);
 }
 
 async function markTaskAsSeen(pool, taskId) {

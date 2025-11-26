@@ -6,19 +6,14 @@
     "auditLog": "/home/democram/Рабочий стол/trello/logs/.31bfaf916b72e92ca0f1a566a8c7913ab2900c90-audit.json",
     "files": [
         {
-            "date": 1755610098939,
-            "name": "/home/democram/Рабочий стол/trello/logs/application-2025-08-19.log",
-            "hash": "75eeefab1b8abedec64c34006e62676543a2e0e22c77ffebea8816135fbb1ce7"
+            "date": 1762603811807,
+            "name": "/home/democram/Рабочий стол/trello/logs/application-2025-11-08.log",
+            "hash": "ed39e25818ecf3459fac403fef7f1e178f4ecc6c09f22b1408f1a215e05dfdf5"
         },
         {
-            "date": 1757414121410,
-            "name": "/home/democram/Рабочий стол/trello/logs/application-2025-09-09.log",
-            "hash": "284bcb5c64f488240368f4d4a4668fb1ff6543525a6c1f532b34b2ec80510286"
-        },
-        {
-            "date": 1757489588106,
-            "name": "/home/democram/Рабочий стол/trello/logs/application-2025-09-10.log",
-            "hash": "ac7a6f693d70717b42925b54cea936deb99b2c0312439b8c3eceb58a5bdfe067"
+            "date": 1764143825231,
+            "name": "/home/democram/Рабочий стол/trello/logs/application-2025-11-26.log",
+            "hash": "655769f50f112dbe0c90d5754a838ba33d89146ebc08efc10ee1bbab0348cbde"
         }
     ],
     "hashType": "sha256"

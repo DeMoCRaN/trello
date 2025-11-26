@@ -870,3 +870,601 @@ error: terminating connection due to administrator command
     }
   ]
 }
+2025-09-10 11:43:32 [error]: uncaughtException: terminating connection due to administrator command
+error: terminating connection due to administrator command
+    at Parser.parseErrorMessage (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:285:98)
+    at Parser.handlePacket (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+error: terminating connection due to administrator command
+    at Parser.parseErrorMessage (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:285:98)
+    at Parser.handlePacket (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+{
+  "error": {
+    "length": 116,
+    "name": "error",
+    "severity": "FATAL",
+    "code": "57P01",
+    "file": "postgres.c",
+    "line": "3197",
+    "routine": "ProcessInterrupts",
+    "client": {
+      "_events": {},
+      "_eventsCount": 1,
+      "connectionParameters": {
+        "user": "democran",
+        "database": "democran",
+        "port": 5433,
+        "host": "localhost",
+        "binary": false,
+        "ssl": false,
+        "client_encoding": "",
+        "isDomainSocket": false,
+        "statement_timeout": false,
+        "lock_timeout": false,
+        "idle_in_transaction_session_timeout": false,
+        "query_timeout": false,
+        "connect_timeout": 0
+      },
+      "user": "democran",
+      "database": "democran",
+      "port": 5433,
+      "host": "localhost",
+      "_types": {
+        "_types": {
+          "arrayParser": {},
+          "builtins": {
+            "BOOL": 16,
+            "BYTEA": 17,
+            "CHAR": 18,
+            "INT8": 20,
+            "INT2": 21,
+            "INT4": 23,
+            "REGPROC": 24,
+            "TEXT": 25,
+            "OID": 26,
+            "TID": 27,
+            "XID": 28,
+            "CID": 29,
+            "JSON": 114,
+            "XML": 142,
+            "PG_NODE_TREE": 194,
+            "SMGR": 210,
+            "PATH": 602,
+            "POLYGON": 604,
+            "CIDR": 650,
+            "FLOAT4": 700,
+            "FLOAT8": 701,
+            "ABSTIME": 702,
+            "RELTIME": 703,
+            "TINTERVAL": 704,
+            "CIRCLE": 718,
+            "MACADDR8": 774,
+            "MONEY": 790,
+            "MACADDR": 829,
+            "INET": 869,
+            "ACLITEM": 1033,
+            "BPCHAR": 1042,
+            "VARCHAR": 1043,
+            "DATE": 1082,
+            "TIME": 1083,
+            "TIMESTAMP": 1114,
+            "TIMESTAMPTZ": 1184,
+            "INTERVAL": 1186,
+            "TIMETZ": 1266,
+            "BIT": 1560,
+            "VARBIT": 1562,
+            "NUMERIC": 1700,
+            "REFCURSOR": 1790,
+            "REGPROCEDURE": 2202,
+            "REGOPER": 2203,
+            "REGOPERATOR": 2204,
+            "REGCLASS": 2205,
+            "REGTYPE": 2206,
+            "UUID": 2950,
+            "TXID_SNAPSHOT": 2970,
+            "PG_LSN": 3220,
+            "PG_NDISTINCT": 3361,
+            "PG_DEPENDENCIES": 3402,
+            "TSVECTOR": 3614,
+            "TSQUERY": 3615,
+            "GTSVECTOR": 3642,
+            "REGCONFIG": 3734,
+            "REGDICTIONARY": 3769,
+            "JSONB": 3802,
+            "REGNAMESPACE": 4089,
+            "REGROLE": 4096
+          }
+        },
+        "text": {},
+        "binary": {}
+      },
+      "_ending": true,
+      "_ended": false,
+      "_connecting": false,
+      "_connected": true,
+      "_connectionError": false,
+      "_queryable": false,
+      "enableChannelBinding": false,
+      "connection": {
+        "_events": {
+          "end": [
+            null,
+            null
+          ]
+        },
+        "_eventsCount": 23,
+        "stream": {
+          "connecting": false,
+          "_hadError": false,
+          "_parent": null,
+          "_host": "localhost",
+          "_closeAfterHandlingError": false,
+          "_events": {
+            "end": [
+              null,
+              null
+            ]
+          },
+          "_readableState": {
+            "highWaterMark": 65536,
+            "buffer": [],
+            "bufferIndex": 0,
+            "length": 0,
+            "pipes": [],
+            "awaitDrainWriters": null
+          },
+          "_writableState": {
+            "highWaterMark": 65536,
+            "length": 0,
+            "corked": 0,
+            "writelen": 0,
+            "bufferedIndex": 0,
+            "pendingcb": 0
+          },
+          "allowHalfOpen": false,
+          "_eventsCount": 4,
+          "_sockname": null,
+          "_pendingData": null,
+          "_pendingEncoding": "",
+          "server": null,
+          "_server": null
+        },
+        "_keepAlive": false,
+        "_keepAliveInitialDelayMillis": 0,
+        "lastBuffer": false,
+        "parsedStatements": {},
+        "ssl": false,
+        "_ending": true,
+        "_emitMessage": false,
+        "_connecting": true
+      },
+      "queryQueue": [],
+      "binary": false,
+      "processID": 766,
+      "secretKey": -254286610,
+      "ssl": false,
+      "_connectionTimeoutMillis": 0,
+      "_connectionCallback": null,
+      "saslSession": null,
+      "activeQuery": null,
+      "readyForQuery": true,
+      "hasExecuted": true,
+      "_poolUseCount": 17
+    }
+  },
+  "exception": true,
+  "date": "Wed Sep 10 2025 11:43:32 GMT+0300 (Москва, стандартное время)",
+  "process": {
+    "pid": 41584,
+    "uid": 1000,
+    "gid": 1000,
+    "cwd": "/home/democram/Рабочий стол/trello/back",
+    "execPath": "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+    "version": "v24.3.0",
+    "argv": [
+      "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+      "/home/democram/Рабочий стол/trello/back/back"
+    ],
+    "memoryUsage": {
+      "rss": 70385664,
+      "heapTotal": 20054016,
+      "heapUsed": 16843080,
+      "external": 2239319,
+      "arrayBuffers": 52117
+    }
+  },
+  "os": {
+    "loadavg": [
+      2.73,
+      2.77,
+      2.46
+    ],
+    "uptime": 4295.49
+  },
+  "trace": [
+    {
+      "column": 98,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js",
+      "function": "Parser.parseErrorMessage",
+      "line": 285,
+      "method": "parseErrorMessage",
+      "native": false
+    },
+    {
+      "column": 29,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js",
+      "function": "Parser.handlePacket",
+      "line": 122,
+      "method": "handlePacket",
+      "native": false
+    },
+    {
+      "column": 38,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js",
+      "function": "Parser.parse",
+      "line": 35,
+      "method": "parse",
+      "native": false
+    },
+    {
+      "column": 42,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/index.js",
+      "function": null,
+      "line": 11,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 28,
+      "file": "node:events",
+      "function": "Socket.emit",
+      "line": 507,
+      "method": "emit",
+      "native": false
+    },
+    {
+      "column": 12,
+      "file": "node:internal/streams/readable",
+      "function": "addChunk",
+      "line": 559,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 3,
+      "file": "node:internal/streams/readable",
+      "function": "readableAddChunkPushByteMode",
+      "line": 510,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 5,
+      "file": "node:internal/streams/readable",
+      "function": "Readable.push",
+      "line": 390,
+      "method": "push",
+      "native": false
+    },
+    {
+      "column": 23,
+      "file": "node:internal/stream_base_commons",
+      "function": "TCP.onStreamRead",
+      "line": 189,
+      "method": "onStreamRead",
+      "native": false
+    }
+  ]
+}
+2025-11-26 11:22:07 [error]: uncaughtException: terminating connection due to administrator command
+error: terminating connection due to administrator command
+    at Parser.parseErrorMessage (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:285:98)
+    at Parser.handlePacket (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+error: terminating connection due to administrator command
+    at Parser.parseErrorMessage (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:285:98)
+    at Parser.handlePacket (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+{
+  "error": {
+    "length": 116,
+    "name": "error",
+    "severity": "FATAL",
+    "code": "57P01",
+    "file": "postgres.c",
+    "line": "3197",
+    "routine": "ProcessInterrupts",
+    "client": {
+      "_events": {},
+      "_eventsCount": 1,
+      "connectionParameters": {
+        "user": "democran",
+        "database": "democran",
+        "port": 5433,
+        "host": "localhost",
+        "binary": false,
+        "ssl": false,
+        "client_encoding": "",
+        "isDomainSocket": false,
+        "statement_timeout": false,
+        "lock_timeout": false,
+        "idle_in_transaction_session_timeout": false,
+        "query_timeout": false,
+        "connect_timeout": 0
+      },
+      "user": "democran",
+      "database": "democran",
+      "port": 5433,
+      "host": "localhost",
+      "_types": {
+        "_types": {
+          "arrayParser": {},
+          "builtins": {
+            "BOOL": 16,
+            "BYTEA": 17,
+            "CHAR": 18,
+            "INT8": 20,
+            "INT2": 21,
+            "INT4": 23,
+            "REGPROC": 24,
+            "TEXT": 25,
+            "OID": 26,
+            "TID": 27,
+            "XID": 28,
+            "CID": 29,
+            "JSON": 114,
+            "XML": 142,
+            "PG_NODE_TREE": 194,
+            "SMGR": 210,
+            "PATH": 602,
+            "POLYGON": 604,
+            "CIDR": 650,
+            "FLOAT4": 700,
+            "FLOAT8": 701,
+            "ABSTIME": 702,
+            "RELTIME": 703,
+            "TINTERVAL": 704,
+            "CIRCLE": 718,
+            "MACADDR8": 774,
+            "MONEY": 790,
+            "MACADDR": 829,
+            "INET": 869,
+            "ACLITEM": 1033,
+            "BPCHAR": 1042,
+            "VARCHAR": 1043,
+            "DATE": 1082,
+            "TIME": 1083,
+            "TIMESTAMP": 1114,
+            "TIMESTAMPTZ": 1184,
+            "INTERVAL": 1186,
+            "TIMETZ": 1266,
+            "BIT": 1560,
+            "VARBIT": 1562,
+            "NUMERIC": 1700,
+            "REFCURSOR": 1790,
+            "REGPROCEDURE": 2202,
+            "REGOPER": 2203,
+            "REGOPERATOR": 2204,
+            "REGCLASS": 2205,
+            "REGTYPE": 2206,
+            "UUID": 2950,
+            "TXID_SNAPSHOT": 2970,
+            "PG_LSN": 3220,
+            "PG_NDISTINCT": 3361,
+            "PG_DEPENDENCIES": 3402,
+            "TSVECTOR": 3614,
+            "TSQUERY": 3615,
+            "GTSVECTOR": 3642,
+            "REGCONFIG": 3734,
+            "REGDICTIONARY": 3769,
+            "JSONB": 3802,
+            "REGNAMESPACE": 4089,
+            "REGROLE": 4096
+          }
+        },
+        "text": {},
+        "binary": {}
+      },
+      "_ending": true,
+      "_ended": false,
+      "_connecting": false,
+      "_connected": true,
+      "_connectionError": false,
+      "_queryable": false,
+      "enableChannelBinding": false,
+      "connection": {
+        "_events": {
+          "end": [
+            null,
+            null
+          ]
+        },
+        "_eventsCount": 23,
+        "stream": {
+          "connecting": false,
+          "_hadError": false,
+          "_parent": null,
+          "_host": "localhost",
+          "_closeAfterHandlingError": false,
+          "_events": {
+            "end": [
+              null,
+              null
+            ]
+          },
+          "_readableState": {
+            "highWaterMark": 65536,
+            "buffer": [],
+            "bufferIndex": 0,
+            "length": 0,
+            "pipes": [],
+            "awaitDrainWriters": null
+          },
+          "_writableState": {
+            "highWaterMark": 65536,
+            "length": 0,
+            "corked": 0,
+            "writelen": 0,
+            "bufferedIndex": 0,
+            "pendingcb": 0
+          },
+          "allowHalfOpen": false,
+          "_eventsCount": 4,
+          "_sockname": null,
+          "_pendingData": null,
+          "_pendingEncoding": "",
+          "server": null,
+          "_server": null
+        },
+        "_keepAlive": false,
+        "_keepAliveInitialDelayMillis": 0,
+        "lastBuffer": false,
+        "parsedStatements": {},
+        "ssl": false,
+        "_ending": true,
+        "_emitMessage": false,
+        "_connecting": true
+      },
+      "queryQueue": [],
+      "binary": false,
+      "processID": 331,
+      "secretKey": 1385951557,
+      "ssl": false,
+      "_connectionTimeoutMillis": 0,
+      "_connectionCallback": null,
+      "saslSession": null,
+      "activeQuery": null,
+      "readyForQuery": true,
+      "hasExecuted": true,
+      "_poolUseCount": 2
+    }
+  },
+  "exception": true,
+  "date": "Wed Nov 26 2025 11:22:07 GMT+0300 (Москва, стандартное время)",
+  "process": {
+    "pid": 16905,
+    "uid": 1000,
+    "gid": 1000,
+    "cwd": "/home/democram/Рабочий стол/trello/back",
+    "execPath": "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+    "version": "v24.3.0",
+    "argv": [
+      "/home/democram/.nvm/versions/node/v24.3.0/bin/node",
+      "/home/democram/Рабочий стол/trello/back/back"
+    ],
+    "memoryUsage": {
+      "rss": 85966848,
+      "heapTotal": 22413312,
+      "heapUsed": 19923984,
+      "external": 2325556,
+      "arrayBuffers": 135026
+    }
+  },
+  "os": {
+    "loadavg": [
+      1.37,
+      1.64,
+      1.84
+    ],
+    "uptime": 2029.04
+  },
+  "trace": [
+    {
+      "column": 98,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js",
+      "function": "Parser.parseErrorMessage",
+      "line": 285,
+      "method": "parseErrorMessage",
+      "native": false
+    },
+    {
+      "column": 29,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js",
+      "function": "Parser.handlePacket",
+      "line": 122,
+      "method": "handlePacket",
+      "native": false
+    },
+    {
+      "column": 38,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/parser.js",
+      "function": "Parser.parse",
+      "line": 35,
+      "method": "parse",
+      "native": false
+    },
+    {
+      "column": 42,
+      "file": "/home/democram/Рабочий стол/trello/back/node_modules/pg-protocol/dist/index.js",
+      "function": null,
+      "line": 11,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 28,
+      "file": "node:events",
+      "function": "Socket.emit",
+      "line": 507,
+      "method": "emit",
+      "native": false
+    },
+    {
+      "column": 12,
+      "file": "node:internal/streams/readable",
+      "function": "addChunk",
+      "line": 559,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 3,
+      "file": "node:internal/streams/readable",
+      "function": "readableAddChunkPushByteMode",
+      "line": 510,
+      "method": null,
+      "native": false
+    },
+    {
+      "column": 5,
+      "file": "node:internal/streams/readable",
+      "function": "Readable.push",
+      "line": 390,
+      "method": "push",
+      "native": false
+    },
+    {
+      "column": 23,
+      "file": "node:internal/stream_base_commons",
+      "function": "TCP.onStreamRead",
+      "line": 189,
+      "method": "onStreamRead",
+      "native": false
+    }
+  ]
+}

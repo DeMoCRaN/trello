@@ -599,7 +599,109 @@ router.post('/comments/mark-read', authenticateToken, async (req, res) => {
   }
 });
 
+// =============================================
+// GIT INTEGRATION ROUTES
+// =============================================
 
+// Получить коммиты для задачи
+router.get('/tasks/:id/commits', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id, 10);
+    const commits = await gitController.getCommitsByTaskId(pool, taskId);
+    res.json(commits);
+  } catch (error) {
+    console.error('Ошибка при получении коммитов задачи:', error);
+    res.status(500).json({ error: 'Ошибка при получении коммитов задачи' });
+  }
+});
+
+// Получить репозитории для задания
+router.get('/assignments/:id/repositories', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id, 10);
+    const repositories = await gitController.getRepositoriesByAssignment(pool, assignmentId);
+    res.json(repositories);
+  } catch (error) {
+    console.error('Ошибка при получении репозиториев:', error);
+    res.status(500).json({ error: 'Ошибка при получении репозиториев' });
+  }
+});
+
+// Создать репозиторий для задания
+router.post('/assignments/:id/repositories', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id, 10);
+    const { name, url, description } = req.body;
+    const createdBy = req.user.userId;
+
+    if (!name || !url) {
+      return res.status(400).json({ error: 'Название и URL репозитория обязательны' });
+    }
+
+    const repository = await gitController.createRepository(pool, {
+      name,
+      url,
+      description,
+      assignment_id: assignmentId,
+      created_by: createdBy
+    });
+
+    res.status(201).json(repository);
+  } catch (error) {
+    console.error('Ошибка при создании репозитория:', error);
+    res.status(500).json({ error: 'Ошибка при создании репозитория' });
+  }
+});
+
+// Получить коммиты репозитория
+router.get('/repositories/:id/commits', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const repoId = parseInt(req.params.id, 10);
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const commits = await gitController.getCommitsByRepository(pool, repoId, limit, offset);
+    res.json(commits);
+  } catch (error) {
+    console.error('Ошибка при получении коммитов репозитория:', error);
+    res.status(500).json({ error: 'Ошибка при получении коммитов репозитория' });
+  }
+});
+
+// Синхронизировать коммиты из Git (для администраторов)
+router.post('/repositories/:id/sync', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const repoId = parseInt(req.params.id, 10);
+    const { commits } = req.body;
+
+    // Проверка прав администратора
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ error: 'Доступ запрещен. Требуются права администратора.' });
+    }
+
+    if (!Array.isArray(commits)) {
+      return res.status(400).json({ error: 'commits должен быть массивом' });
+    }
+
+    const result = await gitController.syncCommitsFromGit(pool, repoId, commits);
+    res.json(result);
+  } catch (error) {
+    console.error('Ошибка при синхронизации коммитов:', error);
+    res.status(500).json({ error: 'Ошибка при синхронизации коммитов' });
+  }
+});
+
+// Получить ветки репозитория
+router.get('/repositories/:id/branches', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const repoId = parseInt(req.params.id, 10);
+    const branches = await gitController.getBranchesByRepository(pool, repoId);
+    res.json(branches);
+  } catch (error) {
+    console.error('Ошибка при получении веток репозитория:', error);
+    res.status(500).json({ error: 'Ошибка при получении веток репозитория' });
+  }
+});
 
 module.exports = (app) => {
   app.use('/api', router);

@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const logger = require('../logger');
+const auditController = require('./audit-backend');
 
 // =============================================
 // БЕЗОПАСНЫЕ УТИЛИТЫ
@@ -200,68 +201,8 @@ async function getAssignments(pool, creator_id, includeArchived = false) {
 }
 
 async function createAssignment(pool, { title, description, creator_id }) {
-    const client = await pool.connect();
-    try {
-        logger.info('Создание нового задания', { 
-            title: title.substring(0, 50),
-            creator_id 
-        });
-
-        // Валидация входных данных (описание теперь необязательно)
-        const validatedData = {
-            title: validateText(title, 'Название задания'),
-            description: description ? validateText(description, 'Описание', 2000) : null,
-            creator_id: validateId(creator_id, 'ID создателя')
-        };
-
-        const query = `
-            INSERT INTO assignments 
-                (title, description, creator_id, created_at, updated_at) 
-            VALUES ($1, $2, $3, now(), now()) 
-            RETURNING *
-        `;
-
-        logger.debug('Выполнение запроса на создание задания', {
-            query: query.substring(0, 100) + '...',
-            params: [
-                validatedData.title.substring(0, 20) + '...',
-                validatedData.description?.substring(0, 20) + '...' || 'NULL',
-                validatedData.creator_id
-            ]
-        });
-
-        const result = await safeQuery(client, query, [
-            validatedData.title,
-            validatedData.description,
-            validatedData.creator_id
-        ]);
-
-        if (!result.rows[0]) {
-            const errorMsg = 'Не удалось создать задание - сервер не вернул данные';
-            logger.error(errorMsg);
-            throw new Error(errorMsg);
-        }
-
-        const createdAssignment = result.rows[0];
-        logger.info('Задание успешно создано', { 
-            assignmentId: createdAssignment.id,
-            title: createdAssignment.title.substring(0, 50) + '...'
-        });
-
-        return createdAssignment;
-    } catch (error) {
-        logger.error('Ошибка при создании задания', {
-            error: error.message,
-            stack: error.stack,
-            inputData: { 
-                title: title?.substring(0, 50),
-                creator_id 
-            }
-        });
-        throw error;
-    } finally {
-        client.release();
-    }
+    // Используем функцию с аудитом
+    return await auditController.createAssignmentWithAudit(pool, { title, description }, creator_id);
 }
 
 async function createTaskInAssignment(pool, assignmentId, taskData) {

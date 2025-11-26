@@ -1,172 +1,131 @@
-/* LoginForm.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
-:root {
-  --primary: #4361ee;
-  --primary-dark: #3a56d4;
-  --error: #ef233c;
-  --text: #2b2d42;
-  --text-light: #8d99ae;
-  --bg: #f8f9fa;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  font-family: 'Inter', sans-serif;
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
-  position: relative;
-  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-body::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(67,97,238,0.1) 0%, rgba(255,255,255,0) 70%);
-  animation: rotate 20s linear infinite;
-  z-index: -1;
-}
-
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-form {
+.login-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
   max-width: 400px;
-  margin: 0 auto;
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  backdrop-filter: blur(8px);
-  font-family: 'Inter', sans-serif;
+}
+
+.login-form h2 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.login-form h4 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #666;
+  font-weight: normal;
+}
+
+.input-container {
+  margin-bottom: 1rem;
+}
+
+.input-container label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.input-container input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 0.75rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  border: 1px solid #fcc;
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.login-button:hover:not(:disabled) {
+  background: #5a6fd8;
+}
+
+.login-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.divider::before {
+  content: '';
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation: fadeIn 0.6s ease-out, float 6s ease-in-out infinite;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, -45%); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-  50% { transform: translate(-50%, -50%) translateY(-10px); }
-}
-
-form h2 {
-  text-align: center;
-  margin-bottom: 16px;
-  color: var(--text);
-  font-weight: 600;
-  font-size: 28px;
-  letter-spacing: -0.5px;
-}
-
-form h4 {
-  text-align: center;
-  margin-bottom: 32px;
-  color: var(--text-light);
-  font-weight: 400;
-  font-size: 16px;
-}
-
-form div {
-  margin-bottom: 24px;
-  position: relative;
-}
-
-form label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--text);
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-form input[type="email"],
-form input[type="password"] {
-  width: 100%;
-  height: 48px;
-  padding: 0 16px;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 15px;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-  background: #f8f9fa;
-  color: var(--text);
-}
-
-form input[type="email"]:focus,
-form input[type="password"]:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
-  background: #fff;
-}
-
-form button {
-  width: 100%;
-  padding: 14px 0;
-  background-color: var(--primary);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 8px;
-}
-
-form button:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(67,97,238,0.2);
-}
-
-form button:active {
-  transform: translateY(0);
-}
-
-form p {
-  color: var(--error);
-  font-weight: 500;
-  text-align: center;
-  margin: 16px 0;
-  font-size: 14px;
-  animation: shake 0.5s ease;
-}
-
-
-
-/* Input focus animation */
-.input-container {
-  position: relative;
-}
-
-.input-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
   left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--primary);
-  transition: width 0.3s ease;
+  right: 0;
+  height: 1px;
+  background: #ddd;
 }
 
-.input-container:focus-within::after {
+.divider span {
+  background: white;
+  padding: 0 1rem;
+  color: #666;
+}
+
+.github-login-button {
   width: 100%;
+  padding: 0.75rem;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 0.3s;
+}
+
+.github-login-button:hover:not(:disabled) {
+  background: #000;
+}
+
+.github-login-button:disabled {
+  background: #666;
+  cursor: not-allowed;
 }

@@ -1,56 +1,28 @@
-# TODO: Реализация состава команды для assignments
+# Git Integration for Task Management System
 
-## Задача
-Создать функционал "состав команды" для проектов (assignments), где можно приглашать пользователей в команду проекта. Только создатель проекта или пользователь с правами может приглашать. Пользователи могут принимать или отклонять приглашения.
+## Database Schema Extension
+- [x] Create `repositories` table for Git repo management
+- [x] Create `commits` table to store commit data with task references
+- [x] Create `branches` table for branch tracking
+- [x] Add foreign keys and indexes to Git tables
 
-## Шаги реализации
+## Backend Implementation
+- [x] Create `back/controllers/git.js` with commit parsing logic
+- [x] Implement functions to fetch commits by task ID
+- [x] Add Git repository operations handling
 
-### 1. Обновление базы данных
-- [ ] Создать таблицу `assignment_members` с полями:
-  - id (SERIAL PRIMARY KEY)
-  - assignment_id (INTEGER REFERENCES assignments(id))
-  - user_id (INTEGER REFERENCES users(id))
-  - invited_by (INTEGER REFERENCES users(id)) - кто пригласил
-  - status (VARCHAR(20) DEFAULT 'pending') - pending/accepted/rejected
-  - invited_at (TIMESTAMP DEFAULT now())
-  - responded_at (TIMESTAMP)
-- [ ] Добавить индексы для производительности
-- [ ] Обновить существующие assignments, если нужно
+## API Routes Extension
+- [x] Add `/api/tasks/:id/commits` endpoint to get commits for a task
+- [x] Add `/api/repositories` endpoints for repo management
+- [x] Add `/api/commits/sync` for syncing commit data
 
-### 2. Обновление бэкенда
-- [ ] Добавить функции в `controllers/assignments.js`:
-  - `inviteUserToAssignment(pool, assignmentId, userId, invitedBy)`
-  - `getTeamMembers(pool, assignmentId)`
-  - `respondToInvitation(pool, invitationId, userId, status)`
-  - `getPendingInvitations(pool, userId)`
-- [ ] Добавить API endpoints в `routes/api.js`:
-  - POST `/assignments/:id/invite` - пригласить пользователя
-  - GET `/assignments/:id/team` - получить состав команды
-  - POST `/assignments/:id/invitations/:invitationId/respond` - ответить на приглашение
-  - GET `/users/me/invitations` - получить свои приглашения
-- [ ] Добавить проверки прав: только creator или admin может приглашать
+## Frontend Components
+- [x] Create `CommitHistory.jsx` component to display commit list
+- [x] Enhance `TaskDetailsForm.jsx` to show commit history
+- [x] Add Git tab/section to task details view
 
-### 3. Обновление фронтенда
-- [ ] Создать компонент `TeamManagement.jsx` для управления командой
-- [ ] Обновить `AssignmentCreationForm.jsx` для выбора пользователей при создании
-- [ ] Добавить компонент `InvitationsList.jsx` для просмотра приглашений
-- [ ] Обновить `AssignmentsList.jsx` для отображения состава команды
-- [ ] Добавить уведомления о новых приглашениях
-
-### 4. Настройка ролей
-- [ ] Расширить таблицу roles новыми ролями:
-  - project_manager
-  - team_lead
-  - developer
-  - tester
-- [ ] Обновить логику прав доступа
-
-### 5. Тестирование
-- [ ] Протестировать приглашения
-- [ ] Проверить права доступа
-- [ ] Тестировать отклонение/принятие приглашений
-- [ ] Проверить отображение на фронтенде
-
-## Зависимости
-- Обновить `back/package.json` если нужны новые зависимости
-- Обновить `front/my_front/package.json` если нужны новые компоненты
+## Dependencies and Testing
+- [x] Install Git-related dependencies (simple-git)
+- [ ] Test commit parsing with sample data
+- [ ] Implement Git authentication if needed
+- [ ] Add repository configuration UI
