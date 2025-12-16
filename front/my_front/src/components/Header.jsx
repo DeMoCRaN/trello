@@ -15,6 +15,7 @@ function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClic
         <button onClick={() => onNavigate('main')}>Главная</button>
         <Link to="/tasks"><button>Задачи</button></Link>
         <Link to="/dashboard"><button>Дешборд</button></Link>
+        <button onClick={() => onNavigate('user-info')}>Профиль</button>
       </nav>
       <div className="header-right">
         {/* Notification Bell */}

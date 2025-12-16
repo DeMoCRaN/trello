@@ -6,6 +6,7 @@ import LoginForm from './LoginForm/LoginForm.jsx';
 import MainPage from './MainPage.jsx';
 import AssignedTasksWrapper from './AssignedTasksWrapper.jsx';
 import Dashboard from '../src/components/Dashboard.jsx';
+import UserProfileForm from './components/UserProfileForm.jsx';
 
 function parseJwt(token) {
   try {
@@ -25,6 +26,7 @@ function parseJwt(token) {
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const MainPageWrapper = () => {
   const [userEmail, setUserEmail] = useState('');
   const [loading, setLoading] = useState(true);
@@ -92,6 +94,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/main" element={<MainPageWrapper />} />
         <Route path="/tasks" element={<AssignedTasksWrapper />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<UserProfileForm/>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

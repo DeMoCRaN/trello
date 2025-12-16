@@ -2,170 +2,215 @@
 
 ## Subject Area
 
-The subject area is the development of a web application for managing projects and tasks (task board), designed to organize collaborative work of user teams. The application provides tools for task distribution, execution control, progress tracking, and improving communication between project participants.
+The subject area is the development of a comprehensive web application for managing projects and tasks (task board) with integrated Git repository tracking and audit logging. The application is designed to organize collaborative work of user teams, providing tools for task distribution, execution control, progress tracking, communication between project participants, and version control integration.
 
-The application is aimed at small and medium-sized teams, combining ease of use with sufficient functionality for effective project management.
+The application targets small and medium-sized development teams, combining ease of use with advanced functionality for effective project management, code tracking, and compliance monitoring.
 
 ## Key Functions of the System
 
 ### Authentication and Authorization
-- User authentication and authorization with access rights differentiation.
-- Role-based access control (e.g., administrator, participant) within teams and projects.
-- Secure password hashing using bcrypt.
-- JWT-based session management with token expiration.
+- User authentication and authorization with role-based access control.
+- Support for multiple roles (administrator, regular user) with differentiated permissions.
+- Secure password hashing using bcryptjs.
+- JWT-based session management with configurable token expiration.
+- Middleware-based route protection and permission validation.
 
-### Task and Project Management
-- Creation, editing, deletion, and archiving of tasks and projects.
-- Task assignment to one or multiple users with progress tracking.
-- Priority and status management for tasks (e.g., new, in progress, completed, overdue).
-- Deadline setting and progress percentage tracking.
-- Time tracking for task execution.
-- Support for collaborative tasks with multiple assignees.
+### Project and Assignment Management
+- Creation, editing, and management of projects (assignments) with team association.
+- Project-based access control with invitation system for team members.
+- Assignment archiving and restoration capabilities.
+- Hierarchical project structure with creator/administrator roles.
 
-### Progress Visualization
-- Use of charts and diagrams to visualize task execution progress.
-- Interactive dashboards with real-time statistics.
-- Recharts library for adaptive and interactive visualizations.
+### Task Management
+- Comprehensive task lifecycle management (creation, editing, deletion, archiving).
+- Task assignment to team members with progress tracking and time logging.
+- Priority levels (low, medium, high) and status management (new, in_progress, done).
+- Deadline setting with overdue detection and progress percentage tracking.
+- Work duration tracking with start/stop functionality.
+- Task comments system with read/unread status tracking.
+- Bulk operations for task status updates and comment marking.
+
+### Team Collaboration
+- Team formation tied to specific projects with role-based permissions.
+- Invitation system for adding new team members via email.
+- Invitation acceptance/rejection workflow with status tracking.
+- Team member management with access control validation.
+- Collaborative commenting on tasks with notification system.
+
+### Git Integration
+- Repository management linked to projects (assignments).
+- Git commit synchronization with automatic task reference parsing.
+- Branch tracking and commit history visualization.
+- Task-commit linking through commit message patterns (#123, Task: 123).
+- GitHub API integration for repository data fetching.
+
+### Audit and Compliance
+- Comprehensive audit logging for all critical operations.
+- PostgreSQL audit triggers for automatic logging of data changes.
+- User action tracking with timestamps and context information.
+- Audit trail for task creation, updates, deletions, and user actions.
+- Compliance-ready logging for regulatory requirements.
 
 ### Notification System
-- Notifications about new comments and changes in tasks.
-- Real-time updates using WebSockets or polling mechanisms.
-- Sound notifications for user alerts.
+- Real-time notifications for task comments and updates.
+- Unread comment counting and marking functionality.
+- Browser notifications with permission management.
+- Notification persistence and user preference handling.
 
-### Time Tracking and Deadline Control
-- Logging of work time on tasks.
-- Automatic calculation of overdue tasks.
-- Progress bars and deadline indicators.
-
-### Adaptive User Interface
-- Responsive design supporting work on various devices (desktop, tablet, mobile).
-- Material UI components for consistent and modern UI.
-- Accessibility features for inclusive design.
-
-### Team Management
-- Creation of teams tied to specific projects.
-- Project creator automatically becomes team member and administrator.
-- Role models within the team (administrator, participant) defining access levels to project management functions.
-- Invitation system for adding new participants:
-  - Administrators can send invitations by specifying the email of the new participant.
-  - Invitations contain direct links for joining the team.
-  - Users can accept invitations through a dedicated form, automatically gaining access to project tasks and functionality.
-- Closed access to projects only for approved participants.
-
-### Statistics and Analytics Page
-- Specialized page for project statistics and analytics, providing detailed visualization of key metrics and performance indicators.
-
-#### Summary Indicators by Project
-- Total number of tasks in the project.
-- Number of completed tasks.
-- Tasks in progress.
-- Overdue tasks.
-- Project completion percentage.
-
-#### Data Visualization
-- Pie charts for task distribution by statuses.
-- Bar charts for team member workload.
-- Progress charts for task execution over time.
-
-#### Analytics by Performers
-- Statistics on task completion by each team member.
-- Time spent on task execution.
-- Number of accepted and completed tasks.
-- Performance rating of participants.
-
-#### Project Dynamics
-- Charts of task quantity changes over time.
-- Team productivity trends.
-- Analysis of task execution deadlines.
-
-#### Filtering and Grouping
-- Ability to filter statistics by time periods.
-- Grouping data by performers, priorities, statuses.
-- Comparative analytics between different projects.
-
-#### Technical Implementation
-- Data visualization using Recharts library for interactive and adaptive charts.
-- Data loading via API from the server, aggregated from PostgreSQL database using complex SQL queries and aggregating functions.
-
-#### Practical Value
-- Allows project managers to:
-  - Quickly assess the current project state.
-  - Identify bottlenecks in workflows.
-  - Optimize team resource distribution.
-  - Make data-driven management decisions.
-  - Forecast project completion dates.
-- Transforms the system from a simple task manager into a full-fledged project management tool with business analytics elements.
+### Progress Visualization and Analytics
+- Interactive dashboards with task statistics and progress tracking.
+- Charts for task distribution by status, priority, and assignee.
+- Time tracking analytics and productivity metrics.
+- Project completion percentage calculations.
+- Team member workload visualization.
 
 ## Technology Stack
 
 ### Backend
-- Node.js with Express.js framework for building RESTful APIs.
-- PostgreSQL database with Docker containerization and pgAdmin for management.
-- bcryptjs for secure password hashing.
-- jsonwebtoken (JWT) for authentication and authorization.
-- Additional libraries: cors for cross-origin requests, helmet for security headers, morgan for logging, etc.
-- Redis for caching and session management (if implemented).
+- **Node.js** with **Express.js** framework for RESTful API development.
+- **PostgreSQL** database with connection pooling and transaction management.
+- **bcryptjs** for secure password hashing.
+- **jsonwebtoken (JWT)** for authentication and authorization.
+- **pg** library for PostgreSQL integration with parameterized queries.
+- Custom logging system with Winston-style structured logging.
+- Security middleware: CORS, helmet, input validation and sanitization.
+- Audit system with database triggers and application-level logging.
 
 ### Frontend
-- React.js for building dynamic user interfaces.
-- Material UI for UI components and styling, ensuring responsive and accessible design.
-- Recharts for data visualization and interactive charts.
-- React Router for client-side routing and navigation.
-- Axios for HTTP requests to the backend API.
-- Additional libraries: React Hooks for state management, Context API or Redux for global state.
+- **React.js** with modern hooks and functional components.
+- **React Router** for client-side routing and navigation.
+- **Material UI** for responsive, accessible UI components.
+- **Axios** for HTTP client with JWT token management.
+- **Framer Motion** for smooth animations and transitions.
+- **React Icons** for consistent iconography.
+- **Recharts** for data visualization (planned for analytics).
+- State management using React hooks and Context API.
 
-### Database
-- PostgreSQL with relational schema for users, tasks, assignments, comments, roles, etc.
-- Docker Compose for easy setup and deployment of database and related services.
+### Database Schema
+- **users**: User accounts with roles and authentication data.
+- **roles**: Role definitions for access control.
+- **assignments**: Projects/assignments with creator and metadata.
+- **assignment_members**: Many-to-many relationship for team membership.
+- **tasks**: Task entities with status, priority, deadlines, and progress tracking.
+- **archived_tasks**: Soft-deleted tasks for data retention.
+- **task_comments**: Comments on tasks with read status.
+- **task_statuses**: Predefined status options.
+- **task_priorities**: Predefined priority levels.
+- **repositories**: Git repositories linked to assignments.
+- **commits**: Git commits with task references and metadata.
+- **branches**: Repository branches tracking.
+- **audit_log**: Comprehensive audit trail for compliance.
 
 ### Development Tools
-- Visual Studio Code as the primary IDE.
-- Postman for API testing and documentation.
-- Git for version control and collaboration.
-- ESLint and Prettier for code quality and formatting.
+- **Visual Studio Code** as primary IDE.
+- **Docker** and **Docker Compose** for containerized development.
+- **Git** for version control with conventional commit messages.
+- **Postman** for API testing and documentation.
+- **ESLint** and **Prettier** for code quality and formatting.
+- **pgAdmin** for database administration.
 
-## JWT Security Implementation
+## Security Implementation
 
-- Backend exposes a `/api/login` endpoint that accepts user credentials (email and password).
-- Passwords are securely hashed using bcrypt with salt rounds for added security.
-- On successful login, a JWT token is issued containing user ID, role ID, email, and possibly project/team affiliations, with a configurable expiration (e.g., 1 hour).
-- Frontend stores the JWT token and expiry time in localStorage or secure cookies.
-- Frontend automatically includes the JWT token in the `Authorization: Bearer <token>` header for all protected API requests.
-- Backend uses middleware to verify JWT tokens on protected routes, checking validity, expiration, and user permissions.
-- Unauthorized or invalid tokens result in 401 Unauthorized responses, triggering re-authentication.
-- Refresh token mechanism can be implemented for seamless session extension.
-- Role-based access control ensures users can only access resources based on their assigned roles (e.g., admin can manage team members, participants can view and update assigned tasks).
+### Authentication Flow
+- POST `/api/login` endpoint validates credentials against hashed passwords.
+- Successful authentication generates JWT containing user ID, role, and email.
+- Frontend stores JWT in localStorage with expiration tracking.
+- Automatic token refresh and logout on expiration.
 
-## Interface Overview
+### Authorization
+- Middleware validates JWT on protected routes.
+- Role-based permissions checked for sensitive operations.
+- Assignment-level access control for team members only.
+- Input validation and SQL injection prevention.
 
-- **Login Page**: Email and password fields with validation, submitting to backend login API. Includes options for password recovery and registration if applicable.
-- **Dashboard Page**: Central hub displaying:
-  - List of assignments and tasks with advanced filtering options (by status, priority, assignee, deadline).
-  - Task statistics including total, completed, in-progress, overdue counts.
-  - Interactive charts visualizing task status distribution (pie charts), priorities (bar charts), deadlines (timeline), and time spent (histograms).
-  - User performance tables showing task completion rates, average completion time, and efficiency metrics.
-  - Notifications panel for unread comments, task updates, and system alerts.
-  - Quick action buttons for creating new tasks, inviting members, and accessing statistics.
-- **Task Details Page**: Detailed view of individual tasks with comments, attachments, time logs, and progress updates.
-- **Team Management Page**: Interface for administrators to manage team members, send invitations, assign roles, and view member activity.
-- **Statistics and Analytics Page**: Dedicated page with comprehensive visualizations, filters, and export options for reports.
-- **User Profile Page**: Settings for personal information, password change, notification preferences.
-- Responsive and interactive UI built with Material UI components, supporting dark/light themes, internationalization (i18n), and accessibility standards (WCAG).
+### Data Protection
+- Password hashing with bcryptjs and salt rounds.
+- Parameterized queries preventing SQL injection.
+- Input sanitization and validation on all endpoints.
+- CORS configuration for cross-origin security.
 
-## Deployment and Setup
+## API Architecture
 
-- Docker Compose for containerized deployment of backend, frontend, and database.
-- Environment variables for configuration (database URLs, JWT secrets, API keys).
-- CI/CD pipelines using GitHub Actions or similar for automated testing and deployment.
-- Production deployment on cloud platforms like AWS, Heroku, or Vercel.
-- Monitoring and logging with tools like Winston for backend logs and Sentry for error tracking.
+### RESTful Endpoints
+- **Authentication**: `/api/login`, `/api/users/*`
+- **Assignments**: `/api/assignments` (CRUD operations)
+- **Tasks**: `/api/tasks`, `/api/assignments/:id/tasks`
+- **Comments**: `/api/tasks/:id/comments`
+- **Team Management**: `/api/assignments/:id/invite`, `/api/assignments/:id/team`
+- **Git Integration**: `/api/assignments/:id/repositories`, `/api/repositories/:id/commits`
+- **Notifications**: `/api/comments/unread/*`
 
-## Requested Diagrams
+### Response Format
+- Consistent JSON responses with error handling.
+- Pagination support for large datasets.
+- Normalized data structures for frontend consumption.
+- Development-friendly error messages with production sanitization.
 
-The following diagrams will be created to document the system:
+## User Interface Overview
 
-- Data Flow Diagram (DFD): Illustrates data movement between frontend, backend, database, and external systems (e.g., email for invitations).
-- SADT Diagram: Describes the task management process, team collaboration, and system activities in detail.
-- Activity Diagram: Shows user login flow, task creation/assignment/updates, invitation process, and analytics generation.
-- IDEF0 Diagram: Represents system functions (e.g., authenticate user, manage tasks), inputs (user data, task details), controls (roles, permissions), and outputs (responses, reports).
-- Class Diagram: Models main entities such as User (with roles), Task (with status, priority, deadlines), Assignment (linking users to tasks), Comment (with timestamps), Project (with teams), and relationships between them.
+### Main Application Flow
+- **Authentication Page**: Login form with validation and error handling.
+- **Main Dashboard**: Assignment list with task overview and quick actions.
+- **Assignment Details**: Task board with filtering and status management.
+- **Task Details**: Comprehensive task view with comments and progress tracking.
+- **Team Management**: Member invitation and role management interface.
+- **User Profile**: Personal settings and notification preferences.
+
+### Responsive Design
+- Mobile-first approach with adaptive layouts.
+- Material UI components ensuring consistency.
+- Accessibility features with keyboard navigation and screen reader support.
+- Dark/light theme support (planned).
+
+## Business Process Documentation
+
+The system implements comprehensive business processes documented through multiple diagram types:
+
+### Data Flow (DFD)
+- Illustrates data movement between frontend, backend, PostgreSQL database, and Git repositories.
+- Shows authentication flow, task management data flows, and audit logging streams.
+
+### Functional Decomposition (IDEF0)
+- A0: Manage Task Management System (top-level function)
+- A1-A6: Sub-functions for authentication, assignments, tasks, collaboration, Git integration, and audit.
+
+### Process Flow (IDEF3)
+- Detailed process flows for user operations from login through task completion.
+- Decision points and alternative flows for error handling and permissions.
+
+### Activity Diagrams
+- User workflows from authentication through all system operations.
+- Parallel activities for team collaboration and notification handling.
+
+### Class Diagrams
+- Entity-relationship model showing all database tables and relationships.
+- Business logic classes with methods and associations.
+
+### Use Case Diagrams
+- Actor-system interactions covering all user roles and system functions.
+- 15+ use cases from basic authentication to advanced Git integration.
+
+### Sequence Diagrams
+- Detailed interaction flows for complex operations like task creation.
+- Shows frontend-backend-database communication patterns.
+
+## Deployment and Operations
+
+### Development Environment
+- Docker Compose setup for PostgreSQL, backend, and frontend services.
+- Hot reloading for development productivity.
+- Environment-based configuration management.
+
+### Production Deployment
+- Containerized deployment with orchestration.
+- Environment variables for secrets and configuration.
+- Database migrations and backup strategies.
+- Monitoring and logging aggregation.
+
+### Maintenance
+- Automated audit log archiving and cleanup.
+- Performance monitoring for database queries and API response times.
+- Regular security updates and dependency management.
+- Backup and disaster recovery procedures.
+
+This comprehensive task management system provides a solid foundation for team collaboration with advanced features for development workflow tracking and compliance auditing.
