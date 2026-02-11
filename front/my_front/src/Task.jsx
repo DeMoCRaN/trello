@@ -61,10 +61,15 @@ function Task({
   };
 
   const handleDetails = () => {
+    console.log('Подробнее clicked, task:', task);
+    console.log('onDetails prop:', onDetails);
     if (onDetails) {
       onDetails(task);
+    } else {
+      console.warn('onDetails prop is not defined');
     }
   };
+
 
   const normalizedTask = {
     ...task,

@@ -314,8 +314,43 @@ function AssignedTasks({ userEmail }) {
     return groups;
   }, [tasks, assignmentNames]);
 
+  // Получение деталей задачи
+  const fetchTaskDetails = useCallback(async (taskId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Пользователь не авторизован');
+        return null;
+      }
+      
+      console.log('Fetching task details for taskId:', taskId);
+      
+      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error('Ошибка загрузки деталей задачи: ' + errorText);
+      }
+      
+      const taskData = await response.json();
+      console.log('Task details fetched:', taskData);
+      return taskData;
+    } catch (err) {
+      console.error('Error fetching task details:', err);
+      setError(err.message);
+      return null;
+    }
+  }, []);
+
   // Обновление статуса задачи
   const updateTaskStatus = useCallback(async (taskId, statusId, action) => {
+
     setUpdatingTaskId(taskId);
     try {
       const token = localStorage.getItem('token');
@@ -521,59 +556,85 @@ const renderTaskCard = useCallback((task) => {
       <p><strong>Обновлена:</strong> {new Date(task.updated_at).toLocaleString()}</p>
       <p><strong>Время работы:</strong> {formatTime(timer.elapsedSeconds)}</p>
       
-      {task.status === 'new' && (
+      <div className="task-buttons-wrapper" style={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: '8px', 
+        marginTop: '12px',
+        alignItems: 'center'
+      }}>
+        {task.status === 'new' && (
+          <button
+            onClick={() => updateTaskStatus(task.id, 2, 'start')}
+            disabled={updatingTaskId === task.id}
+            className="task-button start-button"
+            style={{ order: 1 }}
+          >
+            {updatingTaskId === task.id ? 'Запуск...' : 'Начать работу'}
+          </button>
+        )}
+        
+        {isInProgress && (
+          <>
+            <button
+              onClick={() => updateTaskStatus(task.id, 2, 'stop')}
+              disabled={updatingTaskId === task.id}
+              className="task-button stop-button"
+              style={{ order: 2 }}
+            >
+              {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
+            </button>
+            <button
+              onClick={() => updateTaskStatus(task.id, 2, 'resume')}
+              disabled={updatingTaskId === task.id}
+              className="task-button resume-button"
+              style={{ order: 3 }}
+            >
+              {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
+            </button>
+            <button
+              onClick={() => updateTaskStatus(task.id, 3, 'done')}
+              disabled={updatingTaskId === task.id}
+              className="task-button complete-button"
+              style={{ order: 4 }}
+            >
+              {updatingTaskId === task.id ? 'Завершение...' : 'Завершить'}
+            </button>
+          </>
+        )}
+        
         <button
-          onClick={() => updateTaskStatus(task.id, 2, 'start')}
-          disabled={updatingTaskId === task.id}
-          className="task-button start-button"
-        >
-          {updatingTaskId === task.id ? 'Запуск...' : 'Начать работу'}
-        </button>
-      )}
-      
-      {isInProgress && (
-        <div className="task-buttons-container">
-          <button
-            onClick={() => updateTaskStatus(task.id, 2, 'stop')}
-            disabled={updatingTaskId === task.id}
-            className="task-button stop-button"
-          >
-            {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
-          </button>
-          <button
-            onClick={() => updateTaskStatus(task.id, 2, 'resume')}
-            disabled={updatingTaskId === task.id}
-            className="task-button resume-button"
-          >
-            {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
-          </button>
-          <button
-            onClick={() => updateTaskStatus(task.id, 3, 'done')}
-            disabled={updatingTaskId === task.id}
-            className="task-button complete-button"
-          >
-            {updatingTaskId === task.id ? 'Завершение...' : 'Завершить'}
-          </button>
-          <button
-            onClick={() => {
-              setSelectedTask(task);
+          onClick={async () => {
+            console.log('Подробнее clicked for task:', task.id);
+            const taskDetails = await fetchTaskDetails(task.id);
+            if (taskDetails) {
+              setSelectedTask(taskDetails);
               setShowTaskModal(true);
-            }}
-            className="task-button details-button"
-          >
-            Подробнее
-          </button>
-        </div>
-      )}
+            }
+          }}
+          className="task-button details-button"
+          style={{ 
+            order: 5,
+            marginLeft: 'auto',
+            backgroundColor: '#1976d2',
+            color: 'white'
+          }}
+        >
+          Подробнее
+        </button>
+
+      </div>
       
       {task.status === 'done' && (
-        <p className="task-completed">
-          Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
+        <p className="task-completed" style={{ marginTop: '8px', color: '#4caf50' }}>
+          ✅ Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
         </p>
       )}
+
     </div>
   );
-}, [assignmentNames, formatTime, timers, updateTaskStatus, updatingTaskId, formatDeadline]);
+}, [assignmentNames, formatTime, timers, updateTaskStatus, updatingTaskId, formatDeadline, fetchTaskDetails]);
+
 
 
   // Состояния загрузки

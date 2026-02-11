@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "C:\\Users\\DeMoCRaN\\Desktop\\trello\\logs\\.6c7e3727240dd30f210ba20d9ad8f0d28dcb55e3-audit.json",
+    "files": [
+        {
+            "date": 1770829840926,
+            "name": "C:\\Users\\DeMoCRaN\\Desktop\\trello\\logs\\application-2026-02-11.log",
+            "hash": "3ebe0d3289004bedd7df4ebac8ade016f58ca5c334c856bfef2b6ba711dd276f"
+        }
+    ],
+    "hashType": "sha256"
+}

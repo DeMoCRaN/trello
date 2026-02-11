@@ -4,8 +4,10 @@ const jwt = require('jsonwebtoken');
 const tasksController = require('../controllers/tasks');
 const assignmentsController = require('../controllers/assignments');
 const commentsController = require('../controllers/comments');
+const gitController = require('../controllers/git');
 
 const { Pool } = require('pg');
+
 
 // Создаем пул подключения к базе данных для API
 const pool = new Pool({
@@ -318,7 +320,7 @@ router.get('/tasks/:id/comments', authenticateToken, validateIdParam, async (req
 // Добавить комментарий к задаче
 router.post('/tasks/:id/comments', authenticateToken, validateIdParam, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = parseInt(req.user.userId, 10);
     const taskId = parseInt(req.params.id, 10);
     const { text } = req.body;
     
@@ -338,6 +340,7 @@ router.post('/tasks/:id/comments', authenticateToken, validateIdParam, async (re
     res.status(500).json({ error: 'Ошибка при добавлении комментария' });
   }
 });
+
 
 router.get('/assignments', authenticateToken, async (req, res) => {
   try {
@@ -506,6 +509,133 @@ router.get('/users/me/invitations', authenticateToken, async (req, res) => {
   }
 });
 
+// Получить метрики пользователя (выполненные задачи, KPI и т.д.)
+router.get('/users/:id/metrics', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    
+    // Проверяем, что пользователь запрашивает свои данные или имеет права администратора
+    if (req.user.userId !== userId && req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Доступ запрещен' });
+    }
+
+    // Получаем статистику по задачам пользователя
+    const tasksStats = await pool.query(`
+      SELECT 
+        COUNT(*) as total_tasks,
+        COUNT(CASE WHEN status_id = 3 THEN 1 END) as completed_tasks,
+        COUNT(CASE WHEN status_id = 2 THEN 1 END) as in_progress_tasks,
+        COUNT(CASE WHEN status_id = 1 THEN 1 END) as new_tasks,
+        COUNT(CASE WHEN deadline < NOW() AND status_id != 3 THEN 1 END) as overdue_tasks,
+        COALESCE(SUM(work_duration), 0) as total_work_time,
+        COALESCE(AVG(work_duration), 0) as avg_work_time
+      FROM tasks 
+      WHERE assignee_id = $1 OR creator_id = $1
+    `, [userId]);
+
+    // Получаем статистику по архивным задачам
+    const archivedStats = await pool.query(`
+      SELECT 
+        COUNT(*) as archived_tasks,
+        COUNT(CASE WHEN status_id = 3 THEN 1 END) as archived_completed
+      FROM archived_tasks 
+      WHERE assignee_id = $1 OR creator_id = $1
+    `, [userId]);
+
+    // Получаем данные пользователя
+    const userResult = await pool.query(
+      'SELECT id, email, name, github_connected, github_username, created_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+
+    const metrics = {
+      user: userResult.rows[0],
+      tasks: {
+        total: parseInt(tasksStats.rows[0].total_tasks) + parseInt(archivedStats.rows[0].archived_tasks),
+        completed: parseInt(tasksStats.rows[0].completed_tasks) + parseInt(archivedStats.rows[0].archived_completed),
+        inProgress: parseInt(tasksStats.rows[0].in_progress_tasks),
+        new: parseInt(tasksStats.rows[0].new_tasks),
+        overdue: parseInt(tasksStats.rows[0].overdue_tasks),
+        archived: parseInt(archivedStats.rows[0].archived_tasks)
+      },
+      performance: {
+        completionRate: parseInt(tasksStats.rows[0].total_tasks) > 0 
+          ? Math.round((parseInt(tasksStats.rows[0].completed_tasks) / parseInt(tasksStats.rows[0].total_tasks)) * 100)
+          : 0,
+        totalWorkTime: parseInt(tasksStats.rows[0].total_work_time),
+        avgWorkTime: Math.round(parseFloat(tasksStats.rows[0].avg_work_time))
+      }
+    };
+
+    res.json(metrics);
+  } catch (error) {
+    console.error('Ошибка при получении метрик пользователя:', error);
+    res.status(500).json({ error: 'Ошибка при получении метрик пользователя' });
+  }
+});
+
+// Получить топ-10 пользователей по производительности
+router.get('/users/top-performers', authenticateToken, async (req, res) => {
+  try {
+    // Получаем топ пользователей по количеству выполненных задач и KPI
+    const topPerformers = await pool.query(`
+      SELECT 
+        u.id,
+        u.email,
+        u.name,
+        u.github_username,
+        COALESCE(task_stats.completed_tasks, 0) as completed_tasks,
+        COALESCE(task_stats.total_tasks, 0) as total_tasks,
+        COALESCE(task_stats.on_time_tasks, 0) as on_time_tasks,
+        COALESCE(task_stats.total_work_time, 0) as total_work_time,
+        CASE 
+          WHEN task_stats.total_tasks > 0 THEN 
+            ROUND((task_stats.completed_tasks::numeric / task_stats.total_tasks) * 100, 1)
+          ELSE 0 
+        END as completion_rate,
+        CASE 
+          WHEN task_stats.completed_tasks > 0 THEN 
+            ROUND((task_stats.on_time_tasks::numeric / task_stats.completed_tasks) * 100, 1)
+          ELSE 0 
+        END as on_time_rate,
+        -- KPI score: weighted combination of completion rate and on-time rate
+        CASE 
+          WHEN task_stats.total_tasks > 0 THEN 
+            ROUND(
+              ((task_stats.completed_tasks::numeric / task_stats.total_tasks) * 0.6 + 
+               (CASE WHEN task_stats.completed_tasks > 0 THEN (task_stats.on_time_tasks::numeric / task_stats.completed_tasks) ELSE 0 END) * 0.4) * 100, 
+              1
+            )
+          ELSE 0 
+        END as kpi_score
+      FROM users u
+      LEFT JOIN (
+        SELECT 
+          assignee_id,
+          COUNT(*) as total_tasks,
+          COUNT(CASE WHEN status_id = 3 THEN 1 END) as completed_tasks,
+          COUNT(CASE WHEN status_id = 3 AND (deadline IS NULL OR completed_at <= deadline) THEN 1 END) as on_time_tasks,
+          COALESCE(SUM(work_duration), 0) as total_work_time
+        FROM tasks
+        GROUP BY assignee_id
+      ) task_stats ON u.id = task_stats.assignee_id
+      WHERE task_stats.total_tasks > 0
+      ORDER BY kpi_score DESC, completed_tasks DESC
+      LIMIT 10
+    `);
+
+    res.json(topPerformers.rows);
+  } catch (error) {
+    console.error('Ошибка при получении топ пользователей:', error);
+    res.status(500).json({ error: 'Ошибка при получении топ пользователей' });
+  }
+});
+
+
 router.patch('/tasks/:id/status', authenticateToken, validateIdParam, async (req, res) => {
   try {
     console.log('PATCH /tasks/:id/status called with params:', req.params, 'body:', req.body);
@@ -653,8 +783,79 @@ router.post('/assignments/:id/repositories', authenticateToken, validateIdParam,
   }
 });
 
+// Получить задачу по ID
+router.get('/tasks/:id', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id, 10);
+    
+    // Get task with full user details
+    const taskResult = await pool.query(
+      `SELECT 
+        t.id, t.title, t.description, t.deadline,
+        t.created_at, t.updated_at, t.in_progress_since,
+        t.work_duration, t.status_id, t.priority_id,
+        t.creator_id, t.assignee_id, t.progress_percentage,
+        t.assignment_id,
+        u1.email AS creator_email, 
+        u1.name AS creator_name,
+        u2.email AS assignee_email,
+        u2.name AS assignee_name,
+        s.name AS status, 
+        p.name AS priority,
+        false as is_archived
+      FROM tasks t
+      LEFT JOIN users u1 ON t.creator_id = u1.id
+      LEFT JOIN users u2 ON t.assignee_id = u2.id
+      LEFT JOIN task_statuses s ON t.status_id = s.id
+      LEFT JOIN task_priorities p ON t.priority_id = p.id
+      WHERE t.id = $1`,
+      [taskId]
+    );
+    
+    if (taskResult.rows.length === 0) {
+      // Try archived tasks
+      const archivedResult = await pool.query(
+        `SELECT 
+          at.id, at.title, at.description, at.deadline,
+          at.created_at, at.updated_at, at.in_progress_since,
+          at.work_duration, at.status_id, at.priority_id,
+          at.creator_id, at.assignee_id, at.progress_percentage,
+          at.assignment_id,
+          u1.email AS creator_email, 
+          u1.name AS creator_name,
+          u2.email AS assignee_email,
+          u2.name AS assignee_name,
+          s.name AS status, 
+          p.name AS priority,
+          true as is_archived,
+          at.deleted_at
+        FROM archived_tasks at
+        LEFT JOIN users u1 ON at.creator_id = u1.id
+        LEFT JOIN users u2 ON at.assignee_id = u2.id
+        LEFT JOIN task_statuses s ON at.status_id = s.id
+        LEFT JOIN task_priorities p ON at.priority_id = p.id
+        WHERE at.id = $1`,
+        [taskId]
+      );
+      
+      if (archivedResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Задача не найдена' });
+      }
+      
+      return res.json(archivedResult.rows[0]);
+    }
+    
+    res.json(taskResult.rows[0]);
+  } catch (error) {
+    console.error('Ошибка при получении задачи:', error);
+    res.status(500).json({ error: 'Ошибка при получении задачи' });
+  }
+});
+
+
 // Получить коммиты репозитория
 router.get('/repositories/:id/commits', authenticateToken, validateIdParam, async (req, res) => {
+
   try {
     const repoId = parseInt(req.params.id, 10);
     const limit = parseInt(req.query.limit) || 50;

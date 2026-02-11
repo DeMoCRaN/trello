@@ -1,0 +1,347 @@
+/* Task Details Form Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Task Info Section */
+.task-info-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.task-info-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.4rem;
+  color: #1976d2;
+}
+
+.task-description {
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.task-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 500;
+}
+
+.meta-value {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.meta-value.status-new {
+  color: #ff9800;
+}
+
+.meta-value.status-in_progress {
+  color: #2196f3;
+}
+
+.meta-value.status-done {
+  color: #4caf50;
+}
+
+.meta-value.priority-low {
+  color: #4caf50;
+}
+
+.meta-value.priority-medium {
+  color: #ff9800;
+}
+
+.meta-value.priority-high {
+  color: #f44336;
+}
+
+/* Activity Section */
+.task-activity-section {
+  margin-top: 16px;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.activity-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.toggle-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.toggle-btn.active {
+  background-color: #1976d2;
+  color: white;
+  border-color: #1976d2;
+}
+
+/* Comment Form */
+.comment-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.comment-form textarea {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.comment-form textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.submit-comment-btn {
+  padding: 10px 20px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.submit-comment-btn:hover:not(:disabled) {
+  background-color: #1565c0;
+}
+
+.submit-comment-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Activity List */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-activity {
+  text-align: center;
+  color: #888;
+  padding: 40px;
+  font-style: italic;
+}
+
+.activity-item {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border-left: 3px solid #1976d2;
+}
+
+/* Comment Item */
+.comment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #1976d2;
+  font-size: 0.9rem;
+}
+
+.comment-date {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.comment-content {
+  color: #333;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+/* Commit Item */
+.commit-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commit-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.commit-badge {
+  background-color: #6f42c1;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.commit-hash {
+  font-family: monospace;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.commit-message {
+  color: #333;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.commit-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .modal-content {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .task-meta-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .comment-form {
+    flex-direction: column;
+  }
+  
+  .activity-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

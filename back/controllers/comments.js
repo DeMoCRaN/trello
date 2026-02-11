@@ -13,8 +13,9 @@ function isValidCommentText(text) {
 
 async function createComment(pool, { task_id, user_id, text }) {
   // Используем функцию с аудитом
-  return await auditController.createCommentWithAudit(pool, { task_id, text }, user_id);
+  return await auditController.createCommentWithAudit(pool, task_id, text, user_id);
 }
+
 
 async function getCommentsByTaskId(pool, taskId, userId) {
   // Валидация taskId

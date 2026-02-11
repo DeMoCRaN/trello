@@ -7,6 +7,8 @@ import MainPage from './MainPage.jsx';
 import AssignedTasksWrapper from './AssignedTasksWrapper.jsx';
 import Dashboard from '../src/components/Dashboard.jsx';
 import UserProfileForm from './components/UserProfileForm.jsx';
+import UserInfoPage from './pages/UserInfoPage.jsx';
+
 
 function parseJwt(token) {
   try {
@@ -95,7 +97,9 @@ createRoot(document.getElementById('root')).render(
         <Route path="/tasks" element={<AssignedTasksWrapper />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<UserProfileForm/>} />
+        <Route path="/user-info" element={<UserInfoPage />} />
       </Routes>
+
     </BrowserRouter>
   </StrictMode>
 );

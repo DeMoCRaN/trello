@@ -1,0 +1,678 @@
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:01"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:01","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:01"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:01","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:01"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:01","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:01"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:02","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:02"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:02","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:02"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:02","userId":3}
+{"assignmentId":35,"level":"info","message":"Assignment created with audit","timestamp":"2026-02-11 20:11:05","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:05"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:05"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:05"}
+{"assignmentId":35,"invitedBy":3,"level":"info","message":"Приглашение пользователя в команду проекта","timestamp":"2026-02-11 20:11:17","userId":3}
+{"assignmentId":35,"error":"Создатель проекта уже является членом команды","invitedBy":3,"level":"error","message":"Ошибка при приглашении пользователя в проект","stack":"Error: Создатель проекта уже является членом команды\n    at Object.inviteUserToAssignment (C:\\Users\\DeMoCRaN\\Desktop\\trello\\back\\controllers\\assignments.js:359:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\DeMoCRaN\\Desktop\\trello\\back\\routes\\api.js:438:24","timestamp":"2026-02-11 20:11:17","userId":3}
+{"assignmentId":35,"invitedBy":3,"level":"info","message":"Приглашение пользователя в команду проекта","timestamp":"2026-02-11 20:11:24","userId":1}
+{"assignmentId":35,"invitationId":11,"level":"info","message":"Пользователь успешно приглашен в проект","timestamp":"2026-02-11 20:11:24","userId":1}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:25"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:11:35"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:35","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:35","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:35","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:11:35"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:35","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:35","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:11:35"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:11:35"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:11:35"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:35"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:35"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:35"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:35"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:35"}
+{"assignmentId":null,"invitationId":11,"level":"info","message":"Ответ на приглашение в проект","status":"accepted","timestamp":"2026-02-11 20:11:42","userId":1}
+{"assignmentId":35,"assignmentTitle":"123","level":"info","message":"Пользователь принял приглашение в проект","timestamp":"2026-02-11 20:11:42","userId":1}
+{"assignmentTitle":"123","invitationId":11,"level":"info","message":"Ответ на приглашение обработан","status":"accepted","timestamp":"2026-02-11 20:11:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:42","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:11:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:42","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:47"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:47"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:47"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:47","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:47","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:47","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:47"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:47"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:47","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:47"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:47","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:47"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:47"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:47"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:47"}
+{"assignmentId":35,"level":"info","message":"Создание задачи в задании","taskTitle":"123","timestamp":"2026-02-11 20:11:57"}
+{"assignmentId":35,"level":"info","message":"Задача успешно создана","taskId":178,"timestamp":"2026-02-11 20:11:57"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:57"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:57"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:57","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:59"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:59"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:59"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:59","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:59","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:59","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:59"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:59"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:59","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:59"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:11:59","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:11:59"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:59"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:59"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:11:59"}
+{"assignmentId":35,"level":"info","message":"Создание задачи в задании","taskTitle":"123","timestamp":"2026-02-11 20:12:16"}
+{"assignmentId":35,"level":"info","message":"Задача успешно создана","taskId":179,"timestamp":"2026-02-11 20:12:16"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:16"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:16"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:16","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:18"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:18","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:18"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:18","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:19","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:19","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:19","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:19"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:19","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:48"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:48"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:48","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:48","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:49","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:49","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:49","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:49","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:12:49","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:49"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:49"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:49"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:12:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:50"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:50"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:12:50"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:23"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:23","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:23","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:23"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:23","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:23"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:23"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:23"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:23","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:23"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:23"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:23","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:23"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:23"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:13:24"}
+{"level":"info","message":"Task status updated with audit","newStatus":3,"taskId":179,"timestamp":"2026-02-11 20:13:24"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:24"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:24"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:24","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:25"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:26","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:26","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:26"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:26","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:26"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:26"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:26"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:26","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:26"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:26","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:26"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:26"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:26"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:26"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:29"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:29","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:29","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:29"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:29","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:29"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:29"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:29"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:29","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:29"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:29","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:29"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:29"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:29"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:29"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:13:30"}
+{"level":"info","message":"Task deleted with audit","permanent":false,"taskId":179,"timestamp":"2026-02-11 20:13:30"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:30"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:30"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:30","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:32"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:32","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:32","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:32"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:32","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:32"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:32"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:32"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:32"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:32"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:32","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:32","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:32"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:32"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:32"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:36"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:36","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:36","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:36"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:36","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:36"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:36"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:36"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:36","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:36"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:36","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:36"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:36"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:36"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:36"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:13:38"}
+{"level":"info","message":"Task deleted with audit","permanent":false,"taskId":179,"timestamp":"2026-02-11 20:13:38"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:38"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:38"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:38","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:39"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:39","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:39","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:39"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:39","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:39"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:39"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:40"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:40"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:40"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:40","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:13:40","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:13:40"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:40"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:13:40"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:30","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:30","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:30"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:30","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:30"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:30","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:30"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:30"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:30"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:30"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:30","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:30"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:30"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:30"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:30"}
+{"assignmentId":31,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:32"}
+{"assignmentId":31,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:32"}
+{"assignmentId":24,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:32"}
+{"assignmentId":24,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:32"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:33"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:33"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:34"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:34","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:34","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:34"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:14:35"}
+{"level":"info","message":"Task status updated with audit","newStatus":2,"taskId":178,"timestamp":"2026-02-11 20:14:35"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:42","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:42","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:42","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:42","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:42","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:14:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:14:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:49","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:49","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:14:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:49","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:14:49"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:14:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:49","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:14:49","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:14:49"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:49"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:14:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:02"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:02","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:02","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:02"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:03"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:03"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:03"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:03"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:03","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:03","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:03"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:04","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:04","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:04","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:04"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:04","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:04","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:15:04"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:04"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:15:12"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:12","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:12","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:12","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:15:12"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:12","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:15:12"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:15:12"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:12"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:15:12"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:12","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:12"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:12"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:12"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:15:12"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:15:14"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:14","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:15:14","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:15:14"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:25"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:25","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:42","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:42","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:42","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:42","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:42","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:42"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:44"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:44","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:44","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:44"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:49","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:49","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:49","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:49","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:49"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:16:49","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:49"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:16:49"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:49"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:49"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:16:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:17:31"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:17:31","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:17:31","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:17:31"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:17:42"}
+{"level":"info","message":"Task status updated with audit","newStatus":3,"taskId":178,"timestamp":"2026-02-11 20:17:42"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:17:55","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:17:55","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:17:55"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:17:55","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:17:55","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:17:55"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:17:55","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:17:55"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:17:55"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:17:55"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:17:55"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:17:55"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:17:55"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:17:55"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:17:55"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:17:55"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:17:55"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:18:26"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:18:26","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:18:26"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:18:26","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:18:26"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:18:26","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:18:57"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:18:57","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:18:57"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:18:57","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:18:57","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:18:57"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:16","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:16","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:16"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:16","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:16"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:16","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:16","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:16"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:16"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:16"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:16"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:16"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:16"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:16"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:16"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:16"}
+{"assignmentId":31,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:18"}
+{"assignmentId":31,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:18"}
+{"assignmentId":24,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:19"}
+{"assignmentId":24,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:19"}
+{"assignmentId":31,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:21"}
+{"assignmentId":31,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:21"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:22"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:19:22"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:52"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:52","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:52","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:52"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:19:52"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:19:52","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:08"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:08","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:08","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:08"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:08","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:08","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:08","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:08"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:08"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:08"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:08"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:08"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:08"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:08"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:08"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:10"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:10","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:10","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:10","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:10"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:10","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:10"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:10"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:10","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:10"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:10"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:10"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:10"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:10"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:10"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:27","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:27","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:27","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:27","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:27"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:27","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:27","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:27"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:42"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:44"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:44","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:20:44","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:20:44"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:22:09"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:22:09","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:22:09","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:22:09"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:22:38"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:22:38","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:22:38","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:22:38","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:22:38"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:22:38","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:22:38","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:22:38"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:22:38"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:22:38"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:22:38"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:22:38"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:22:38"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:22:38"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:22:38"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:04","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:04","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:49"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:52"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:52"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:52"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:53","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:53","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:53","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:53","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:53","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:53","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:53"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:23:53","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:23:53"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:23:53"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:23:53"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:23:53"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:24:54"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:24:54","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:24:54","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:24:54"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:24:54","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:24:54"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:04","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:04","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:04","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:04","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:04"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:04"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:04"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:04","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:04"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:07"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:07","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:07","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:07","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:07"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:07","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:07"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:07"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:07"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:07","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:07"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:07"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:07"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:07"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:07"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:07"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:22"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:22"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:22","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:22","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:22"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:22"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:22"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:22"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:22","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:22","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:22"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:25:22"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:22"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:22","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:22"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:22","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:35"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:35","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:25:35","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:25:35"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:28:05"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:28:21"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:28:47"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:13","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:13","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:29:13"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:13","userId":1}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:13","userId":1}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:29:14"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:29:14"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:29:14"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:14"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:14","userId":1}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:14"}
+{"level":"info","message":"Получение заданий для пользователя ID: 1","timestamp":"2026-02-11 20:29:14"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:14"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:14"}
+{"assignmentId":32,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:14"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:28","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:28","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:28"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:28","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:28","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:28"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:28","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:28","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:28"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:59"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:59","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:59"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:59","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:29:59"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:29:59","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:30:30","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:30:30"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:30:30"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:30:30","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:30:30"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:30:30","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:31:00","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:31:00"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:31:00"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:31:00","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:31:00","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:31:00"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:31:31"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:31:31","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:31:31","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:31:31"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:31:31"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:31:31","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:32:02"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:32:02","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:32:02"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:32:02","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:32:02"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:32:02","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:32:33"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:32:33","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:32:33"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:32:33","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:32:33"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:32:33","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:33:03"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:33:03","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:33:03","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:33:03"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:33:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:33:04","userId":3}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:33:04","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:33:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:33:04","userId":3}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:33:04"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:33:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:33:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:33:04","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:33:04"}
+{"level":"info","message":"Получение ожидающих приглашений пользователя","timestamp":"2026-02-11 20:33:04","userId":3}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:33:04"}
+{"level":"info","message":"Получение заданий для пользователя ID: 3","timestamp":"2026-02-11 20:33:04"}
+{"assignmentId":35,"level":"info","message":"Получение состава команды проекта","timestamp":"2026-02-11 20:33:04"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:33:06"}
+{"level":"warn","message":"Attempt to set audit user without userId","timestamp":"2026-02-11 20:33:11"}

@@ -1,12 +1,15 @@
 import React from 'react';
 import './Header.css';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiBell } from 'react-icons/fi';
+
 
 // eslint-disable-next-line no-unused-vars
 function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClick, totalNotifications = 0 }) {
+  const navigate = useNavigate();
   // console.log('Header userEmail prop:', userEmail);
   return (
+
     <header className="app-header">
       <div className="logo">
         <img src="/image/logo.png" alt="Logo" style={{ height: '40px' }} />
@@ -15,7 +18,8 @@ function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClic
         <button onClick={() => onNavigate('main')}>Главная</button>
         <Link to="/tasks"><button>Задачи</button></Link>
         <Link to="/dashboard"><button>Дешборд</button></Link>
-        <button onClick={() => onNavigate('user-info')}>Профиль</button>
+        <button onClick={() => navigate('/user-info')}>Профиль</button>
+
       </nav>
       <div className="header-right">
         {/* Notification Bell */}
@@ -37,10 +41,11 @@ function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClic
           style={{ cursor: userEmail ? 'pointer' : 'default', textDecoration: userEmail ? 'underline' : 'none' }}
           onClick={() => {
             if (userEmail) {
-              alert('не работает временно');
+              navigate('/user-info');
             }
           }}
         >
+
           {userEmail ? userEmail : 'Не авторизован'}
         </div>
       </div>
