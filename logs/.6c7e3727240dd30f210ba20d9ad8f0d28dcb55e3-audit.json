@@ -6,9 +6,14 @@
     "auditLog": "C:\\Users\\DeMoCRaN\\Desktop\\trello\\logs\\.6c7e3727240dd30f210ba20d9ad8f0d28dcb55e3-audit.json",
     "files": [
         {
-            "date": 1770829840926,
-            "name": "C:\\Users\\DeMoCRaN\\Desktop\\trello\\logs\\application-2026-02-11.log",
-            "hash": "3ebe0d3289004bedd7df4ebac8ade016f58ca5c334c856bfef2b6ba711dd276f"
+            "date": 1774019022616,
+            "name": "C:\\Users\\DeMoCRaN\\Desktop\\trello\\logs\\application-2026-03-20.log",
+            "hash": "d89e275b8f3628a64b1fb7493dc6c1692d8496d363e13b99cb6ae9be5346506a"
+        },
+        {
+            "date": 1774040576528,
+            "name": "C:\\Users\\DeMoCRaN\\Desktop\\trello\\logs\\application-2026-03-21.log",
+            "hash": "a7141b8b0581e826dd9724cb163977efcb2925ad8b853266d977a1c52b95750b"
         }
     ],
     "hashType": "sha256"

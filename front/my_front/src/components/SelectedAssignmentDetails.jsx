@@ -16,14 +16,16 @@ function SelectedAssignmentDetails({
   timers,
   formatTime,
   activeTasks = [],
-  archivedTasks = []
+  archivedTasks = [],
+  failedTasks = []
 }) {
   const [activeTab, setActiveTab] = useState('active');
   
   const statusTranslations = {
     'new': 'Новые',
     'in_progress': 'В работе',
-    'done': 'Завершённые'
+    'done': 'Завершённые',
+    'failed': 'Проваленные'
   };
 
 
@@ -65,13 +67,17 @@ function SelectedAssignmentDetails({
       const statusKey = task.status || 'new';
       if (grouped[statusKey]) {
         grouped[statusKey].push(task);
+      } else {
+        // Неизвестный статус показывать как "other"
+        if (!grouped['other']) grouped['other'] = [];
+        grouped['other'].push(task);
       }
     });
     
     return grouped;
   };
 
-  const currentTasks = activeTab === 'active' ? activeTasks : archivedTasks;
+  const currentTasks = activeTab === 'active' ? activeTasks : activeTab === 'archived' ? archivedTasks : failedTasks;
   const groupedTasks = groupTasksByStatus(currentTasks);
   const orderedStatuses = Object.keys(groupedTasks);
 
@@ -93,6 +99,12 @@ function SelectedAssignmentDetails({
         >
           Архивные задачи ({archivedTasks.length})
         </button>
+        <button 
+          className={`tab-button ${activeTab === 'failed' ? 'active' : ''}`}
+          onClick={() => setActiveTab('failed')}
+        >
+          Проваленные задачи ({failedTasks?.length || 0})
+        </button>
       </div>
 
       <div className="tasks-dashboard">
@@ -100,7 +112,7 @@ function SelectedAssignmentDetails({
           <div key={statusKey} className="tasks-column">
             <h3>
               {statusTranslations[statusKey] || statusKey}
-              {activeTab === 'archived' && ' (Архив)'}
+{activeTab === 'archived' && ' (Архив)'}{activeTab === 'failed' && ' (Провалено)'}
             </h3>
             
             {groupedTasks[statusKey].length > 0 ? (
@@ -116,6 +128,8 @@ function SelectedAssignmentDetails({
                   onStopWork={onStopWork}
                   onResumeWork={onResumeWork}
                   onCompleteWork={handleCompleteWork}
+onFail={async (taskId) => await handleStatusChange(taskId, 4)}
+userId={1}
                   creatorName={task.creator_name || task.creator_id}
                   assigneeName={task.assignee_name || task.assignee_id}
                   createdAt={task.created_at}
@@ -127,7 +141,7 @@ function SelectedAssignmentDetails({
               ))
             ) : (
               <p className="no-tasks-message">
-                {activeTab === 'archived' ? 'Нет архивных задач' : 'Нет задач'}
+                {activeTab === 'archived' ? 'Нет архивных задач' : activeTab === 'failed' ? 'Нет проваленных задач' : 'Нет задач'}
               </p>
             )}
           </div>

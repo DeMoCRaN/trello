@@ -87,7 +87,7 @@ const UserInfoPage = () => {
   const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState(null);
   const [userMetrics, setUserMetrics] = useState(null);
-  const [topPerformers, setTopPerformers] = useState([]);
+  const [, setTopPerformers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
@@ -388,6 +388,21 @@ const UserInfoPage = () => {
                       </CardContent>
                     </StatsCard>
                   </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard>
+                      <CardContent>
+                        <Typography color="textSecondary" gutterBottom>Провалено</Typography>
+                        <Typography variant="h4" component="div" color="warning">
+                          {userMetrics.performance.failedTasks || 0}
+                        </Typography>
+                        <Divider style={{ margin: '12px 0' }} />
+                        <MetricItem>
+                          <ErrorIcon color="warning" fontSize="small" />
+                          <Typography variant="body2">Неудачные задачи</Typography>
+                        </MetricItem>
+                      </CardContent>
+                    </StatsCard>
+                  </Grid>
                 </Grid>
               </Box>
 
@@ -441,7 +456,7 @@ const UserInfoPage = () => {
                     <ChartCard>
                       <CardContent>
                         <Typography variant="h6" gutterBottom>Показатели эффективности</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width={450} height={450}>
                           <RadarChart outerRadius={90} data={getPerformanceMetrics()}>
                             <PolarGrid />
                             <PolarAngleAxis dataKey="subject" />
@@ -464,7 +479,7 @@ const UserInfoPage = () => {
                     <ChartCard>
                       <CardContent>
                         <Typography variant="h6" gutterBottom>Задачи по статусам</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width="100%" height={400}>
                           <BarChart data={getTasksByStatusData()}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
@@ -480,118 +495,6 @@ const UserInfoPage = () => {
               </Box>
             </>
           )}
-
-          {/* Топ-10 пользователей */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-              <EmojiEventsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Топ-10 пользователей по производительности
-            </Typography>
-            <ChartCard>
-              <CardContent>
-                {topPerformers.length > 0 ? (
-                  <TableContainer component={Paper} style={{ maxHeight: 600, overflowX: 'auto' }}>
-                    <Table stickyHeader size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell align="center">Место</TableCell>
-                          <TableCell>Пользователь</TableCell>
-                          <TableCell align="right">Всего задач</TableCell>
-                          <TableCell align="right">Выполнено</TableCell>
-                          <TableCell align="right">% выполнения</TableCell>
-                          <TableCell align="right">В срок</TableCell>
-                          <TableCell align="right">KPI</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {topPerformers.map((performer, index) => (
-                          <TableRow 
-                            key={performer.id} 
-                            hover
-                            sx={{ 
-                              backgroundColor: performer.email === userEmail ? 'rgba(25, 118, 210, 0.1)' : 'inherit',
-                              fontWeight: performer.email === userEmail ? 'bold' : 'normal'
-                            }}
-                          >
-                            <TableCell align="center">
-                              {index === 0 ? (
-                                <Chip icon={<EmojiEventsIcon />} label="1" color="warning" size="small" />
-                              ) : index === 1 ? (
-                                <Chip icon={<EmojiEventsIcon />} label="2" color="default" size="small" sx={{ bgcolor: '#c0c0c0', color: 'white' }} />
-                              ) : index === 2 ? (
-                                <Chip icon={<EmojiEventsIcon />} label="3" color="default" size="small" sx={{ bgcolor: '#cd7f32', color: 'white' }} />
-                              ) : (
-                                <Typography variant="body2">{index + 1}</Typography>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Box display="flex" alignItems="center">
-                                <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: performer.email === userEmail ? '#1976d2' : '#757575' }}>
-                                  {(performer.name || performer.email).charAt(0).toUpperCase()}
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="body2" fontWeight={performer.email === userEmail ? 'bold' : 'normal'}>
-                                    {performer.name || performer.email}
-                                  </Typography>
-                                  {performer.email === userEmail && (
-                                    <Typography variant="caption" color="primary">(Вы)</Typography>
-                                  )}
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="right">{performer.total_tasks}</TableCell>
-                            <TableCell align="right">
-                              <Box color="success.main">{performer.completed_tasks}</Box>
-                            </TableCell>
-                            <TableCell align="right">
-                              <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={parseFloat(performer.completion_rate)}
-                                  sx={{ 
-                                    width: 60, 
-                                    height: 8, 
-                                    borderRadius: 4,
-                                    bgcolor: '#e0e0e0'
-                                  }}
-                                  color={parseFloat(performer.completion_rate) > 75 ? 'success' : parseFloat(performer.completion_rate) > 50 ? 'warning' : 'error'}
-                                />
-                                <Typography variant="body2">{performer.completion_rate}%</Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="right">
-                              <Chip 
-                                label={`${performer.on_time_rate}%`} 
-                                size="small"
-                                color={parseFloat(performer.on_time_rate) > 80 ? 'success' : parseFloat(performer.on_time_rate) > 60 ? 'warning' : 'error'}
-                                variant="outlined"
-                              />
-                            </TableCell>
-                            <TableCell align="right">
-                              <Chip 
-                                label={performer.kpi_score} 
-                                size="small"
-                                color={parseFloat(performer.kpi_score) > 80 ? 'success' : parseFloat(performer.kpi_score) > 60 ? 'primary' : 'default'}
-                                sx={{ 
-                                  fontWeight: 'bold',
-                                  bgcolor: parseFloat(performer.kpi_score) > 80 ? '#4caf50' : parseFloat(performer.kpi_score) > 60 ? '#1976d2' : '#757575',
-                                  color: 'white'
-                                }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Box display="flex" justifyContent="center" alignItems="center" height={200}>
-                    <Typography color="textSecondary">Нет данных о пользователях</Typography>
-                  </Box>
-                )}
-              </CardContent>
-            </ChartCard>
-          </Box>
         </ContentContainer>
       </ScrollableContainer>
     </PageContainer>

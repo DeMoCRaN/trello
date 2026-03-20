@@ -1205,17 +1205,26 @@ const getActivityTimeline = () => {
     Дедлайны
   </Typography>
   <Grid container spacing={3}>
-    <Grid item xs={12} md={7}>
-      <ChartCard>
-        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '500px' }}>
-          <Typography variant="h6" gutterBottom>
-            <EventIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
-            Календарь дедлайнов
-          </Typography>
-          <DeadlineCalendar events={getCalendarEvents()} />
-        </CardContent>
-      </ChartCard>
-    </Grid>
+<Grid item xs={12} md={8}>
+  <ChartCard sx={{ width: 1500 }}>
+    <CardContent sx={{ 
+      flex: 1, 
+      display: 'flex', 
+      flexDirection: 'column', 
+      minHeight: '500px',
+      width: '100%',  // добавить
+      overflow: 'auto' // если нужно скроллить
+    }}>
+      <Typography variant="h6" gutterBottom>
+        <EventIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
+        Календарь дедлайнов
+      </Typography>
+      <div style={{ width: '100%', flex: 1, minHeight: '450px' }}>
+        <DeadlineCalendar events={getCalendarEvents()} />
+      </div>
+    </CardContent>
+  </ChartCard>
+</Grid>
     <Grid item xs={12} md={5}>
       <ChartCard>
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -1224,7 +1233,7 @@ const getActivityTimeline = () => {
             График предстоящих дедлайнов
           </Typography>
           <ChartContainer>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width={400} height={600}>
               <BarChart
                 data={deadlineData}
                 layout="vertical"
@@ -1329,7 +1338,7 @@ const getActivityTimeline = () => {
           </Typography>
           <ChartContainer>
             {statusData?.some(item => item.value > 0) && (
-              <ResponsiveContainer width={400} height="100%">
+              <ResponsiveContainer width={600} height="100%">
                 <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <Pie
                     data={statusData.filter(item => item.value > 0)}
@@ -1438,7 +1447,7 @@ const getActivityTimeline = () => {
                       <CardContent>
                         <Typography variant="h5" gutterBottom>По периоду задания</Typography>
                         {getActivityTimeline().length > 0 ? (
-                          <ResponsiveContainer width={1000} height={300}>
+                          <ResponsiveContainer width={1900} height={300}>
                             <AreaChart data={getActivityTimeline()}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis dataKey="name" />
@@ -1542,7 +1551,7 @@ const getActivityTimeline = () => {
                     <ChartCard>
                       <CardContent>
                         <Typography variant="h6" gutterBottom>Показатели производительности</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width={500} height={300}>
                           <RadarChart outerRadius={90} data={getPerformanceMetrics()}>
                             <PolarGrid />
                             <PolarAngleAxis dataKey="subject" />

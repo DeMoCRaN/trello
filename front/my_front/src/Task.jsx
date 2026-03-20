@@ -19,12 +19,17 @@ function Task({
   creatorName, 
   assigneeName, 
   onDetails, 
-  onCompleteWork,
+  onCompleteWork, 
+  onFail,
+  isProjectAuthor = false,
+  userEmail = '',
   loading = false,
   isArchived = false
 }) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [lastAction, setLastAction] = useState(null);
+  const [showFailedModal, setShowFailedModal] = useState(false);
+
 
   useEffect(() => {
     if (loading) {
@@ -161,32 +166,56 @@ function Task({
         <div className="no-deadline">Дедлайн не установлен</div>
       )}
 
-      <div className="task-actions">
-        <button 
-          onClick={handleDetails}
-          disabled={isUpdating}
-        >
-          Подробнее
-        </button>
-        
-        {normalizedTask.status !== 'done' && !isArchived && (
-          <button 
-            onClick={handleComplete}
-            disabled={isUpdating}
-            className="complete-button"
-          >
-            {isUpdating && lastAction === 'complete' ? '...' : 'Завершить'}
-          </button>
-        )}
-        
-        <button 
-          onClick={handleDelete}
-          disabled={isUpdating}
-          className="delete-button"
-        >
-          {isUpdating && lastAction === 'delete' ? '...' : 'Удалить'}
-        </button>
-      </div>
+
+  <div className="task-actions">
+    <button 
+      onClick={handleDetails}
+      disabled={isUpdating}
+    >
+      Подробнее
+    </button>
+    
+    {normalizedTask.status !== 'done' && !isArchived && (
+      <button 
+        onClick={handleComplete}
+        disabled={isUpdating}
+        className="complete-button"
+      >
+        {isUpdating && lastAction === 'complete' ? '...' : 'Завершить'}
+      </button>
+    )}
+    
+    {isProjectAuthor && normalizedTask.status !== 'done' && normalizedTask.status !== 'failed' && !isArchived && (
+      <button 
+        onClick={() => setShowFailedModal(true)}
+        disabled={isUpdating}
+        className="fail-button"
+      >
+        ❌ Провалено
+      </button>
+    )}
+    
+    <button 
+      onClick={handleDelete}
+      disabled={isUpdating}
+      className="delete-button"
+    >
+      {isUpdating && lastAction === 'delete' ? '...' : 'Удалить'}
+    </button>
+  </div>
+  
+  {showFailedModal && (
+    <FailedTaskModal 
+      task={normalizedTask}
+      token={localStorage.getItem('token')}
+      onClose={() => setShowFailedModal(false)}
+      onConfirm={(reason) => {
+        onFail?.(normalizedTask.id, 4, reason);
+        setShowFailedModal(false);
+      }}
+    />
+  )}
+
     </article>
   );
 }
@@ -213,8 +242,12 @@ Task.propTypes = {
   assigneeName: PropTypes.string,
   onDetails: PropTypes.func,
   onCompleteWork: PropTypes.func.isRequired,
+  onFail: PropTypes.func,
+  isProjectAuthor: PropTypes.bool,
+  userEmail: PropTypes.string,
   loading: PropTypes.bool,
   isArchived: PropTypes.bool
 };
+
 
 export default Task;

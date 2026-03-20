@@ -67,12 +67,16 @@ function MainPage({ userEmail }) {
       statuses.find(s => s.id === task.status)?.name || 'new' : task.status
   }));
 
-  // eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
   const newTasks = mappedAssignedTasks.filter(task => task.status === 'new');
+// eslint-disable-next-line no-unused-vars  
+  const failedTasks = mappedAssignedTasks.filter(task => task.status === 'failed');
   // eslint-disable-next-line no-unused-vars
   const newComments = comments.filter(comment => comment.is_new);
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line no-unused-vars  
   const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
+  // eslint-disable-next-line no-unused-vars
+  const failedInvitations = invitations.filter(inv => inv.status === 'failed'); // if needed
 
   const processTasks = (tasks) => {
     return tasks.map(task => ({
@@ -197,12 +201,7 @@ function MainPage({ userEmail }) {
       setUnreadCommentsCount(filteredComments.length);
 
       if (filteredComments.length > 0) {
-        if (Notification.permission === 'granted') {
-          new Notification('Новые комментарии', {
-            body: `У вас ${filteredComments.length} новых комментариев`,
-          });
-        }
-
+        // Browser notifications removed - only internal TaskNotification component
       }
 
       setComments(filteredComments);
@@ -290,7 +289,7 @@ const fetchStatuses = async () => {
       },
     });
     
-    if (!response.ok) throw new Error('Ошибка при загрузке статусов');
+    if (!response.ok) throw new Error('Ошибка при загрузке приоритетов');
       const data = await response.json();
       setPriorities(data);
       return data;
@@ -341,23 +340,10 @@ const fetchStatuses = async () => {
     }
   }, [selectedAssignment, fetchTeamMembers]);
 
+
   useEffect(() => {
     const loadInitialData = async () => {
-
-      if ('Notification' in window) {
-        if (Notification.permission === 'default') {
-          try {
-            const permission = await Notification.requestPermission();
-            console.log('Notification permission:', permission);
-          } catch (error) {
-            console.error('Error requesting notification permission:', error);
-          }
-        } else if (Notification.permission === 'denied') {
-          console.warn('Browser notifications are blocked. Please enable them in browser settings.');
-        }
-      } else {
-        console.warn('This browser does not support notifications');
-      }
+      // Browser notifications completely removed
 
       await Promise.all([
         fetchStatuses(),
@@ -703,8 +689,9 @@ const fetchStatuses = async () => {
                   statusChangeLoading={statusChangeLoading}
                   timers={timers}
                   formatTime={formatTime}
-                  activeTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived) || []}
+                  activeTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived && task.status !== 'failed') || []}
                   archivedTasks={selectedAssignment?.tasks?.filter(task => task.isArchived) || []}
+                  failedTasks={selectedAssignment?.tasks?.filter(task => task.status === 'failed') || []}
                   onStartWork={async (taskId) => {
                     try {
                       const token = localStorage.getItem('token');

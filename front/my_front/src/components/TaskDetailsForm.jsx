@@ -10,6 +10,9 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeView, setActiveView] = useState('all');
+  // const [failedReason, setFailedReason] = useState(''); // ESLint unused
+  // const [creatorId, setCreatorId] = useState(null); // ESLint unused
+
 
   // Fetch full task details and comments when modal opens
   useEffect(() => {
@@ -68,7 +71,9 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
     };
 
     fetchTaskDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task?.id, token]);
+
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -226,12 +231,10 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
                 </span>
               </div>
 
-              {displayTask.work_duration && (
-                <div className="meta-item">
+              <div className="meta-item">
                   <span className="meta-label">Время работы:</span>
-                  <span className="meta-value">{formatTime(displayTask.work_duration)}</span>
+                  <span className="meta-value">{formatTime(displayTask.work_duration || 0)}</span>
                 </div>
-              )}
             </div>
           </div>
 
@@ -301,7 +304,9 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
                     ) : (
                       <div className="comment-item">
                         <div className="comment-header">
-                          <span className="comment-author">{item.author_name || item.author}</span>
+
+                          <span className="comment-author">{item.user_email || 'Аноним'}</span>
+
                           <span className="comment-date">{formatDate(item.date)}</span>
                         </div>
                         <p className="comment-content">{item.text || item.content}</p>

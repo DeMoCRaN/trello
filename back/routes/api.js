@@ -522,11 +522,12 @@ router.get('/users/:id/metrics', authenticateToken, validateIdParam, async (req,
     // Получаем статистику по задачам пользователя
     const tasksStats = await pool.query(`
       SELECT 
-        COUNT(*) as total_tasks,
+COUNT(*) as total_tasks,
         COUNT(CASE WHEN status_id = 3 THEN 1 END) as completed_tasks,
         COUNT(CASE WHEN status_id = 2 THEN 1 END) as in_progress_tasks,
         COUNT(CASE WHEN status_id = 1 THEN 1 END) as new_tasks,
-        COUNT(CASE WHEN deadline < NOW() AND status_id != 3 THEN 1 END) as overdue_tasks,
+        COUNT(CASE WHEN status_id = 4 THEN 1 END) as failed_tasks,
+        COUNT(CASE WHEN deadline < NOW() AND status_id != 3 AND status_id != 4 THEN 1 END) as overdue_tasks,
         COALESCE(SUM(work_duration), 0) as total_work_time,
         COALESCE(AVG(work_duration), 0) as avg_work_time
       FROM tasks 
@@ -534,10 +535,12 @@ router.get('/users/:id/metrics', authenticateToken, validateIdParam, async (req,
     `, [userId]);
 
     // Получаем статистику по архивным задачам
-    const archivedStats = await pool.query(`
+  const archivedStats = await pool.query(`
       SELECT 
         COUNT(*) as archived_tasks,
-        COUNT(CASE WHEN status_id = 3 THEN 1 END) as archived_completed
+        COUNT(CASE WHEN status_id = 3 THEN 1 END) as archived_completed,
+        COUNT(CASE WHEN status_id = 4 THEN 1 END) as archived_failed,
+        COUNT(CASE WHEN status_id != 3 AND status_id != 4 THEN 1 END) as archived_not_done
       FROM archived_tasks 
       WHERE assignee_id = $1 OR creator_id = $1
     `, [userId]);
@@ -555,17 +558,16 @@ router.get('/users/:id/metrics', authenticateToken, validateIdParam, async (req,
     const metrics = {
       user: userResult.rows[0],
       tasks: {
-        total: parseInt(tasksStats.rows[0].total_tasks) + parseInt(archivedStats.rows[0].archived_tasks),
+        total: parseInt(tasksStats.rows[0].total_tasks),
         completed: parseInt(tasksStats.rows[0].completed_tasks) + parseInt(archivedStats.rows[0].archived_completed),
         inProgress: parseInt(tasksStats.rows[0].in_progress_tasks),
         new: parseInt(tasksStats.rows[0].new_tasks),
         overdue: parseInt(tasksStats.rows[0].overdue_tasks),
         archived: parseInt(archivedStats.rows[0].archived_tasks)
       },
-      performance: {
-        completionRate: parseInt(tasksStats.rows[0].total_tasks) > 0 
-          ? Math.round((parseInt(tasksStats.rows[0].completed_tasks) / parseInt(tasksStats.rows[0].total_tasks)) * 100)
-          : 0,
+performance: {
+        completionRate: parseInt(tasksStats.rows[0].total_tasks || 0) > 0 ? Math.round((parseInt(tasksStats.rows[0].completed_tasks || 0) / parseInt(tasksStats.rows[0].total_tasks || 0)) * 100) : 0,
+        failedTasks: parseInt(tasksStats.rows[0].failed_tasks || 0) + parseInt(archivedStats.rows[0].archived_failed || 0),
         totalWorkTime: parseInt(tasksStats.rows[0].total_work_time),
         avgWorkTime: Math.round(parseFloat(tasksStats.rows[0].avg_work_time))
       }
@@ -578,81 +580,70 @@ router.get('/users/:id/metrics', authenticateToken, validateIdParam, async (req,
   }
 });
 
-// Получить топ-10 пользователей по производительности
-router.get('/users/top-performers', authenticateToken, async (req, res) => {
-  try {
-    // Получаем топ пользователей по количеству выполненных задач и KPI
-    const topPerformers = await pool.query(`
-      SELECT 
-        u.id,
-        u.email,
-        u.name,
-        u.github_username,
-        COALESCE(task_stats.completed_tasks, 0) as completed_tasks,
-        COALESCE(task_stats.total_tasks, 0) as total_tasks,
-        COALESCE(task_stats.on_time_tasks, 0) as on_time_tasks,
-        COALESCE(task_stats.total_work_time, 0) as total_work_time,
-        CASE 
-          WHEN task_stats.total_tasks > 0 THEN 
-            ROUND((task_stats.completed_tasks::numeric / task_stats.total_tasks) * 100, 1)
-          ELSE 0 
-        END as completion_rate,
-        CASE 
-          WHEN task_stats.completed_tasks > 0 THEN 
-            ROUND((task_stats.on_time_tasks::numeric / task_stats.completed_tasks) * 100, 1)
-          ELSE 0 
-        END as on_time_rate,
-        -- KPI score: weighted combination of completion rate and on-time rate
-        CASE 
-          WHEN task_stats.total_tasks > 0 THEN 
-            ROUND(
-              ((task_stats.completed_tasks::numeric / task_stats.total_tasks) * 0.6 + 
-               (CASE WHEN task_stats.completed_tasks > 0 THEN (task_stats.on_time_tasks::numeric / task_stats.completed_tasks) ELSE 0 END) * 0.4) * 100, 
-              1
-            )
-          ELSE 0 
-        END as kpi_score
-      FROM users u
-      LEFT JOIN (
-        SELECT 
-          assignee_id,
-          COUNT(*) as total_tasks,
-          COUNT(CASE WHEN status_id = 3 THEN 1 END) as completed_tasks,
-          COUNT(CASE WHEN status_id = 3 AND (deadline IS NULL OR completed_at <= deadline) THEN 1 END) as on_time_tasks,
-          COALESCE(SUM(work_duration), 0) as total_work_time
-        FROM tasks
-        GROUP BY assignee_id
-      ) task_stats ON u.id = task_stats.assignee_id
-      WHERE task_stats.total_tasks > 0
-      ORDER BY kpi_score DESC, completed_tasks DESC
-      LIMIT 10
-    `);
 
-    res.json(topPerformers.rows);
-  } catch (error) {
-    console.error('Ошибка при получении топ пользователей:', error);
-    res.status(500).json({ error: 'Ошибка при получении топ пользователей' });
-  }
-});
 
 
 router.patch('/tasks/:id/status', authenticateToken, validateIdParam, async (req, res) => {
   try {
     console.log('PATCH /tasks/:id/status called with params:', req.params, 'body:', req.body);
     const taskId = parseInt(req.params.id, 10);
-    const { status_id, action } = req.body;
+    const { status_id, title, deadline, failed_reason, action } = req.body;
     
     if (!status_id) {
       return res.status(400).json({ error: 'status_id is required' });
     }
     
-    const updatedTask = await tasksController.updateTaskStatus(pool, taskId, status_id, action);
+    let updatedTask = await tasksController.updateTaskStatus(pool, taskId, status_id, action, req.user.userId);
+    
+    // Update title and deadline if provided
+    if (title || deadline !== undefined) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const updateQuery = 'UPDATE tasks SET ';
+        const params = [];
+        let paramIndex = 1;
+        
+        if (title !== undefined) {
+          updateQuery += `title = $${paramIndex}, `;
+          params.push(title);
+          paramIndex++;
+        }
+        if (deadline !== undefined) {
+          updateQuery += `deadline = $${paramIndex}, `;
+          params.push(deadline);
+          paramIndex++;
+        }
+        
+        updateQuery = updateQuery.slice(0, -2) + `, updated_at = NOW() WHERE id = $${paramIndex} RETURNING *`;
+        params.push(taskId);
+        
+        const result = await client.query(updateQuery, params);
+        await client.query('COMMIT');
+        updatedTask = tasksController.normalizeTask(result.rows[0]);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+    
+    // Save failed reason if provided
+    if (failed_reason && status_id === 4) {
+      await pool.query(
+        'UPDATE tasks SET failed_reason = $1, failed_at = NOW() WHERE id = $2',
+        [failed_reason, taskId]
+      );
+    }
+    
     res.json(updatedTask);
   } catch (error) {
     console.error('Ошибка при обновлении статуса задачи:', error);
     res.status(500).json({ error: 'Ошибка при обновлении статуса задачи' });
   }
 });
+
 
 router.patch('/tasks/:id/seen', authenticateToken, validateIdParam, async (req, res) => {
   try {
