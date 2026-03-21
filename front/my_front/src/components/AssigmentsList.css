@@ -1,10 +1,32 @@
+/* AssignmentsList.css */
 :root {
-  --primary-color: #6366f1;
-  --primary-dark: #4f46e5;
-  --primary-light: #818cf8;
+  /* Корпоративные цвета */
+  --primary-color: #0026ff;
+  --primary-dark: #0020cc;
+  --primary-light: #3352ff;
+  --primary-gradient: linear-gradient(135deg, #0026ff 0%, #0026ff 100%);
+  
+  /* Цвета текста - ИЗМЕНЯЙТЕ ЗДЕСЬ */
+  --text-primary: #1e293b;        /* Основной текст (темно-серый) */
+  --text-secondary: #64748b;      /* Второстепенный текст (светло-серый) */
+  --text-white: #ffffff;          /* Белый текст */
+  --text-muted: #94a3b8;          /* Приглушенный текст */
+  
+  /* Цвета фона - ИЗМЕНЯЙТЕ ЗДЕСЬ */
+  --bg-primary: #ffffff;          /* Основной фон (белый) */
+  --bg-secondary: #f8fafc;        /* Второстепенный фон (светло-серый) */
+  --bg-hover: #fafbff;            /* Фон при наведении (светло-синий) */
+  --bg-selected: #f5f7ff;         /* Фон выбранного элемента */
+  --bg-card: #ffffff;             /* Фон карточки задания */
+  --bg-header: #ffffff;           /* Фон заголовка */
+  --bg-empty: transparent;        /* Фон пустого состояния */
+  
+  /* Цвета границ */
+  --border-color: #eef2ff;
+  --border-hover: #0026ff;
+  
+  /* Остальные переменные */
   --secondary-color: #f8fafc;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
   --success-color: #10b981;
   --danger-color: #ef4444;
   --warning-color: #f59e0b;
@@ -14,7 +36,6 @@
   --sidebar-collapsed: 80px;
   --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
   --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
-  --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
 }
 
 /* Основные стили для SVG иконок */
@@ -26,18 +47,18 @@
 
 .assignments-list {
   width: var(--sidebar-width);
-  background: linear-gradient(160deg, #ffffff 0%, #f8faff 100%);
+  background: var(--bg-primary);
   border-radius: var(--border-radius);
   padding: 24px;
   box-shadow: var(--shadow-medium);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-color);
   transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
   height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  margin: 0;
 }
 
 .assignments-list.collapsed {
@@ -45,25 +66,28 @@
   padding: 24px 12px;
 }
 
-.sidebar-header {
+/* Заголовок */
+.assignments-list .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
   position: relative;
   min-height: 40px;
+  background: var(--bg-header);
 }
 
-.sidebar-title {
+.assignments-list .sidebar-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--primary-color);
   display: flex;
   align-items: center;
   gap: 10px;
+  margin: 0;
 }
 
-.title-icon {
+.assignments-list .title-icon {
   width: 28px;
   height: 28px;
   color: var(--primary-color);
@@ -72,8 +96,16 @@
   justify-content: center;
 }
 
-.collapse-toggle {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+.assignments-list.collapsed .collapse-toggle {
+  margin: 0;  /* Убираем отступы */
+  position: relative;
+  /* Для точного позиционирования можно добавить: */
+  left: -25px; 
+  transform: translateX(0); 
+}
+
+.assignments-list .collapse-toggle {
+  background: var(--bg-secondary);
   border: none;
   width: 40px;
   height: 40px;
@@ -90,7 +122,7 @@
   overflow: hidden;
 }
 
-.toggle-icon {
+.assignments-list .toggle-icon {
   width: 20px;
   height: 20px;
   position: relative;
@@ -99,17 +131,19 @@
   justify-content: center;
 }
 
-.toggle-icon svg {
+.assignments-list .toggle-icon svg {
   position: absolute;
   transition: all 0.3s ease;
+  width: 20px;
+  height: 20px;
 }
 
-.left-arrow {
+.assignments-list .left-arrow {
   opacity: 1;
   transform: rotate(0deg);
 }
 
-.right-arrow {
+.assignments-list .right-arrow {
   opacity: 0;
   transform: rotate(180deg);
 }
@@ -124,22 +158,24 @@
   transform: rotate(0deg);
 }
 
-.collapse-toggle:hover {
-  background: var(--accent-gradient);
+.assignments-list .collapse-toggle:hover {
+  background: var(--primary-gradient);
   color: white;
   transform: scale(1.1);
-  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 6px 15px rgba(0, 38, 255, 0.3);
 }
 
-.collapse-toggle:active {
+.assignments-list .collapse-toggle:active {
   transform: scale(0.95);
 }
 
-.assignments-content {
+/* Контент */
+.assignments-list .assignments-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   transition: opacity 0.2s ease;
+  overflow: hidden;
 }
 
 .assignments-list.collapsed .assignments-content {
@@ -147,86 +183,94 @@
   pointer-events: none;
 }
 
-.assignments-header {
+/* Секция поиска и создания */
+.assignments-list .assignments-header {
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-bottom: 20px;
 }
 
-.search-container {
+.assignments-list .search-container {
   position: relative;
   width: 100%;
 }
 
-.search-input {
+.assignments-list .search-input {
   width: 100%;
   padding: 12px 16px 12px 40px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  background: white;
+  background: var(--bg-primary);
   font-size: 0.95rem;
   color: var(--text-primary);
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
-.search-input:focus {
+.assignments-list .search-input:focus {
   outline: none;
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), 0 4px 12px rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 38, 255, 0.1);
 }
 
-.search-icon {
+.assignments-list .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.assignments-list .search-icon {
   position: absolute;
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--primary-light);
+  color: var(--primary-color);
   width: 18px;
   height: 18px;
   z-index: 2;
+  pointer-events: none;
 }
 
-.create-assignment-btn {
+.assignments-list .create-assignment-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 12px 16px;
-  background: var(--accent-gradient);
-  color: white;
+  background: var(--primary-gradient);
+  color: var(--text-white);
   border: none;
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 4px 10px rgba(0, 38, 255, 0.25);
   position: relative;
   overflow: hidden;
 }
 
-.create-assignment-btn::before {
+.assignments-list .create-assignment-btn::before {
   content: '';
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   transition: all 0.6s ease;
 }
 
-.create-assignment-btn:hover::before {
+.assignments-list .create-assignment-btn:hover::before {
   left: 100%;
 }
 
-.create-assignment-btn:hover {
+.assignments-list .create-assignment-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 6px 15px rgba(0, 38, 255, 0.35);
+  background: var(--primary-dark);
 }
 
-.btn-icon {
+.assignments-list .btn-icon {
   width: 18px;
   height: 18px;
   display: flex;
@@ -234,48 +278,49 @@
   justify-content: center;
 }
 
-.assignments-ul {
+/* Список заданий */
+.assignments-list .assignments-ul {
   list-style: none;
   padding: 0;
   margin: 0;
   flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary-light) #f1f5f9;
+  scrollbar-color: var(--primary-color) var(--bg-secondary);
 }
 
-.assignments-ul::-webkit-scrollbar {
+.assignments-list .assignments-ul::-webkit-scrollbar {
   width: 6px;
 }
 
-.assignments-ul::-webkit-scrollbar-track {
-  background: #f1f5f9;
+.assignments-list .assignments-ul::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
   border-radius: 3px;
 }
 
-.assignments-ul::-webkit-scrollbar-thumb {
-  background-color: var(--primary-light);
-  border-radius: 3px;
-}
-
-.assignments-ul::-webkit-scrollbar-thumb:hover {
+.assignments-list .assignments-ul::-webkit-scrollbar-thumb {
   background-color: var(--primary-color);
+  border-radius: 3px;
 }
 
-.assignments-ul li {
+.assignments-list .assignments-ul::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-dark);
+}
+
+.assignments-list .assignments-ul li {
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  animation: slideIn 0.4s ease forwards;
-  backdrop-filter: blur(10px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  animation: assignmentsSlideIn 0.4s ease forwards;
   position: relative;
+  list-style: none;
 }
 
-.assignments-ul li::before {
+.assignments-list .assignments-ul li::before {
   content: "";
   position: absolute;
   left: -4px;
@@ -283,43 +328,43 @@
   transform: translateY(-50%);
   width: 6px;
   height: 0;
-  background: var(--accent-gradient);
+  background: var(--primary-gradient);
   border-radius: 3px;
   transition: all 0.3s ease;
   opacity: 0;
 }
 
-.assignments-ul li.selected::before {
+.assignments-list .assignments-ul li.selected::before {
   height: 60%;
   opacity: 1;
 }
 
-.assignments-ul li:hover {
-  background: white;
+.assignments-list .assignments-ul li:hover {
+  background: var(--bg-hover);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
-  border-color: var(--primary-light);
+  border-color: var(--border-hover);
 }
 
-.assignments-ul li.selected {
-  background: white;
+.assignments-list .assignments-ul li.selected {
+  background: var(--bg-selected);
   border-color: var(--primary-color);
-  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 38, 255, 0.1);
 }
 
-.assignment-main-content {
+.assignments-list .assignment-main-content {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-.assignment-info {
+.assignments-list .assignment-info {
   flex: 1;
   min-width: 0;
   margin-bottom: 12px;
 }
 
-.assignment-title {
+.assignments-list .assignment-title {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 6px;
@@ -327,18 +372,23 @@
   font-size: 1rem;
 }
 
-.assignment-description {
+.assignments-list .assignment-description {
   font-size: 0.85rem;
   color: var(--text-secondary);
   line-height: 1.4;
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.delete-btn {
+/* Кнопка удаления */
+.assignments-list .delete-btn {
   position: absolute;
   top: 16px;
   right: 16px;
-  color: #94a3b8;
+  color: var(--text-muted);
   background: transparent;
   border: none;
   transition: all 0.3s ease;
@@ -352,7 +402,7 @@
   justify-content: center;
 }
 
-.trash-icon {
+.assignments-list .trash-icon {
   width: 18px;
   height: 18px;
   display: flex;
@@ -360,80 +410,130 @@
   justify-content: center;
 }
 
-.assignments-ul li:hover .delete-btn {
+.assignments-list .assignments-ul li:hover .delete-btn {
   opacity: 0.8;
 }
 
-.delete-btn:hover {
+.assignments-list .delete-btn:hover {
   color: var(--danger-color);
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(235, 9, 9, 0.1);
   opacity: 1 !important;
   transform: scale(1.1);
 }
 
-.delete-confirmation {
+/* Подтверждение удаления */
+.assignments-list .delete-confirmation {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  background: rgba(248, 250, 252, 0.9);
-  padding: 12px;
+  background: var(--bg-primary);
+  padding: 8px 12px;
   border-radius: 10px;
   margin-top: 8px;
-  animation: fadeIn 0.3s ease;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  animation: assignmentsFadeIn 0.3s ease;
+  border: 1px solid #fee2e2;
 }
 
-.confirm-text {
-  font-size: 0.9rem;
+.assignments-list .confirm-text {
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  text-align: center;
 }
 
-.confirmation-buttons {
+.assignments-list .confirmation-buttons {
   display: flex;
-  justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.confirm-btn {
+.assignments-list .confirm-btn {
   border: none;
   border-radius: 8px;
-  padding: 8px;
+  padding: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.confirm-btn svg {
-  width: 18px;
-  height: 18px;
+.assignments-list .confirm-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.confirm-yes {
-  background-color: var(--success-color);
-  color: white;
+.assignments-list .confirm-yes {
+  background-color: var(--danger-color);
+  color: var(--text-white);
 }
 
-.confirm-yes:hover {
-  background-color: #0d9669;
+.assignments-list .confirm-yes:hover {
+  background-color: #dc2626;
   transform: scale(1.1);
 }
 
-.confirm-no {
-  background-color: #94a3b8;
-  color: white;
+.assignments-list .confirm-no {
+  background-color: var(--text-muted);
+  color: var(--text-white);
 }
 
-.confirm-no:hover {
+.assignments-list .confirm-no:hover {
   background-color: #64748b;
   transform: scale(1.1);
 }
 
-.collapsed-placeholder {
+/* Пустое состояние */
+.assignments-list .empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-empty);
+}
+
+.assignments-list .empty-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--primary-color);
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+
+.assignments-list .empty-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.assignments-list .empty-state p {
+  font-size: 0.95rem;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.assignments-list .create-empty-btn {
+  background: var(--primary-gradient);
+  color: var(--text-white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+}
+
+.assignments-list .create-empty-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 38, 255, 0.3);
+  background: var(--primary-dark);
+}
+
+/* Свернутое состояние */
+.assignments-list .collapsed-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -450,7 +550,7 @@
   pointer-events: auto;
 }
 
-.placeholder-icon {
+.assignments-list .placeholder-icon {
   width: 32px;
   height: 32px;
   margin-bottom: 15px;
@@ -460,15 +560,17 @@
   justify-content: center;
 }
 
-.collapsed-placeholder p {
+.assignments-list .collapsed-placeholder p {
   font-size: 0.9rem;
   text-align: center;
   color: var(--text-secondary);
   writing-mode: vertical-rl;
   transform: rotate(180deg);
+  margin: 0;
 }
 
-@keyframes slideIn {
+/* Анимации */
+@keyframes assignmentsSlideIn {
   from { 
     opacity: 0; 
     transform: translateX(-15px); 
@@ -479,17 +581,18 @@
   }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes assignmentsFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-.assignments-ul li:nth-child(1) { animation-delay: 0.05s; }
-.assignments-ul li:nth-child(2) { animation-delay: 0.1s; }
-.assignments-ul li:nth-child(3) { animation-delay: 0.15s; }
-.assignments-ul li:nth-child(4) { animation-delay: 0.2s; }
-.assignments-ul li:nth-child(5) { animation-delay: 0.25s; }
+.assignments-list .assignments-ul li:nth-child(1) { animation-delay: 0.05s; }
+.assignments-list .assignments-ul li:nth-child(2) { animation-delay: 0.1s; }
+.assignments-list .assignments-ul li:nth-child(3) { animation-delay: 0.15s; }
+.assignments-list .assignments-ul li:nth-child(4) { animation-delay: 0.2s; }
+.assignments-list .assignments-ul li:nth-child(5) { animation-delay: 0.25s; }
 
+/* Медиа-запросы */
 @media (max-width: 968px) {
   .assignments-list {
     width: 100%;
@@ -509,20 +612,12 @@
     padding: 20px;
   }
   
-  .delete-confirmation {
+  .assignments-list .delete-confirmation {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
   }
   
-  .confirmation-buttons {
-    width: 100%;
-    justify-content: space-around;
-  }
-  
-  .confirm-btn {
-    flex: 1;
-    max-width: 80px;
+  .assignments-list .confirmation-buttons {
+    justify-content: center;
   }
 }
-
-

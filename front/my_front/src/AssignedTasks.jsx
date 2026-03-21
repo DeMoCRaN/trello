@@ -293,7 +293,7 @@ function AssignedTasks({ userEmail }) {
     const groups = {};
     
     groups['none'] = {
-      name: 'Без задания',
+      name: 'Все задачи для выполнения',
       tasks: []
     };
 
@@ -708,7 +708,7 @@ const renderTaskCard = useCallback((task) => {
             onClick={() => setSortByAssignment(!sortByAssignment)}
             className="toggle-sort-button"
           >
-            {sortByAssignment ? 'Сортировка по статусу' : 'Сортировка по заданиям'}
+            {sortByAssignment ? 'Сортировка по статусу' : 'Без сортировки'}
           </button>
           
           <button onClick={goBack} className="back-button">

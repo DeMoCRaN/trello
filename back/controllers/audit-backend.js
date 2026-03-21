@@ -313,11 +313,11 @@ async function deleteTaskWithAudit(pool, taskId, permanent = false, currentUserI
     const taskType = taskCheck.rows[0].type;
 
     if (taskType === 'active' && !permanent) {
-      await safeQuery(client,
-        `INSERT INTO archived_tasks 
-         SELECT *, NOW() as deleted_at FROM tasks WHERE id = $1`,
-        [validatedId]
-      );
+        await safeQuery(client,
+          `INSERT INTO archived_tasks (id, assignment_id, title, description, deadline, creator_id, assignee_id, status_id, priority_id, created_at, updated_at, seen_at, in_progress_since, work_duration, progress_percentage, deleted_at)
+           SELECT id, assignment_id, title, description, deadline, creator_id, assignee_id, status_id, priority_id, created_at, updated_at, seen_at, in_progress_since, work_duration, progress_percentage, NOW() FROM tasks WHERE id = $1`,
+          [validatedId]
+        );
       await safeQuery(client, 'DELETE FROM tasks WHERE id = $1', [validatedId]);
     } else {
       await safeQuery(client, 'DELETE FROM task_comments WHERE task_id = $1', [validatedId]);

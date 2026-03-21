@@ -76,7 +76,7 @@ function MainPage({ userEmail }) {
   // eslint-disable-next-line no-unused-vars  
   const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
   // eslint-disable-next-line no-unused-vars
-  const failedInvitations = invitations.filter(inv => inv.status === 'failed'); // if needed
+  const failedInvitations = invitations.filter(inv => inv.status === 'failed');
 
   const processTasks = (tasks) => {
     return tasks.map(task => ({
@@ -260,36 +260,35 @@ function MainPage({ userEmail }) {
     }
   }, []);
 
-
-const fetchStatuses = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:3000/api/task_statuses', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) throw new Error('Ошибка при загрузке статусов');
-    
-    const data = await response.json();
-    setStatuses(data);
-  } catch (err) {
-    console.error(err);
-    setError('Ошибка при загрузке статусов');
-  }
-};
+  const fetchStatuses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/task_statuses', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Ошибка при загрузке статусов');
+      
+      const data = await response.json();
+      setStatuses(data);
+    } catch (err) {
+      console.error(err);
+      setError('Ошибка при загрузке статусов');
+    }
+  };
 
   const fetchPriorities = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:3000/api/task_priorities', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) throw new Error('Ошибка при загрузке приоритетов');
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Ошибка при загрузке приоритетов');
       const data = await response.json();
       setPriorities(data);
       return data;
@@ -340,11 +339,8 @@ const fetchStatuses = async () => {
     }
   }, [selectedAssignment, fetchTeamMembers]);
 
-
   useEffect(() => {
     const loadInitialData = async () => {
-      // Browser notifications completely removed
-
       await Promise.all([
         fetchStatuses(),
         fetchPriorities(),
@@ -413,12 +409,28 @@ const fetchStatuses = async () => {
           'Authorization': `Bearer ${token}`
         }
       });
+      
       if (!response.ok) {
-        throw new Error('Ошибка при удалении задания');
+        const errorData = await response.json();
+        
+        if (response.status === 409 || errorData.error?.includes('foreign key constraint')) {
+          alert('Невозможно удалить задание: сначала удалите все задачи, связанные с этим заданием');
+          return;
+        }
+        
+        throw new Error(errorData.message || 'Ошибка при удалении задания');
       }
+      
       await fetchAssignments();
+      alert('Задание успешно удалено');
     } catch (error) {
       console.error('Ошибка при удалении задания:', error);
+      
+      if (error.message?.includes('foreign key') || error.message?.includes('referenced')) {
+        alert('Невозможно удалить задание. Сначала удалите все задачи, связанные с этим заданием');
+      } else {
+        alert('Невозможно удалить задание. Сначала удалите все задачи, связанные с этим заданием');
+      }
     }
   };
 
@@ -584,7 +596,6 @@ const fetchStatuses = async () => {
         throw new Error('Токен авторизации не найден');
       }
 
-      // Получаем assignmentId из selectedInvitation
       const assignmentId = selectedInvitation?.assignment_id;
       if (!assignmentId) {
         console.error('selectedInvitation:', selectedInvitation);
@@ -620,7 +631,6 @@ const fetchStatuses = async () => {
       const result = await response.json();
       console.log('Успешный ответ на приглашение:', result);
 
-      // Обновляем список приглашений
       await fetchInvitations();
       setShowInvitationForm(false);
       setSelectedInvitation(null);
@@ -650,7 +660,6 @@ const fetchStatuses = async () => {
         onCommentsClick={() => setShowNotification(!showNotification)}
       />
       
-      {/* Уведомления теперь рендерятся как выпадающее меню из хедера */}
       {showNotification && (
         <TaskNotification
           tasks={assignedTasks}
@@ -675,87 +684,119 @@ const fetchStatuses = async () => {
               currentTab={currentTab}
               setCurrentTab={setCurrentTab}
             />
-            {selectedAssignment && (
-              <>
-                <SelectedAssignmentDetails
-                  selectedAssignment={selectedAssignment}
-                  statuses={statuses}
-                  onStatusChange={handleStatusChange}
-                  onDelete={handleDeleteTask}
-                  onDetails={handleShowDetails}
-                  assignedTasks={assignedTasks}
-                  loadingAssignedTasks={loadingAssignedTasks}
-                  currentTab={currentTab}
-                  statusChangeLoading={statusChangeLoading}
-                  timers={timers}
-                  formatTime={formatTime}
-                  activeTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived && task.status !== 'failed') || []}
-                  archivedTasks={selectedAssignment?.tasks?.filter(task => task.isArchived) || []}
-                  failedTasks={selectedAssignment?.tasks?.filter(task => task.status === 'failed') || []}
-                  onStartWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                        method: 'PATCH',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          Authorization: 'Bearer ' + token,
-                        },
-                        body: JSON.stringify({ status_id: 2, action: 'start' }),
-                      });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to start work: ' + errorText);
-                      }
-                      await Promise.all([
-                        fetchAssignments(),
-                        fetchAssignedTasks()
-                      ]);
-                      window.dispatchEvent(new Event('taskUpdated'));
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                  onCompleteWork={async (taskId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                        method: 'PATCH',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          Authorization: 'Bearer ' + token,
-                        },
-                        body: JSON.stringify({ status_id: 3, action: 'done' }),
-                      });
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error('Failed to complete work: ' + errorText);
-                      }
-                      await Promise.all([
-                        fetchAssignments(),
-                        fetchAssignedTasks()
-                      ]);
-                      window.dispatchEvent(new Event('taskUpdated'));
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                />
-                {showDetailsForm && detailsFormTask && (
-                  <div className="details-form-container">
-                    <TaskDetailsForm
-                      task={detailsFormTask}
-                      onClose={handleCloseDetails}
-                      token={localStorage.getItem('token')}
-                    />
+            
+            {/* Заглушка, если нет проектов */}
+            {assignments.length === 0 ? (
+              <div className="empty-assignments-placeholder">
+                <div className="placeholder-content">
+                  <div className="placeholder-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5C15 6.10457 14.1046 7 13 7H11C9.89543 7 9 6.10457 9 5Z" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M9 12H15" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M9 16H15" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
                   </div>
-                )}
-              </>
+                  <h2>У вас пока нет проектов</h2>
+                  <p>Создайте свой первый проект, чтобы начать работу</p>
+                  <button 
+                    className="create-first-assignment-btn"
+                    onClick={() => setShowAssignmentCreationForm(true)}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4V20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    Создать проект
+                  </button>
+                </div>
+              </div>
+            ) : !selectedAssignment ? (
+              <div className="empty-assignments-placeholder">
+                <div className="placeholder-content">
+                  <div className="placeholder-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6H21" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M10 11V17" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M14 11V17" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M18 6V20C18 21 17 22 16 22H8C7 22 6 21 6 20V6" stroke="#0026ff" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <h2>Выберите проект</h2>
+                  <p>Нажмите на проект слева, чтобы увидеть его задачи</p>
+                </div>
+              </div>
+            ) : (
+              <SelectedAssignmentDetails
+                selectedAssignment={selectedAssignment}
+                statuses={statuses}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDeleteTask}
+                onDetails={handleShowDetails}
+                assignedTasks={assignedTasks}
+                loadingAssignedTasks={loadingAssignedTasks}
+                currentTab={currentTab}
+                statusChangeLoading={statusChangeLoading}
+                timers={timers}
+                formatTime={formatTime}
+                activeTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived && task.status !== 'failed') || []}
+                archivedTasks={selectedAssignment?.tasks?.filter(task => task.isArchived) || []}
+                failedTasks={selectedAssignment?.tasks?.filter(task => task.status === 'failed') || []}
+                onStartWork={async (taskId) => {
+                  try {
+                    const token = localStorage.getItem('token');
+                    if (!token) throw new Error('User not logged in');
+                    const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                      method: 'PATCH',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + token,
+                      },
+                      body: JSON.stringify({ status_id: 2, action: 'start' }),
+                    });
+                    if (!response.ok) {
+                      const errorText = await response.text();
+                      throw new Error('Failed to start work: ' + errorText);
+                    }
+                    await Promise.all([
+                      fetchAssignments(),
+                      fetchAssignedTasks()
+                    ]);
+                    window.dispatchEvent(new Event('taskUpdated'));
+                  } catch (err) {
+                    alert(err.message);
+                  }
+                }}
+                onCompleteWork={async (taskId) => {
+                  try {
+                    const token = localStorage.getItem('token');
+                    if (!token) throw new Error('User not logged in');
+                    const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                      method: 'PATCH',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + token,
+                      },
+                      body: JSON.stringify({ status_id: 3, action: 'done' }),
+                    });
+                    if (!response.ok) {
+                      const errorText = await response.text();
+                      throw new Error('Failed to complete work: ' + errorText);
+                    }
+                    await Promise.all([
+                      fetchAssignments(),
+                      fetchAssignedTasks()
+                    ]);
+                    window.dispatchEvent(new Event('taskUpdated'));
+                  } catch (err) {
+                    alert(err.message);
+                  }
+                }}
+              />
             )}
+            
             <div className="floating-buttons-group">
-              {/* Кнопка состава команды - выше */}
               <button
                 className="floating-button team-button"
                 onClick={() => setShowTeamMembersPanel(true)}
@@ -764,10 +805,9 @@ const fetchStatuses = async () => {
               >
                 👥
               </button>
-
-              {/* Кнопка создания задачи - ниже */}
               <FloatingButton onClick={() => setShowTaskForm(true)} />
             </div>
+            
             <div className={`task-form-overlay ${showTaskForm ? '' : 'hidden'}`}>
               <TaskCreationForm
                 onCreateTask={handleCreateTask}
@@ -799,7 +839,6 @@ const fetchStatuses = async () => {
           />
         )}
 
-        {/* Форма ответа на приглашение */}
         {showInvitationForm && selectedInvitation && (
           <InvitationResponseForm
             invitation={selectedInvitation}
