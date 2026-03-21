@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Card, CardContent, Grid, Typography, CircularProgress, Box, Avatar,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Chip, LinearProgress, Divider
+  Chip, Divider,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend,
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from 'recharts';
 import Header from '../components/Header';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -16,15 +16,14 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import ErrorIcon from '@mui/icons-material/Error';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 
-// Стили
 const PageContainer = styled('div')({
   backgroundColor: '#f5f7fa',
   display: 'flex',
   flexDirection: 'column',
-  height: '100vh',
+  minHeight: '100vh',
   width: '100%',
   overflow: 'hidden',
 });
@@ -37,31 +36,31 @@ const ScrollableContainer = styled('div')({
 });
 
 const ContentContainer = styled('div')({
-  padding: '24px',
+  padding: '28px 32px 40px',
   width: '100%',
   minHeight: '100%',
   display: 'flex',
   flexDirection: 'column',
+  boxSizing: 'border-box',
 });
 
 const StatsCard = styled(Card)(({ theme }) => ({
   height: '100%',
   width: '100%',
-  transition: 'transform 0.3s, box-shadow 0.3s',
+  borderRadius: '16px',
+  transition: 'transform 0.25s, box-shadow 0.25s',
+  boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.08)',
   '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: theme.shadows[4],
+    transform: 'translateY(-4px)',
+    boxShadow: theme.shadows[5],
   },
 }));
 
 const ChartCard = styled(Card)({
   width: '100%',
   height: '100%',
-  padding: '16px',
-  borderRadius: '12px',
+  borderRadius: '16px',
   boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.08)',
-  display: 'flex',
-  flexDirection: 'column',
 });
 
 const MetricItem = styled(Box)({
@@ -69,16 +68,33 @@ const MetricItem = styled(Box)({
   alignItems: 'center',
   gap: '8px',
   marginBottom: '8px',
-  width: '100%'
+  width: '100%',
 });
 
+const STATUS_COLORS = {
+  done: '#4caf50',
+  inProgress: '#2196f3',
+  new: '#8e24aa',
+  review: '#ff9800',
+  failed: '#d32f2f',
+  overdue: '#ef4444',
+};
+
+const performanceMetricDescriptions = {
+  'Эффективность': 'Показывает долю завершённых задач среди всех задач, которые участвуют в расчёте.',
+  'Продуктивность': 'Учитывает завершённые задачи как основной вклад, а задачи на ревью и в работе как частичный прогресс.',
+  'Качество': 'Снижается из-за проваленных задач и просрочек. Проваленные задачи влияют сильнее.',
+  'Сроки': 'Показывает, насколько стабильно пользователь укладывается в дедлайны и не копит просрочки.',
+  'Стабильность': 'Оценивает, насколько ровно пользователь доводит задачи до результата без срывов.',
+};
+
+const clampPercent = (value) => Math.max(0, Math.min(100, Math.round(value)));
+
 const formatTime = (seconds) => {
-  if (isNaN(seconds) || seconds === 0) return '0м';
+  if (isNaN(seconds) || seconds <= 0) return '0м';
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours}ч ${mins}м`;
-  }
+  if (hours > 0) return `${hours}ч ${mins}м`;
   return `${mins}м`;
 };
 
@@ -87,7 +103,6 @@ const UserInfoPage = () => {
   const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState(null);
   const [userMetrics, setUserMetrics] = useState(null);
-  const [, setTopPerformers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
@@ -96,28 +111,21 @@ const UserInfoPage = () => {
     navigate(`/${page}`);
   }, [navigate]);
 
-  // Получаем email и userId из токена
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-        const decoded = JSON.parse(jsonPayload);
-        if (decoded?.email) {
-          setUserEmail(decoded.email);
-        }
-        if (decoded?.userId) {
-          setUserId(decoded.userId);
-        }
-      } catch (e) {
-        console.error('Failed to decode token:', e);
-      }
+    if (!token) return;
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`).join(''));
+      const decoded = JSON.parse(jsonPayload);
+      if (decoded?.email) setUserEmail(decoded.email);
+      if (decoded?.userId) setUserId(decoded.userId);
+    } catch (decodeError) {
+      console.error('Failed to decode token:', decodeError);
     }
   }, []);
 
-  // Загружаем метрики пользователя
   useEffect(() => {
     if (!userId) return;
 
@@ -125,118 +133,76 @@ const UserInfoPage = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:3000/api/users/${userId}/metrics`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!response.ok) {
-          throw new Error('Не удалось загрузить метрики пользователя');
-        }
+        if (!response.ok) throw new Error('Не удалось загрузить метрики пользователя');
 
         const data = await response.json();
         setUserMetrics(data);
-      } catch (err) {
-        console.error('Ошибка при загрузке метрик:', err);
-        setError(err.message);
+      } catch (fetchError) {
+        console.error('Ошибка при загрузке метрик:', fetchError);
+        setError(fetchError.message);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUserMetrics();
   }, [userId]);
 
-  // Загружаем топ-10 пользователей
-  useEffect(() => {
-    const fetchTopPerformers = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        console.log('Fetching top performers, token:', token ? 'exists' : 'missing');
-        
-        const response = await fetch('http://localhost:3000/api/users/top-performers', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        console.log('Top performers response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Top performers error response:', errorText);
-          throw new Error('Не удалось загрузить топ пользователей');
-        }
-
-        const data = await response.json();
-        console.log('Top performers data:', data);
-        setTopPerformers(data);
-      } catch (err) {
-        console.error('Ошибка при загрузке топ пользователей:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTopPerformers();
-  }, []);
-
-
-  // Загружаем количество непрочитанных комментариев
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        
         const response = await fetch('http://localhost:3000/api/comments/unread/count', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-        
         if (response.ok) {
           const data = await response.json();
           setUnreadCommentsCount(data.unread_count);
         }
-      } catch (error) {
-        console.error('Ошибка при загрузке уведомлений:', error);
+      } catch (fetchError) {
+        console.error('Ошибка при загрузке уведомлений:', fetchError);
       }
     };
 
     fetchUnreadCount();
   }, []);
 
-  // Данные для радар-графика производительности
-  const getPerformanceMetrics = () => {
+  const performanceMetrics = useMemo(() => {
     if (!userMetrics) return [];
-    
+
     const { tasks, performance } = userMetrics;
-    const completionRate = performance.completionRate;
-    const productivity = tasks.total > 0 ? Math.round((tasks.completed / tasks.total) * 100) : 0;
-    const quality = Math.max(0, 100 - (tasks.overdue / Math.max(tasks.total, 1) * 100));
-    const timeliness = tasks.completed > 0 
-      ? Math.round(((tasks.completed - tasks.overdue) / tasks.completed) * 100) 
-      : 0;
-    
+    const countedTotal = Math.max((performance.effectiveTotal || (tasks.total - (tasks.review || 0))), 1);
+    const completionRate = performance.completionRate || 0;
+    const productivity = clampPercent((((tasks.completed || 0) * 1) + ((tasks.review || 0) * 0.8) + ((tasks.inProgress || 0) * 0.45) + ((tasks.new || 0) * 0.1)) / Math.max(tasks.total || 1, 1) * 100);
+    const quality = clampPercent(100 - ((((performance.failedTasks || 0) * 1.25) + ((tasks.overdue || 0) * 0.6)) / countedTotal * 100));
+    const timeliness = clampPercent(((((tasks.completed || 0) * 1) + ((tasks.review || 0) * 0.7) + ((tasks.inProgress || 0) * 0.35) - ((tasks.overdue || 0) * 0.85)) / countedTotal) * 100);
+    const stability = clampPercent(100 - ((((performance.failedTasks || 0) * 1.4) + ((tasks.overdue || 0) * 0.8) + ((tasks.new || 0) * 0.15)) / countedTotal * 100));
+
     return [
       { subject: 'Эффективность', A: completionRate, fullMark: 100 },
       { subject: 'Продуктивность', A: productivity, fullMark: 100 },
       { subject: 'Качество', A: quality, fullMark: 100 },
       { subject: 'Сроки', A: timeliness, fullMark: 100 },
-      { subject: 'Активность', A: Math.min(100, tasks.total * 5), fullMark: 100 },
+      { subject: 'Стабильность', A: stability, fullMark: 100 },
     ];
-  };
+  }, [userMetrics]);
 
-  // Данные для графика задач по статусам
-  const getTasksByStatusData = () => {
+  const tasksByStatusData = useMemo(() => {
     if (!userMetrics) return [];
-    
+
     return [
-      { name: 'Завершено', value: userMetrics.tasks.completed, fill: '#4caf50' },
-      { name: 'В работе', value: userMetrics.tasks.inProgress, fill: '#2196f3' },
-      { name: 'Новые', value: userMetrics.tasks.new, fill: '#ff9800' },
-      { name: 'Просрочено', value: userMetrics.tasks.overdue, fill: '#f44336' },
-    ].filter(item => item.value > 0);
-  };
+      { name: 'Завершено', value: userMetrics.tasks.completed, fill: STATUS_COLORS.done },
+      { name: 'В работе', value: userMetrics.tasks.inProgress, fill: STATUS_COLORS.inProgress },
+      { name: 'Новые', value: userMetrics.tasks.new, fill: STATUS_COLORS.new },
+      { name: 'На ревью', value: userMetrics.tasks.review || 0, fill: STATUS_COLORS.review },
+      { name: 'Провалено', value: userMetrics.performance.failedTasks || 0, fill: STATUS_COLORS.failed },
+      { name: 'Просрочено', value: userMetrics.tasks.overdue, fill: STATUS_COLORS.overdue },
+    ].filter((item) => item.value > 0);
+  }, [userMetrics]);
 
   if (loading) {
     return (
@@ -263,11 +229,10 @@ const UserInfoPage = () => {
   return (
     <PageContainer>
       <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
-      
       <ScrollableContainer>
         <ContentContainer>
-          <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 3, fontWeight: 600 }}>
-            <Avatar sx={{ bgcolor: '#1976d2', width: 40, height: 40, mr: 2, display: 'inline-flex' }}>
+          <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 3, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar sx={{ bgcolor: '#1976d2', width: 44, height: 44 }}>
               {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
             </Avatar>
             Профиль пользователя
@@ -275,219 +240,114 @@ const UserInfoPage = () => {
 
           {userMetrics && (
             <>
-              {/* Основная информация о пользователе */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Основная информация
-                </Typography>
-                <Card sx={{ mb: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>Основная информация</Typography>
+                <Card sx={{ borderRadius: 4, boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.08)' }}>
                   <CardContent>
                     <Grid container spacing={3}>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="body1" gutterBottom>
-                          <strong>Email:</strong> {userMetrics.user.email}
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          <strong>Имя:</strong> {userMetrics.user.name || 'Не указано'}
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          <strong>GitHub:</strong> {userMetrics.user.github_connected ? 'Подключен' : 'Не подключен'}
-                        </Typography>
-                        {userMetrics.user.github_connected && (
-                          <Typography variant="body1" gutterBottom>
-                            <strong>GitHub username:</strong> {userMetrics.user.github_username}
-                          </Typography>
-                        )}
+                        <Typography variant="body1" gutterBottom><strong>Email:</strong> {userMetrics.user.email}</Typography>
+                        <Typography variant="body1" gutterBottom><strong>Имя:</strong> {userMetrics.user.name || 'Не указано'}</Typography>
+                        <Typography variant="body1" gutterBottom><strong>GitHub:</strong> {userMetrics.user.github_connected ? 'Подключен' : 'Не подключен'}</Typography>
+                        {userMetrics.user.github_connected && <Typography variant="body1" gutterBottom><strong>GitHub username:</strong> {userMetrics.user.github_username}</Typography>}
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="body1" gutterBottom>
-                          <strong>Дата регистрации:</strong> {new Date(userMetrics.user.created_at).toLocaleDateString('ru-RU')}
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          <strong>Общее количество задач:</strong> {userMetrics.tasks.total}
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          <strong>Процент выполнения:</strong> {userMetrics.performance.completionRate}%
-                        </Typography>
+                        <Typography variant="body1" gutterBottom><strong>Дата регистрации:</strong> {new Date(userMetrics.user.created_at).toLocaleDateString('ru-RU')}</Typography>
+                        <Typography variant="body1" gutterBottom><strong>Всего задач:</strong> {userMetrics.tasks.total}</Typography>
+                        <Typography variant="body1" gutterBottom><strong>Процент выполнения:</strong> {userMetrics.performance.completionRate}%</Typography>
                       </Grid>
                     </Grid>
                   </CardContent>
                 </Card>
               </Box>
 
-              {/* Метрики задач */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Метрики задач
-                </Typography>
+                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>Метрики задач</Typography>
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
-                      <CardContent>
-                        <Typography color="textSecondary" gutterBottom>Всего задач</Typography>
-                        <Typography variant="h4" component="div" color="primary">
-                          {userMetrics.tasks.total}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <AssignmentIcon color="primary" fontSize="small" />
-                          <Typography variant="body2">Всего назначено</Typography>
-                        </MetricItem>
-                      </CardContent>
-                    </StatsCard>
-                  </Grid>
-                  
-                  <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
-                      <CardContent>
-                        <Typography color="textSecondary" gutterBottom>Завершено</Typography>
-                        <Typography variant="h4" component="div" color="success">
-                          {userMetrics.tasks.completed}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <CheckCircleIcon color="success" fontSize="small" />
-                          <Typography variant="body2">
-                            {userMetrics.tasks.total > 0 
-                              ? Math.round((userMetrics.tasks.completed / userMetrics.tasks.total) * 100) 
-                              : 0}% от общего числа
-                          </Typography>
-                        </MetricItem>
-                      </CardContent>
-                    </StatsCard>
-                  </Grid>
-                  
-                  <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
-                      <CardContent>
-                        <Typography color="textSecondary" gutterBottom>В работе</Typography>
-                        <Typography variant="h4" component="div" color="info">
-                          {userMetrics.tasks.inProgress}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <HourglassEmptyIcon color="info" fontSize="small" />
-                          <Typography variant="body2">Активных задач</Typography>
-                        </MetricItem>
-                      </CardContent>
-                    </StatsCard>
-                  </Grid>
-                  
-                  <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
-                      <CardContent>
-                        <Typography color="textSecondary" gutterBottom>Просрочено</Typography>
-                        <Typography variant="h4" component="div" color="error">
-                          {userMetrics.tasks.overdue}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <ErrorIcon color="error" fontSize="small" />
-                          <Typography variant="body2">Требуют внимания</Typography>
-                        </MetricItem>
-                      </CardContent>
-                    </StatsCard>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>Всего задач</Typography><Typography variant="h4" color="primary">{userMetrics.tasks.total}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><AssignmentIcon color="primary" fontSize="small" /><Typography variant="body2">Все задачи пользователя</Typography></MetricItem></CardContent></StatsCard>
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
-                      <CardContent>
-                        <Typography color="textSecondary" gutterBottom>Провалено</Typography>
-                        <Typography variant="h4" component="div" color="warning">
-                          {userMetrics.performance.failedTasks || 0}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <ErrorIcon color="warning" fontSize="small" />
-                          <Typography variant="body2">Неудачные задачи</Typography>
-                        </MetricItem>
-                      </CardContent>
-                    </StatsCard>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>Завершено</Typography><Typography variant="h4" color="success.main">{userMetrics.tasks.completed}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><CheckCircleIcon color="success" fontSize="small" /><Typography variant="body2">{userMetrics.tasks.total > 0 ? Math.round((userMetrics.tasks.completed / userMetrics.tasks.total) * 100) : 0}% от общего числа</Typography></MetricItem></CardContent></StatsCard>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>В работе</Typography><Typography variant="h4" color="info.main">{userMetrics.tasks.inProgress}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><HourglassEmptyIcon color="info" fontSize="small" /><Typography variant="body2">Активные задачи</Typography></MetricItem></CardContent></StatsCard>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>На ревью</Typography><Typography variant="h4" sx={{ color: STATUS_COLORS.review }}>{userMetrics.tasks.review || 0}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><RateReviewIcon sx={{ color: STATUS_COLORS.review }} fontSize="small" /><Typography variant="body2">Ожидают подтверждения</Typography></MetricItem></CardContent></StatsCard>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>Провалено</Typography><Typography variant="h4" sx={{ color: STATUS_COLORS.failed }}>{userMetrics.performance.failedTasks || 0}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><ErrorIcon sx={{ color: STATUS_COLORS.failed }} fontSize="small" /><Typography variant="body2">Неудачные задачи</Typography></MetricItem></CardContent></StatsCard>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>Просрочено</Typography><Typography variant="h4" color="error.main">{userMetrics.tasks.overdue}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><ErrorIcon color="error" fontSize="small" /><Typography variant="body2">Требуют внимания</Typography></MetricItem></CardContent></StatsCard>
                   </Grid>
                 </Grid>
               </Box>
 
-              {/* Время работы */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Статистика времени
-                </Typography>
+                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>Статистика времени</Typography>
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6}>
-                    <StatsCard>
-                      <CardContent>
-                        <Typography color="textSecondary" gutterBottom>Общее время работы</Typography>
-                        <Typography variant="h4" component="div" color="primary">
-                          {formatTime(userMetrics.performance.totalWorkTime)}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <AccessTimeIcon color="primary" fontSize="small" />
-                          <Typography variant="body2">Накоплено за все задачи</Typography>
-                        </MetricItem>
-                      </CardContent>
-                    </StatsCard>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>Общее время работы</Typography><Typography variant="h4" color="primary">{formatTime(userMetrics.performance.totalWorkTime)}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><AccessTimeIcon color="primary" fontSize="small" /><Typography variant="body2">Накоплено за все задачи</Typography></MetricItem></CardContent></StatsCard>
                   </Grid>
-                  
                   <Grid item xs={12} sm={6}>
-                    <StatsCard>
-                      <CardContent>
-                        <Typography color="textSecondary" gutterBottom>Среднее время на задачу</Typography>
-                        <Typography variant="h4" component="div" color="primary">
-                          {formatTime(userMetrics.performance.avgWorkTime)}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <TrendingUpIcon color="primary" fontSize="small" />
-                          <Typography variant="body2">Средний показатель</Typography>
-                        </MetricItem>
-                      </CardContent>
-                    </StatsCard>
+                    <StatsCard><CardContent><Typography color="textSecondary" gutterBottom>Среднее время на задачу</Typography><Typography variant="h4" color="primary">{formatTime(userMetrics.performance.avgWorkTime)}</Typography><Divider sx={{ my: 1.5 }} /><MetricItem><TrendingUpIcon color="primary" fontSize="small" /><Typography variant="body2">Средний показатель по задачам</Typography></MetricItem></CardContent></StatsCard>
                   </Grid>
                 </Grid>
               </Box>
 
-              {/* Графики производительности */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Производительность
-                </Typography>
+                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>Производительность</Typography>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} lg={7}>
                     <ChartCard>
                       <CardContent>
                         <Typography variant="h6" gutterBottom>Показатели эффективности</Typography>
-                        <ResponsiveContainer width={450} height={450}>
-                          <RadarChart outerRadius={90} data={getPerformanceMetrics()}>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                          Это составная оценка по ключевым направлениям работы. Под графиком есть расшифровка, чтобы было понятно, откуда берётся каждый показатель.
+                        </Typography>
+                        <ResponsiveContainer width="100%" height={380}>
+                          <RadarChart outerRadius={120} data={performanceMetrics}>
                             <PolarGrid />
                             <PolarAngleAxis dataKey="subject" />
                             <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                            <Radar 
-                              name="Ваши показатели" 
-                              dataKey="A" 
-                              stroke="#8884d8" 
-                              fill="#8884d8" 
-                              fillOpacity={0.6} 
-                            />
+                            <Radar name="Ваши показатели" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
                             <Legend />
                           </RadarChart>
                         </ResponsiveContainer>
+                        <Box sx={{ mt: 2, display: 'grid', gap: 1.5 }}>
+                          {performanceMetrics.map((metric) => (
+                            <Box key={metric.subject} sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#f8fafc', border: '1px solid #e6edf5' }}>
+                              <Typography variant="subtitle2" sx={{ color: '#1f3b64', fontWeight: 700 }}>{metric.subject}: {metric.A}%</Typography>
+                              <Typography variant="body2" color="textSecondary">{performanceMetricDescriptions[metric.subject]}</Typography>
+                            </Box>
+                          ))}
+                        </Box>
                       </CardContent>
                     </ChartCard>
                   </Grid>
-                  
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} lg={5}>
                     <ChartCard>
                       <CardContent>
                         <Typography variant="h6" gutterBottom>Задачи по статусам</Typography>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <BarChart data={getTasksByStatusData()}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                          График показывает текущую структуру задач пользователя по всем ключевым статусам.
+                        </Typography>
+                        <ResponsiveContainer width="100%" height={420}>
+                          <BarChart data={tasksByStatusData} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#edf2f7" />
+                            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                            <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(15, 23, 42, 0.08)' }} formatter={(value) => [`${value} задач`, 'Количество']} />
+                            <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                              {tasksByStatusData.map((entry) => <Cell key={entry.name} fill={entry.fill} />)}
+                            </Bar>
                           </BarChart>
                         </ResponsiveContainer>
+                        <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          {tasksByStatusData.map((entry) => <Chip key={entry.name} label={`${entry.name}: ${entry.value}`} size="small" sx={{ backgroundColor: entry.fill, color: '#fff' }} />)}
+                        </Box>
                       </CardContent>
                     </ChartCard>
                   </Grid>

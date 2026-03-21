@@ -1,90 +1,124 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, LineChart, Line, ReferenceLine } from 'recharts';
-import { Card, CardContent, Grid, Typography, CircularProgress, Box, MenuItem, Select, FormControl, InputLabel, Divider, Chip, ToggleButton, ToggleButtonGroup, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  CartesianGrid,
+  AreaChart,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ReferenceLine,
+} from 'recharts';
+import {
+  Card,
+  CardContent,
+  Grid,
+  Typography,
+  CircularProgress,
+  Box,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Divider,
+  Chip,
+  ToggleButton,
+  ToggleButtonGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Avatar,
+  LinearProgress,
+  Button,
+  Stack,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Header from '../components/Header';
 import TaskNotification from '../components/TaskNotification';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import ErrorIcon from '@mui/icons-material/Error';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EventIcon from '@mui/icons-material/Event';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 import PeopleIcon from '@mui/icons-material/People';
-import Avatar from '@mui/material/Avatar';
-import LinearProgress from '@mui/material/LinearProgress';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './Dashboard.css'
+import './Dashboard.css';
 
-// Инициализация календаря
 const localizer = momentLocalizer(moment);
 
-// Стили
+const STATUS_COLORS = {
+  new: '#8e24aa',
+  in_progress: '#2196f3',
+  done: '#4caf50',
+  rew: '#ff9800',
+  failed: '#d32f2f',
+  unknown: '#607d8b',
+};
+
+const STATUS_LABELS = {
+  new: 'Новая',
+  in_progress: 'В работе',
+  done: 'Завершено',
+  rew: 'На ревью',
+  failed: 'Провалено',
+  unknown: 'Неизвестно',
+};
+
+const PRIORITY_COLORS = {
+  high: '#ff6b6b',
+  medium: '#ffd166',
+  low: '#06d6a0',
+};
+
 const PageContainer = styled('div')({
-  backgroundColor: '#f5f7fa',
   display: 'flex',
   flexDirection: 'column',
-  height: '100vh',
-  width: '100%',
-  overflow: 'hidden',
+  minHeight: '100vh',
+  backgroundColor: '#f5f7fa',
 });
 
 const ScrollableContainer = styled('div')({
-  width: '100%',
-  overflowY: 'auto',
   flex: 1,
+  overflowY: 'auto',
   paddingTop: '80px',
 });
 
 const ContentContainer = styled('div')({
-  padding: '24px',
+  padding: '28px 32px 40px',
   width: '100%',
-  minHeight: '100%',
-  display: 'flex',
-  flexDirection: 'column',
+  boxSizing: 'border-box',
 });
 
 const DashboardTitle = styled(Typography)({
   marginBottom: '24px',
   color: '#1976d2',
-  fontWeight: 600,
-});
-
-const StatsCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  width: '100%',
-  transition: 'transform 0.3s, box-shadow 0.3s',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: theme.shadows[4],
-  },
-}));
-
-const ChartCard = styled(Card)({
-  width: '100%',
-  height: '100%',
-  padding: '16px',
-  borderRadius: '12px',
-  boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.08)',
-  display: 'flex',
-  flexDirection: 'column',
-});
-
-const ChartContainer = styled('div')({
-  flex: 1,
-  minHeight: '400px',
-  width: '100%',
+  fontWeight: 700,
 });
 
 const StyledSelect = styled(Select)({
-  backgroundColor: '#fff',
-  borderRadius: '8px',
-  width: '100%',
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#e0e0e0',
-  },
+  backgroundColor: '#ffffff',
+  borderRadius: '12px',
+  minWidth: '240px',
 });
 
 const MetricItem = styled(Box)({
@@ -92,355 +126,194 @@ const MetricItem = styled(Box)({
   alignItems: 'center',
   gap: '8px',
   marginBottom: '8px',
-  width: '100%'
-});
-const CalendarWrapper = styled('div')({
-  height: '70vh',
-  flex: 1,
-  minHeight: '600px',
-  '& .rbc-month-view': {
-    height: '100%',
-    minHeight: '500px',
-  },
-  '& .rbc-event': {
-    backgroundColor: '#1976d2',
-    borderRadius: '4px',
-    padding: '2px 4px',
-    fontSize: '0.8rem',
-    display: 'flex',
-    alignItems: 'center',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-    textOverflow: 'ellipsis',
-    transition: 'all 0.2s ease',
-    '&:hover': {
-      transform: 'scale(1.02)',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-      zIndex: 2
-    }
-  },
-  '& .rbc-event-overdue': {
-    backgroundColor: '#ff6b6b',
-  },
-  '& .rbc-event-completed': {
-    backgroundColor: '#4caf50',
-  },
-  '& .rbc-event-content': {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  '& .rbc-show-more': {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: '4px',
-    padding: '0 4px',
-    fontSize: '0.7rem',
-    color: '#1976d2',
-    fontWeight: 'bold',
-    zIndex: 5
-  },
-  '& .rbc-overflowing': {
-    marginRight: 0
-  }
 });
 
+const ChartContainer = styled('div')({
+  width: '100%',
+  height: '380px',
+});
 
-const DeadlineCalendar = ({ events }) => {
-  const [expandedEvent, setExpandedEvent] = useState(null);
-  const [showMoreEvents, setShowMoreEvents] = useState({});
-  const [hoveredEvent, setHoveredEvent] = useState(null);
-
-  // Обработчик клика по событию
-  const handleEventClick = (event, e) => {
-    e.stopPropagation();
-    setExpandedEvent(expandedEvent?.id === event.id ? null : event);
-  };
-
-  // Обработчик клика по кнопке "показать больше"
-  const handleShowMoreClick = (date, events, e) => {
-    e.stopPropagation();
-    setShowMoreEvents(prev => ({
-      ...prev,
-      [date.toISOString()]: !prev[date.toISOString()]
-    }));
-  };
-
-  // Кастомный рендер события
-  const CustomEvent = ({ event }) => {
-    const isExpanded = expandedEvent?.id === event.id;
-    const isHovered = hoveredEvent?.id === event.id && !isExpanded;
-
-    return (
-      <div 
-        onClick={(e) => handleEventClick(event, e)}
-        onMouseEnter={() => setHoveredEvent(event)}
-        onMouseLeave={() => setHoveredEvent(null)}
-        style={{
-            backgroundColor: event.overdue 
-              ? '#ff6b6b' 
-              : event.status === 'done' 
-                ? '#4caf50' 
-                : event.status === 'rew'
-                  ? '#ff9800'
-                  : '#1976d2',
-          color: 'white',
-          border: '0px',
-          borderRadius: '4px',
-          padding: '6px 8px',
-          marginBottom: '2px',
-          height: isExpanded ? 'auto' : '24px',
-          whiteSpace: isExpanded ? 'normal' : 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          transform: isHovered ? 'scale(1.02)' : 'none',
-          boxShadow: isHovered ? '0 2px 4px rgba(0,0,0,0.2)' : 'none',
-          position: 'relative',
-          zIndex: isExpanded || isHovered ? 2 : 1
-        }}
-      >
-        <div style={{ fontWeight: 'bold' }}>{event.title}</div>
-        {isExpanded && (
-          <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>
-            {event.overdue && <span style={{ display: 'block' }}>🔴 Просрочено</span>}
-            {event.status === 'done' && <span style={{ display: 'block' }}>✅ Завершено</span>}
-            {event.priority === 'high' && <span style={{ display: 'block' }}>⚠️ Высокий приоритет</span>}
-          </div>
-        )}
-        
-        {isHovered && !isExpanded && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            zIndex: 10,
-            background: 'white',
-            color: '#333',
-            padding: '8px',
-            borderRadius: '4px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            fontSize: '0.8rem',
-            width: '200px'
-          }}>
-            <div><strong>{event.title}</strong></div>
-            <div>Статус: {event.status === 'done' ? 'Завершено' : event.overdue ? 'Просрочено' : 'Активно'}</div>
-            {event.priority === 'high' && <div>Приоритет: Высокий</div>}
-            <div>Дата: {new Date(event.start).toLocaleDateString()}</div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Кастомный рендер кнопки "показать больше"
-const CustomShowMore = ({ date, events }) => {
-  // Добавляем проверку на существование date
-  if (!date) return null;
-  
-  const dateKey = date.toISOString();
-  const isOpen = showMoreEvents[dateKey];
-  
-  return (
-    <div style={{ position: 'relative' }}>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowMoreEvents(prev => ({
-            ...prev,
-            [dateKey]: !prev[dateKey]
-          }));
-        }}
-        style={{
-          background: 'rgba(255, 255, 255, 0.9)',
-          border: 'none',
-          borderRadius: '4px',
-          padding: '2px 6px',
-          fontSize: '0.7rem',
-          color: '#1976d2',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          marginTop: '4px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          transition: 'all 0.2s ease',
-          ':hover': {
-            background: 'rgba(255, 255, 255, 1)',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-          }
-        }}
-      >
-        {isOpen ? '▲ Скрыть' : `▼ +${events.length} еще`}
-      </button>
-      
-      {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          zIndex: 20,
-          background: 'white',
-          boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
-          borderRadius: '4px',
-          padding: '8px',
-          width: '220px',
-          maxHeight: '300px',
-          overflowY: 'auto'
-        }}>
-          {events.map(event => (
-            <div 
-              key={event.id}
-              style={{
-                padding: '6px',
-                marginBottom: '4px',
-                backgroundColor: '#f5f7fa',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                borderLeft: `3px solid ${
-                  event.overdue 
-                    ? '#ff6b6b' 
-                    : event.status === 'done' 
-                      ? '#4caf50' 
-                      : '#1976d2'
-                }`
-              }}
-            >
-              <div style={{ fontWeight: 'bold' }}>{event.title}</div>
-              <div style={{ fontSize: '0.7rem', color: '#666' }}>
-                {new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+const cardSx = {
+  borderRadius: 3,
+  boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.08)',
+  height: '100%',
 };
+
+const sectionTitleSx = {
+  color: '#1976d2',
+  mb: 2,
+};
+
+const performanceMetricDescriptions = {
+  'Эффективность': 'Показывает долю завершённых задач среди всех задач, кроме тех, что находятся на ревью.',
+  'Продуктивность': 'Учитывает завершённые задачи как основной вклад, а задачи на ревью и в работе добавляют частичный вклад.',
+  'Качество': 'Снижается из-за проваленных задач и просрочек. Проваленные влияют сильнее, чем просто задержки.',
+  'Сроки': 'Отражает, сколько задач закрыто вовремя и сколько текущих задач всё ещё укладываются в дедлайн.',
+  'Согласованность': 'Оценивает баланс нагрузки по участникам команды и общий вклад команды в завершение задач.',
+};
+
+const getStatusById = (id) => ({
+  1: 'new',
+  2: 'in_progress',
+  3: 'done',
+  4: 'failed',
+  5: 'rew',
+}[id] || 'unknown');
+
+const getPriorityById = (id) => ({
+  1: 'low',
+  2: 'medium',
+  3: 'high',
+}[id] || 'low');
+
+const getStatusColor = (status) => STATUS_COLORS[status] || STATUS_COLORS.unknown;
+const getStatusLabel = (status) => STATUS_LABELS[status] || STATUS_LABELS.unknown;
+const clampPercent = (value) => Math.max(0, Math.min(100, Math.round(value)));
+
+const toValidDate = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isCountedForCompletion = (task) => task.status !== 'rew';
+const isOverdueTask = (task) => !!task.deadlineAt && new Date(task.deadlineAt) < new Date() && !['done', 'failed', 'rew'].includes(task.status);
+
+const formatTime = (seconds) => {
+  if (isNaN(seconds) || seconds <= 0) return '0s';
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return [hours > 0 ? `${hours}h` : null, mins > 0 || hours > 0 ? `${mins}m` : null, `${secs}s`]
+    .filter(Boolean)
+    .join(' ');
+};
+
+const formatDeadlineOffset = (daysLeft) => {
+  if (daysLeft === 0) return 'Сегодня';
+  if (daysLeft === 1) return 'Через 1 день';
+  if (daysLeft > 1) return `Через ${daysLeft} дн.`;
+  if (daysLeft === -1) return 'Просрочено на 1 день';
+  return `Просрочено на ${Math.abs(daysLeft)} дн.`;
+};
+
+function CalendarToolbar({ date, view, onNavigate, onView }) {
+  const title = view === 'month'
+    ? moment(date).format('MMMM YYYY')
+    : view === 'week'
+      ? `${moment(date).startOf('week').format('D MMM')} - ${moment(date).endOf('week').format('D MMM YYYY')}`
+      : `Список: ${moment(date).format('MMMM YYYY')}`;
+
   return (
-    <CalendarWrapper>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2, flexWrap: 'wrap', mb: 2 }}>
+      <Stack direction="row" spacing={1} flexWrap="wrap">
+        <Button variant="outlined" size="small" onClick={() => onNavigate('TODAY')}>Сегодня</Button>
+        <Button variant="outlined" size="small" onClick={() => onNavigate('PREV')}>Назад</Button>
+        <Button variant="outlined" size="small" onClick={() => onNavigate('NEXT')}>Вперёд</Button>
+      </Stack>
+      <Typography variant="h6" sx={{ textTransform: 'capitalize', color: '#1f3b64', fontWeight: 700 }}>
+        {title}
+      </Typography>
+      <Stack direction="row" spacing={1} flexWrap="wrap">
+        <Button variant={view === 'month' ? 'contained' : 'outlined'} size="small" onClick={() => onView('month')}>Месяц</Button>
+        <Button variant={view === 'week' ? 'contained' : 'outlined'} size="small" onClick={() => onView('week')}>Неделя</Button>
+        <Button variant={view === 'agenda' ? 'contained' : 'outlined'} size="small" onClick={() => onView('agenda')}>Список</Button>
+      </Stack>
+    </Box>
+  );
+}
+
+function CalendarBlock({ events, date, view, onNavigate, onView }) {
+  if (!events.length) {
+    return (
+      <Box sx={{ height: 640, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography color="textSecondary">Для выбранного набора задач нет дедлайнов</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ height: 640 }}>
       <Calendar
         localizer={localizer}
         events={events}
+        date={date}
+        view={view}
+        onNavigate={onNavigate}
+        onView={onView}
         startAccessor="start"
         endAccessor="end"
-        defaultView="month"
-        views={['month', 'week', 'agenda']}
         components={{
-          event: CustomEvent,
-          week: {
-            event: CustomEvent
-          },
-          month: {
-            event: CustomEvent,
-            showMore: ({ date, events }) => (
-              <CustomShowMore 
-                date={date} 
-                events={events} 
-                onShowMore={handleShowMoreClick}
-              />
-            )
-          }
+          toolbar: () => (
+            <CalendarToolbar
+              date={date}
+              view={view}
+              onNavigate={onNavigate}
+              onView={onView}
+            />
+          ),
         }}
+        views={['month', 'week', 'agenda']}
         messages={{
           today: 'Сегодня',
           previous: 'Назад',
-          next: 'Вперед',
+          next: 'Вперёд',
           month: 'Месяц',
           week: 'Неделя',
           agenda: 'Список',
           date: 'Дата',
           time: 'Время',
           event: 'Событие',
-          noEventsInRange: 'Нет дедлайнов в этом периоде'
+          noEventsInRange: 'Нет дедлайнов в этом периоде',
+          showMore: (n) => `+ ещё ${n}`,
         }}
-        onSelectEvent={handleEventClick}
         eventPropGetter={(event) => ({
           style: {
-            backgroundColor: event.overdue 
-              ? '#ff6b6b' 
-              : event.status === 'done' 
-                ? '#4caf50' 
-                : event.status === 'rew'
-                  ? '#ff9800'
-                  : '#1976d2',
-            color: 'white',
-            borderRadius: '4px',
-            border: 'none'
-          }
+            backgroundColor: getStatusColor(event.status),
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+          },
         })}
       />
-    </CalendarWrapper>
+    </Box>
   );
-};
+}
 
-
-
-
-// Вспомогательные функции
-const getStatusById = (id) => {
-  switch (id) {
-    case 1: return 'new';
-    case 2: return 'in_progress';
-    case 3: return 'done';
-    case 4: return 'failed';
-    case 5: return 'rew';
-    default: return 'unknown';
-  }
-};
-
-const getPriorityById = (id) => {
-  switch (id) {
-    case 1: return 'low';
-    case 2: return 'medium';
-    case 3: return 'high';
-    default: return 'unknown';
-  }
-};
-
-const formatTime = (seconds) => {
-  if (isNaN(seconds)) return '0m 0s';
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours}h`);
-  if (mins > 0 || hours > 0) parts.push(`${mins}m`);
-  parts.push(`${secs}s`);
-  return parts.join(' ');
-};
-
-const Dashboard = ({ userEmail: propUserEmail }) => {
+function Dashboard({ userEmail: propUserEmail }) {
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState(propUserEmail || '');
   const [tasks, setTasks] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [selectedAssignment, setSelectedAssignment] = useState('');
+  const [selectedAssignmentData, setSelectedAssignmentData] = useState(null);
+  const [taskFilter, setTaskFilter] = useState('active');
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState('month');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
-  const [assignments, setAssignments] = useState([]);
-  const [selectedAssignment, setSelectedAssignment] = useState('');
-  const [selectedAssignmentData, setSelectedAssignmentData] = useState(null);
-  const [taskFilter, setTaskFilter] = useState('active');
 
-  const onNavigate = useCallback((page) => {
-    navigate(`/${page}`);
-  }, [navigate]);
+  const onNavigate = useCallback((page) => navigate(`/${page}`), [navigate]);
 
   useEffect(() => {
-    if (!propUserEmail) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-          const decoded = JSON.parse(jsonPayload);
-          if (decoded?.email) {
-            setUserEmail(decoded.email);
-          }
-        } catch (e) {
-          console.error('Failed to decode token:', e);
-        }
-      }
+    if (propUserEmail) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const decoded = JSON.parse(
+        decodeURIComponent(
+          atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))
+            .split('')
+            .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+            .join('')
+        )
+      );
+      if (decoded?.email) setUserEmail(decoded.email);
+    } catch (decodeError) {
+      console.error('Failed to decode token:', decodeError);
     }
   }, [propUserEmail]);
 
@@ -449,9 +322,7 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Пользователь не авторизован');
       const response = await fetch('http://localhost:3000/api/assignments', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Не удалось загрузить задания');
       const data = await response.json();
@@ -460,38 +331,40 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
         setSelectedAssignment(data[0].id);
         setSelectedAssignmentData(data[0]);
       }
-    } catch (err) {
-      console.error('Ошибка при загрузке заданий:', err);
-      setError(err.message);
+    } catch (fetchError) {
+      setError(fetchError.message);
     }
   }, []);
 
-  const fetchTasks = useCallback(async () => { 
+  const fetchTasks = useCallback(async () => {
     if (!selectedAssignment) return;
     setLoading(true);
     setError(null);
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Пользователь не авторизован');
-      const response = await fetch(`http://localhost:3000/api/assignments/${selectedAssignment}/tasks?include_archived=true`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/assignments/${selectedAssignment}/tasks?include_archived=true`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (!response.ok) throw new Error(`Не удалось загрузить задачи: ${response.status}`);
       const data = await response.json();
-      const processedTasks = data.map(task => ({
-        ...task,
-        status: task.status || getStatusById(Number(task.status_id)),
-        priority: getPriorityById(Number(task.priority_id)),
-        work_duration: Number(task.work_duration) || 0,
-        due_date: task.deadline || new Date().toISOString(),
-        isArchived: !!task.deleted_at
-      }));
-      setTasks(processedTasks);
-    } catch (err) {
-      console.error('Ошибка при загрузке задач:', err);
-      setError(err.message);
+      setTasks(
+        data.map((task) => {
+          const deadlineDate = toValidDate(task.deadline || task.due_date || task.dueDate);
+          return {
+            ...task,
+            status: task.status || getStatusById(Number(task.status_id)),
+            priority: getPriorityById(Number(task.priority_id)),
+            work_duration: Number(task.work_duration) || 0,
+            due_date: deadlineDate ? deadlineDate.toISOString() : null,
+            deadlineAt: deadlineDate ? deadlineDate.toISOString() : null,
+            isArchived: !!task.deleted_at,
+          };
+        })
+      );
+    } catch (fetchError) {
+      setError(fetchError.message);
     } finally {
       setLoading(false);
     }
@@ -502,17 +375,15 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
       const response = await fetch('http://localhost:3000/api/comments/unread', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) return;
       const data = await response.json();
-      const filteredComments = data.filter(comment => comment.author_email !== userEmail);
-      setUnreadCommentsCount(filteredComments.length);
+      const filteredComments = data.filter((comment) => comment.author_email !== userEmail);
       setComments(filteredComments);
-    } catch (error) {
-      console.error('Ошибка при загрузке комментариев:', error);
+      setUnreadCommentsCount(filteredComments.length);
+    } catch (fetchError) {
+      console.error('Ошибка при загрузке комментариев:', fetchError);
     }
   }, [userEmail]);
 
@@ -522,357 +393,187 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
   }, [fetchAssignments, fetchComments]);
 
   useEffect(() => {
-    if (selectedAssignment) {
-      fetchTasks();
-      const assignment = assignments.find(a => a.id === selectedAssignment);
-      if (assignment) setSelectedAssignmentData(assignment);
-    }
-  }, [selectedAssignment, fetchTasks, assignments]);
-
-  const handleAssignmentChange = (event) => {
-    const assignmentId = event.target.value;
-    setSelectedAssignment(assignmentId);
-    const assignment = assignments.find(a => a.id === assignmentId);
+    if (!selectedAssignment) return;
+    fetchTasks();
+    const assignment = assignments.find((item) => item.id === selectedAssignment);
     if (assignment) setSelectedAssignmentData(assignment);
-  };
+  }, [selectedAssignment, assignments, fetchTasks]);
 
-  const handleTaskFilterChange = (event, newFilter) => {
-    if (newFilter !== null) {
-      setTaskFilter(newFilter);
-    }
-  };
+  const filteredTasks = useMemo(() => {
+    if (taskFilter === 'active') return tasks.filter((task) => !task.isArchived);
+    if (taskFilter === 'archived') return tasks.filter((task) => task.isArchived);
+    return tasks;
+  }, [tasks, taskFilter]);
 
-  const filteredTasks = tasks.filter(task => {
-    if (taskFilter === 'active') return !task.isArchived;
-    if (taskFilter === 'archived') return task.isArchived;
-    return true;
-  });
-
-  // Расчет статистики
   const totalTasks = filteredTasks.length;
-  const completedTasks = filteredTasks.filter(task => task.status === 'done').length;
-  const inProgressTasks = filteredTasks.filter(task => task.status === 'in_progress').length;
-  const notStartedTasks = filteredTasks.filter(task => task.status === 'new').length;
-  const reviewTasks = filteredTasks.filter(task => task.status === 'rew').length;
-  const overdueTasks = filteredTasks.filter(task => new Date(task.due_date) < new Date() && task.status !== 'done').length;
+  const countedTasks = filteredTasks.filter(isCountedForCompletion);
+  const completedTasks = filteredTasks.filter((task) => task.status === 'done').length;
+  const inProgressTasks = filteredTasks.filter((task) => task.status === 'in_progress').length;
+  const newTasks = filteredTasks.filter((task) => task.status === 'new').length;
+  const reviewTasks = filteredTasks.filter((task) => task.status === 'rew').length;
+  const failedTasks = filteredTasks.filter((task) => task.status === 'failed').length;
+  const overdueTasks = filteredTasks.filter(isOverdueTask).length;
+  const completionPercentage = countedTasks.length > 0 ? Math.round((completedTasks / countedTasks.length) * 100) : 0;
+  const totalTime = filteredTasks.reduce((sum, task) => sum + (Number(task.work_duration) || 0), 0);
+  const avgTimePerTask = totalTasks > 0 ? Math.round(totalTime / totalTasks) : 0;
+  const fastestTaskTime = filteredTasks.length > 0 ? Math.min(...filteredTasks.map((task) => Number(task.work_duration) || 0)) : 0;
+  const slowestTaskTime = filteredTasks.length > 0 ? Math.max(...filteredTasks.map((task) => Number(task.work_duration) || 0)) : 0;
 
-  // Получение данных для календаря
-  const getCalendarEvents = () => {
-    return filteredTasks
-      .filter(task => task.due_date)
-      .map(task => ({
-        id: task.id,
-        title: task.title,
-        start: new Date(task.due_date),
-        end: new Date(new Date(task.due_date).getTime() + 30 * 60000),
-        allDay: false,
+  const priorityData = [
+    { name: 'Высокий', value: filteredTasks.filter((task) => task.priority === 'high').length, color: PRIORITY_COLORS.high },
+    { name: 'Средний', value: filteredTasks.filter((task) => task.priority === 'medium').length, color: PRIORITY_COLORS.medium },
+    { name: 'Низкий', value: filteredTasks.filter((task) => task.priority === 'low').length, color: PRIORITY_COLORS.low },
+  ];
+
+  const statusData = [
+    { name: 'Завершено', value: completedTasks, color: STATUS_COLORS.done },
+    { name: 'В работе', value: inProgressTasks, color: STATUS_COLORS.in_progress },
+    { name: 'Новые', value: newTasks, color: STATUS_COLORS.new },
+    { name: 'На ревью', value: reviewTasks, color: STATUS_COLORS.rew },
+    { name: 'Провалено', value: failedTasks, color: STATUS_COLORS.failed },
+  ];
+
+  const tasksWithDeadlines = filteredTasks
+    .filter((task) => task.deadlineAt)
+    .map((task) => ({ ...task, deadlineDate: new Date(task.deadlineAt) }))
+    .filter((task) => !Number.isNaN(task.deadlineDate.getTime()))
+    .sort((a, b) => a.deadlineDate - b.deadlineDate);
+
+  const calendarEvents = tasksWithDeadlines.map((task) => ({
+    id: task.id,
+    title: task.title,
+    start: task.deadlineDate,
+    end: new Date(task.deadlineDate.getTime() + 30 * 60 * 1000),
+    status: task.status,
+  }));
+
+  const deadlineData = tasksWithDeadlines
+    .slice(0, 8)
+    .map((task) => {
+      const daysLeft = Math.ceil((task.deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      return {
+        name: task.title?.substring(0, 26) || 'Задача',
+        fullTitle: task.title || 'Задача',
+        daysLeft,
+        absoluteDays: Math.abs(daysLeft),
+        timelineValue: daysLeft >= 0 ? Math.max(daysLeft, 0.5) : Math.max(Math.abs(daysLeft), 0.5),
+        deadlineLabel: task.deadlineDate.toLocaleDateString('ru-RU'),
         status: task.status,
-        overdue: new Date(task.due_date) < new Date() && task.status !== 'done',
-        priority: task.priority
-      }));
-  };
-
-const DeadlineChart = ({ data = [] }) => {
-  // Подготовка данных
-  const processedData = data
-    .filter(item => item.deadline)
-    .map(item => ({
-      ...item,
-      deadline: new Date(item.deadline).getTime(),
-      name: item.name || item.assignee || 'Без названия',
-      status: item.status || 'active',
-      overdue: item.overdue || false
-    }))
-    .sort((a, b) => a.deadline - b.deadline);
-
-  // Форматирование даты
-  const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-  };
-
-  // Кастомный тултип
-  const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload || !payload.length) return null;
-    
-    const task = payload[0].payload;
-    const deadline = new Date(task.deadline);
-    
-    return (
-      <div style={{
-        background: '#fff',
-        padding: '10px',
-        border: '1px solid #e0e0e0',
-        borderRadius: '4px',
-        fontSize: '14px'
-      }}>
-        <div style={{ fontWeight: 600, marginBottom: '5px' }}>{task.name}</div>
-        <div style={{ marginBottom: '5px' }}>
-          <strong>Срок:</strong> {deadline.toLocaleDateString('ru-RU')}
-        </div>
-        <div style={{ 
-          color: task.overdue ? '#f44336' : task.status === 'done' ? '#4caf50' : '#2196f3'
-        }}>
-          {task.overdue ? 'Просрочено' : task.status === 'done' ? 'Завершено' : 'Активно'}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div style={{
-      backgroundColor: '#fff',
-      borderRadius: '8px',
-      padding: '16px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      marginBottom: '20px'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '16px',
-        fontSize: '18px',
-        fontWeight: '500',
-        color: '#333'
-      }}>
-        <EventIcon style={{ marginRight: '8px', color: '#1976d2' }} />
-        <span>График предстоящих дедлайнов</span>
-      </div>
-
-      {processedData.length > 0 ? (
-        <div style={{ height: '400px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={processedData}
-              layout="vertical"
-              margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-              <XAxis
-                type="number"
-                dataKey="deadline"
-                tickFormatter={formatDate}
-                tick={{ fontSize: 12, fill: '#555' }}
-                axisLine={{ stroke: '#ddd' }}
-                label={{
-                  value: 'Дата выполнения',
-                  position: 'bottom',
-                  offset: 20,
-                  fontSize: 12,
-                  fill: '#555'
-                }}
-              />
-              <YAxis
-                dataKey="name"
-                type="category"
-                width={110}
-                tick={{ fontSize: 12, fill: '#333' }}
-                tickFormatter={value => value.length > 15 ? `${value.substring(0, 12)}...` : value}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="deadline" barSize={20} radius={[0, 4, 4, 0]}>
-                {processedData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={
-                      entry.overdue ? '#f44336' :
-                      entry.status === 'done' ? '#4caf50' :
-                      entry.status === 'rew' ? '#ff9800' :
-                      '#2196f3'
-                    }
-                  />
-                ))}
-              </Bar>
-              <ReferenceLine
-                x={new Date().getTime()}
-                stroke="#ff9800"
-                strokeWidth={2}
-                label={{
-                  value: 'Сегодня',
-                  position: 'right',
-                  fill: '#ff9800',
-                  fontSize: 12
-                }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '200px',
-          color: '#777',
-          border: '1px dashed #e0e0e0',
-          borderRadius: '4px'
-        }}>
-          <EventIcon style={{ fontSize: '32px', marginBottom: '8px' }} />
-          <div style={{ fontSize: '14px' }}>Нет данных о дедлайнах</div>
-        </div>
-      )}
-    </div>
-  );
-};
-  // Получение данных для графика активности (новая версия)
-const getActivityTimeline = () => {
-  if (!selectedAssignmentData) return [];
-  
-  const assignmentStart = new Date(selectedAssignmentData.created_at);
-  const now = new Date();
-  const assignmentEnd = selectedAssignmentData.deadline ? 
-    new Date(selectedAssignmentData.deadline) : 
-    new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  
-  const weeks = [];
-  let currentWeekStart = new Date(assignmentStart);
-  
-  while (currentWeekStart < assignmentEnd) {
-    const currentWeekEnd = new Date(currentWeekStart);
-    currentWeekEnd.setDate(currentWeekStart.getDate() + 7);
-    
-    const weekTasks = filteredTasks.filter(task => {
-      const created = new Date(task.created_at);
-      return created >= currentWeekStart && created < currentWeekEnd;
+        offsetLabel: formatDeadlineOffset(daysLeft),
+      };
     });
-    
-    // Изменено: считаем задачи с status === 'done' без проверки completed_at
-    const weekCompleted = weekTasks.filter(task => task.status === 'done').length;
-    const weekInProgress = weekTasks.filter(task => task.status === 'in_progress').length;
-    const weekNew = weekTasks.filter(task => task.status === 'new').length;
-    const weekReview = weekTasks.filter(task => task.status === 'rew').length;
-    
-    weeks.push({
-      name: moment(currentWeekStart).format('DD MMM'),
-      startDate: currentWeekStart.toISOString(),
-      endDate: currentWeekEnd.toISOString(),
-      total: weekTasks.length,
-      completed: weekCompleted,
-      inProgress: weekInProgress,
-      new: weekNew,
-      review: weekReview
-    });
-    
-    currentWeekStart = new Date(currentWeekEnd);
-  }
-  
-  return weeks;
-};
 
-  // Старая версия графика активности (по последним 4 неделям)
-  const getWeeklyProgress = () => {
-    const now = new Date();
-    const weeks = [];
-    
-    for (let i = 3; i >= 0; i--) {
-      const startDate = new Date(now);
-      startDate.setDate(now.getDate() - (7 * (i + 1)));
-      const endDate = new Date(now);
-      endDate.setDate(now.getDate() - (7 * i));
-      
-      const weekTasks = filteredTasks.filter(task => {
-        const created = new Date(task.created_at);
-        return created >= startDate && created < endDate;
-      });
-      
-      const weekCompleted = weekTasks.filter(task => task.status === 'done').length;
-      
-      weeks.push({
-        name: `Неделя ${4-i}`,
-        startDate: startDate.toLocaleDateString(),
-        endDate: endDate.toLocaleDateString(),
-        total: weekTasks.length,
-        completed: weekCompleted
-      });
-    }
-    
-    return weeks;
-  };
+  const timePerTaskData = filteredTasks.map((task) => ({
+    name: task.title?.substring(0, 22) || 'Задача',
+    time: Number(task.work_duration) || 0,
+    status: task.status,
+  }));
 
-
-  const performersStats = filteredTasks.reduce((acc, task) => {
-    if (task.assignee_email) {
+  const performersData = Object.values(
+    filteredTasks.reduce((acc, task) => {
+      if (!task.assignee_email) return acc;
       if (!acc[task.assignee_email]) {
         acc[task.assignee_email] = {
           name: task.assignee_name || task.assignee_email,
           total: 0,
           completed: 0,
           inProgress: 0,
-          new: 0,
-          review: 0
+          review: 0,
+          failed: 0,
         };
       }
-      acc[task.assignee_email].total++;
-      
-      if (task.status === 'done') {
-        acc[task.assignee_email].completed++;
-      } else if (task.status === 'in_progress') {
-        acc[task.assignee_email].inProgress++;
-      } else if (task.status === 'rew') {
-        acc[task.assignee_email].review++;
-      } else if (task.status === 'new') {
-        acc[task.assignee_email].new++;
-      }
-    }
-    return acc;
-  }, {});
-
-  const performersData = Object.values(performersStats)
-    .sort((a, b) => (b.completed / b.total) - (a.completed / a.total));
-
-  const deadlineData = filteredTasks
-    .filter(task => task.due_date)
-    .map(task => ({
-      name: task.title?.substring(0, 15) || 'Задача',
-      deadline: new Date(task.due_date).getTime(),
-      status: task.status,
-      overdue: new Date(task.due_date) < new Date() && task.status !== 'done'
+      acc[task.assignee_email].total += 1;
+      if (task.status === 'done') acc[task.assignee_email].completed += 1;
+      if (task.status === 'in_progress') acc[task.assignee_email].inProgress += 1;
+      if (task.status === 'rew') acc[task.assignee_email].review += 1;
+      if (task.status === 'failed') acc[task.assignee_email].failed += 1;
+      return acc;
+    }, {})
+  )
+    .map((performer) => ({
+      ...performer,
+      completionRate: Math.round((performer.completed / Math.max(performer.total - performer.review, 1)) * 100),
     }))
-    .sort((a, b) => a.deadline - b.deadline);
+    .sort((a, b) => b.completionRate - a.completionRate);
 
+  const activityTimeline = useMemo(() => {
+    if (!selectedAssignmentData?.created_at) return [];
+    const assignmentStart = new Date(selectedAssignmentData.created_at);
+    const assignmentEnd = selectedAssignmentData.deadline ? new Date(selectedAssignmentData.deadline) : new Date();
+    const weeks = [];
+    let currentWeekStart = new Date(assignmentStart);
+    while (currentWeekStart <= assignmentEnd) {
+      const currentWeekEnd = new Date(currentWeekStart);
+      currentWeekEnd.setDate(currentWeekStart.getDate() + 7);
+      const weekTasks = filteredTasks.filter((task) => {
+        const created = new Date(task.created_at);
+        return created >= currentWeekStart && created < currentWeekEnd;
+      });
+      weeks.push({
+        name: moment(currentWeekStart).format('DD MMM'),
+        completed: weekTasks.filter((task) => task.status === 'done').length,
+        inProgress: weekTasks.filter((task) => task.status === 'in_progress').length,
+        new: weekTasks.filter((task) => task.status === 'new').length,
+        review: weekTasks.filter((task) => task.status === 'rew').length,
+        failed: weekTasks.filter((task) => task.status === 'failed').length,
+      });
+      currentWeekStart = currentWeekEnd;
+    }
+    return weeks;
+  }, [filteredTasks, selectedAssignmentData]);
 
-  const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0; 
-  const totalTime = filteredTasks.reduce((sum, task) => { 
-    const duration = Number(task.work_duration) || 0; 
-    return sum + (isNaN(duration) ? 0 : duration); 
-  }, 0);
+  const weeklyProgress = useMemo(() => {
+    const now = new Date();
+    const weeks = [];
+    for (let i = 3; i >= 0; i -= 1) {
+      const startDate = new Date(now);
+      startDate.setDate(now.getDate() - (7 * (i + 1)));
+      const endDate = new Date(now);
+      endDate.setDate(now.getDate() - (7 * i));
+      const weekTasks = filteredTasks.filter((task) => {
+        const created = new Date(task.created_at);
+        return created >= startDate && created < endDate;
+      });
+      weeks.push({
+        name: `Неделя ${4 - i}`,
+        total: weekTasks.length,
+        completed: weekTasks.filter((task) => task.status === 'done').length,
+        review: weekTasks.filter((task) => task.status === 'rew').length,
+        failed: weekTasks.filter((task) => task.status === 'failed').length,
+      });
+    }
+    return weeks;
+  }, [filteredTasks]);
 
-  const avgTimePerTask = totalTasks > 0 ? Math.round(totalTime / totalTasks) : 0;
+  const performanceMetrics = useMemo(() => {
+    const totalVisibleTasks = Math.max(filteredTasks.length, 1);
+    const reviewedTasks = filteredTasks.filter((task) => task.status === 'rew').length;
+    const activeOnTrackTasks = tasksWithDeadlines.filter((task) => ['new', 'in_progress'].includes(task.status) && task.deadlineDate >= new Date()).length;
+    const reviewOnTrackTasks = tasksWithDeadlines.filter((task) => task.status === 'rew' && task.deadlineDate >= new Date()).length;
+    const completedOnTimeTasks = tasksWithDeadlines.filter((task) => task.status === 'done' && (!task.updated_at || new Date(task.updated_at) <= task.deadlineDate)).length;
+    const deadlineTrackedCount = tasksWithDeadlines.length;
+    const averageTeamLoad = performersData.length > 0
+      ? performersData.reduce((sum, performer) => sum + performer.total, 0) / performersData.length
+      : 0;
+    const loadDeviation = performersData.length > 0
+      ? performersData.reduce((sum, performer) => sum + Math.abs(performer.total - averageTeamLoad), 0) / performersData.length
+      : 0;
+    const balanceScore = averageTeamLoad > 0
+      ? Math.max(0, 100 - ((loadDeviation / averageTeamLoad) * 35))
+      : 100;
 
-  const statusData = [
-    { name: 'Завершено', value: completedTasks },
-    { name: 'В работе', value: inProgressTasks },
-    { name: 'Новые', value: notStartedTasks }
-  ];
-
-  const priorityData = [
-    { name: 'Высокий', value: filteredTasks.filter(task => task.priority === 'high').length, color: '#ff6b6b' },
-    { name: 'Средний', value: filteredTasks.filter(task => task.priority === 'medium').length, color: '#ffd166' },
-    { name: 'Низкий', value: filteredTasks.filter(task => task.priority === 'low').length, color: '#06d6a0' }
-  ];
-
-  const timePerTaskData = filteredTasks.map(task => ({
-    name: task.title?.substring(0, 15) || 'Задача',
-    time: Number(task.work_duration) || 0
-  }));
-
-  const COLORS = ['#0088FE', '#00C49F', '#FF9800', '#FFBB28'];
-
-  const getPerformanceMetrics = () => {
     const efficiency = completionPercentage;
-    const productivity = Math.round((completedTasks / totalTasks) * 100);
-    const quality = Math.max(0, 100 - (overdueTasks / totalTasks * 100));
-    
-    const onTimeTasks = filteredTasks.filter(task => 
-      task.status === 'done' && 
-      (!task.due_date || new Date(task.due_date) >= new Date(task.completed_at))
-    ).length;
-    const timeliness = totalTasks > 0 ? Math.round((onTimeTasks / totalTasks) * 100) : 0;
-    
-    const performerCount = Object.keys(performersStats).length;
-    const collaboration = performerCount > 0 
-      ? Math.min(100, Math.round((completedTasks / performerCount) * 10)) 
+    const productivity = clampPercent(
+      ((completedTasks * 1) + (reviewedTasks * 0.8) + (inProgressTasks * 0.45) + (newTasks * 0.1)) / totalVisibleTasks * 100
+    );
+    const quality = clampPercent(
+      100 - ((((failedTasks * 1.25) + (overdueTasks * 0.6)) / Math.max(countedTasks.length, 1)) * 100)
+    );
+    const timeliness = deadlineTrackedCount > 0
+      ? clampPercent((((completedOnTimeTasks * 1) + (reviewOnTrackTasks * 0.75) + (activeOnTrackTasks * 0.55)) / deadlineTrackedCount) * 100)
+      : 100;
+    const collaboration = performersData.length > 0
+      ? clampPercent((balanceScore * 0.55) + ((((completedTasks + (reviewedTasks * 0.6)) / performersData.length) * 18) * 0.45))
       : 0;
 
     return [
@@ -880,108 +581,48 @@ const getActivityTimeline = () => {
       { subject: 'Продуктивность', A: productivity, fullMark: 100 },
       { subject: 'Качество', A: quality, fullMark: 100 },
       { subject: 'Сроки', A: timeliness, fullMark: 100 },
-      { subject: 'Сотрудничество', A: collaboration, fullMark: 100 },
+      { subject: 'Согласованность', A: collaboration, fullMark: 100 },
     ];
+  }, [completionPercentage, countedTasks.length, completedTasks, failedTasks, filteredTasks, inProgressTasks, newTasks, overdueTasks, performersData, tasksWithDeadlines]);
+
+  const handleAssignmentChange = (event) => {
+    const assignmentId = event.target.value;
+    setSelectedAssignment(assignmentId);
+    const assignment = assignments.find((item) => item.id === assignmentId);
+    if (assignment) setSelectedAssignmentData(assignment);
   };
 
-  const UsersPerformanceTable = ({ performersData }) => {
-    return (
-      <ChartCard>
-        <CardContent>
-          <Typography variant="h5" gutterBottom>
-            <PeopleIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
-            Исполнители и выполненные задачи
-          </Typography>
-          {performersData.length > 0 ? (
-            <>
-              <TableContainer component={Paper} style={{ maxHeight: 600, overflowX: 'auto', width: '100%' }}>
-                <Table stickyHeader size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Исполнитель</TableCell>
-                      <TableCell align="right">Всего задач</TableCell>
-                      <TableCell align="right">Выполнено</TableCell>
-                      <TableCell align="right">В работе</TableCell>
-                      <TableCell align="right">% выполнения</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {performersData.map((performer, index) => (
-                      <TableRow key={index} hover>
-                        <TableCell component="th" scope="row">
-                          <Box display="flex" alignItems="center">
-                            <Avatar sx={{ width: 24, height: 24, mr: 1 }}>
-                              {performer.name.charAt(0).toUpperCase()}
-                            </Avatar>
-                            {performer.name}
-                          </Box>
-                        </TableCell>
-                        <TableCell align="right">{performer.total}</TableCell>
-                        <TableCell align="right">
-                          <Box color="success.main">{performer.completed}</Box>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Box color="warning.main">{performer.inProgress}</Box>
-                        </TableCell>
-                        <TableCell align="right">
-                          <LinearProgress
-                            variant="determinate"
-                            value={Math.round((performer.completed / performer.total) * 100)}
-                            color={
-                              Math.round((performer.completed / performer.total) * 100) > 75 ? 'success' :
-                              Math.round((performer.completed / performer.total) * 100) > 50 ? 'warning' : 'error'
-                            }
-                            sx={{ height: 8, borderRadius: 4 }}
-                          />
-                          <Typography variant="body2">
-                            {Math.round((performer.completed / performer.total) * 100)}%
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <Box mt={2} display="flex" justifyContent="space-between">
-                <Box>
-                  <Typography variant="subtitle2">Общая статистика:</Typography>
-                  <Box display="flex" gap={1} mt={1}>
-                    <Chip
-                      label={`Всего задач: ${performersData.reduce((sum, p) => sum + p.total, 0)}`}
-                      color="default"
-                      size="small"
-                    />
-                    <Chip
-                      label={`Выполнено: ${performersData.reduce((sum, p) => sum + p.completed, 0)}`}
-                      color="success"
-                      size="small"
-                    />
-                  </Box>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2">Лучшие исполнители:</Typography>
-                  <Box display="flex" gap={1} mt={1}>
-                    {performersData.slice(0, 2).map((performer, idx) => (
-                      <Chip
-                        key={idx}
-                        label={`${performer.name}: ${Math.round((performer.completed / performer.total) * 100)}%`}
-                        color={idx === 0 ? 'primary' : 'secondary'}
-                        size="small"
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              </Box>
-            </>
-          ) : (
-            <Box display="flex" justifyContent="center" alignItems="center" height={200}>
-              <Typography color="textSecondary">Нет данных об исполнителях</Typography>
-            </Box>
-          )}
-        </CardContent>
-      </ChartCard>
-    );
+  const handleTaskFilterChange = (_, newFilter) => {
+    if (newFilter) setTaskFilter(newFilter);
   };
+
+  const handleCalendarNavigate = useCallback((nextDateOrAction) => {
+    if (nextDateOrAction instanceof Date) {
+      setCalendarDate(nextDateOrAction);
+      return;
+    }
+
+    if (nextDateOrAction === 'TODAY') {
+      setCalendarDate(new Date());
+      return;
+    }
+
+    setCalendarDate((currentDate) => {
+      const nextDate = new Date(currentDate);
+      if (calendarView === 'month') {
+        nextDate.setMonth(currentDate.getMonth() + (nextDateOrAction === 'NEXT' ? 1 : -1));
+      } else if (calendarView === 'week') {
+        nextDate.setDate(currentDate.getDate() + (nextDateOrAction === 'NEXT' ? 7 : -7));
+      } else {
+        nextDate.setDate(currentDate.getDate() + (nextDateOrAction === 'NEXT' ? 30 : -30));
+      }
+      return nextDate;
+    });
+  }, [calendarView]);
+
+  const handleCalendarView = useCallback((nextView) => {
+    setCalendarView(nextView);
+  }, []);
 
   if (loading) {
     return (
@@ -1008,579 +649,389 @@ const getActivityTimeline = () => {
   return (
     <PageContainer>
       <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} onCommentsClick={() => setShowNotification(true)} />
-
-      {showNotification && (
-        <TaskNotification
-          tasks={tasks}
-          comments={comments}
-          onClose={() => setShowNotification(false)}
-        />
-      )}
-
+      {showNotification && <TaskNotification tasks={tasks} comments={comments} invitations={[]} onClose={() => setShowNotification(false)} />}
       <ScrollableContainer>
         <ContentContainer>
-          <DashboardTitle variant="h4">Панель управления заданиями</DashboardTitle>
-          
-          {/* Выбор задания и фильтры */}
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+          <DashboardTitle variant="h4">Дашборд проекта</DashboardTitle>
+
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={8}>
               <FormControl fullWidth>
-                <InputLabel>Выберите задание</InputLabel>
-                <StyledSelect
-                  value={selectedAssignment}
-                  onChange={handleAssignmentChange}
-                  label="Выберите задание"
-                >
-                  {assignments.map(assignment => (
-                    <MenuItem key={assignment.id} value={assignment.id}>
-                      {assignment.title}
-                    </MenuItem>
+                <InputLabel id="assignment-select-label">Проект</InputLabel>
+                <StyledSelect labelId="assignment-select-label" value={selectedAssignment} label="Проект" onChange={handleAssignmentChange}>
+                  {assignments.map((assignment) => (
+                    <MenuItem key={assignment.id} value={assignment.id}>{assignment.title}</MenuItem>
                   ))}
                 </StyledSelect>
               </FormControl>
             </Grid>
-
             {selectedAssignment && tasks.length > 0 && (
-              <Grid item xs={12}>
-                <ToggleButtonGroup
-                  value={taskFilter}
-                  onChange={handleTaskFilterChange}
-                  exclusive
-                  aria-label="Фильтр задач"
-                  fullWidth
-                >
-                  <ToggleButton value="active" aria-label="Активные">
-                    Активные
-                  </ToggleButton>
-                  <ToggleButton value="archived" aria-label="Архив">
-                    Архив
-                  </ToggleButton>
-                  <ToggleButton value="all" aria-label="Все">
-                    Все
-                  </ToggleButton>
+              <Grid item xs={12} md={4}>
+                <ToggleButtonGroup value={taskFilter} onChange={handleTaskFilterChange} exclusive fullWidth>
+                  <ToggleButton value="active">Активные</ToggleButton>
+                  <ToggleButton value="archived">Архив</ToggleButton>
+                  <ToggleButton value="all">Все</ToggleButton>
                 </ToggleButtonGroup>
               </Grid>
             )}
           </Grid>
 
           {!selectedAssignment && assignments.length === 0 && !loading && (
-            <Typography variant="body1" style={{ marginTop: 20 }}>
-              Нет доступных заданий
-            </Typography>
+            <Typography variant="body1" sx={{ mt: 2 }}>Нет доступных заданий</Typography>
           )}
 
           {selectedAssignment && tasks.length === 0 && !loading && (
-            <Typography variant="body1" style={{ marginTop: 20 }}>
-              Не найдено задач для выбранного задания
-            </Typography>
+            <Typography variant="body1" sx={{ mt: 2 }}>Не найдено задач для выбранного задания</Typography>
           )}
 
           {selectedAssignment && tasks.length > 0 && (
             <>
-              {/* Раздел: Основные метрики */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Основные метрики
-                </Typography>
+                <Typography variant="h5" gutterBottom sx={sectionTitleSx}>Основные метрики</Typography>
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
+                    <Card sx={cardSx}>
                       <CardContent>
                         <Typography color="textSecondary" gutterBottom>Всего задач</Typography>
-                        <Typography variant="h4" component="div" color="primary">
-                          {totalTasks}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <CheckCircleIcon color="success" fontSize="small" />
-                          <Typography variant="body2">Завершено: {completedTasks}</Typography>
-                        </MetricItem>
-                        <MetricItem>
-                          <HourglassEmptyIcon color="warning" fontSize="small" />
-                          <Typography variant="body2">В работе: {inProgressTasks}</Typography>
-                        </MetricItem>
-                        <MetricItem>
-                          <ErrorIcon color="error" fontSize="small" />
-                          <Typography variant="body2">Просрочено: {overdueTasks}</Typography>
-                        </MetricItem>
+                        <Typography variant="h4" color="primary">{totalTasks}</Typography>
+                        <Divider sx={{ my: 1.5 }} />
+                        <MetricItem><CheckCircleIcon color="success" fontSize="small" /><Typography variant="body2">Завершено: {completedTasks}</Typography></MetricItem>
+                        <MetricItem><HourglassEmptyIcon color="warning" fontSize="small" /><Typography variant="body2">В работе: {inProgressTasks}</Typography></MetricItem>
+                        <MetricItem><RateReviewIcon color="warning" fontSize="small" /><Typography variant="body2">На ревью: {reviewTasks}</Typography></MetricItem>
+                        <MetricItem><ErrorIcon color="error" fontSize="small" /><Typography variant="body2">Провалено: {failedTasks}</Typography></MetricItem>
+                        <MetricItem><ErrorIcon color="error" fontSize="small" /><Typography variant="body2">Просрочено: {overdueTasks}</Typography></MetricItem>
                       </CardContent>
-                    </StatsCard>
+                    </Card>
                   </Grid>
-                  
                   <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
+                    <Card sx={cardSx}>
                       <CardContent>
                         <Typography color="textSecondary" gutterBottom>Процент выполнения</Typography>
-                        <Typography variant="h4" component="div" color="primary">
-                          {completionPercentage}%
+                        <Typography variant="h4" color="primary">{completionPercentage}%</Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1, lineHeight: 1.6 }}>
+                          Коэффициент считается по завершённым задачам
+                          <br />
+                          от всех задач, кроме тех, что находятся на ревью.
+                          <br />
+                          Задачи со статусом «Провалено» остаются в расчёте
+                          <br />
+                          и уменьшают итоговый процент.
                         </Typography>
                         <Box mt={2}>
-                          <CircularProgress
-                            variant="determinate"
-                            value={completionPercentage}
-                            size={60}
-                            thickness={5}
-                            color={completionPercentage > 75 ? 'success' : completionPercentage > 50 ? 'warning' : 'error'}
-                          />
+                          <CircularProgress variant="determinate" value={completionPercentage} size={60} thickness={5} color={completionPercentage > 75 ? 'success' : completionPercentage > 50 ? 'warning' : 'error'} />
                         </Box>
                       </CardContent>
-                    </StatsCard>
+                    </Card>
                   </Grid>
-                  
                   <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
+                    <Card sx={cardSx}>
                       <CardContent>
                         <Typography color="textSecondary" gutterBottom>Среднее время на задачу</Typography>
-                        <Typography variant="h4" component="div" color="primary">
-                          {formatTime(avgTimePerTask)}
-                        </Typography>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <MetricItem>
-                          <AccessTimeIcon color="info" fontSize="small" />
-                          <Typography variant="body2">Общее время: {formatTime(totalTime)}</Typography>
-                        </MetricItem>
-                        {filteredTasks.length > 0 && (
-                          <Box mt={1}>
-                            <Chip 
-                              label={`Быстрее всего: ${formatTime(Math.min(...filteredTasks.map(t => Number(t.work_duration) || 0)))}`} 
-                              size="small" 
-                              color="success"
-                            />
-                            <Chip 
-                              label={`Дольше всего: ${formatTime(Math.max(...filteredTasks.map(t => Number(t.work_duration) || 0)))}`} 
-                              size="small" 
-                              color="error"
-                              style={{ marginLeft: '8px' }}
-                            />
-                          </Box>
-                        )}
+                        <Typography variant="h4" color="primary">{formatTime(avgTimePerTask)}</Typography>
+                        <Divider sx={{ my: 1.5 }} />
+                        <MetricItem><AccessTimeIcon color="info" fontSize="small" /><Typography variant="body2">Общее время: {formatTime(totalTime)}</Typography></MetricItem>
+                        <Box mt={1} display="flex" gap={1} flexWrap="wrap">
+                          <Chip label={`Быстрее всего: ${formatTime(fastestTaskTime)}`} size="small" color="success" />
+                          <Chip label={`Дольше всего: ${formatTime(slowestTaskTime)}`} size="small" color="error" />
+                        </Box>
                       </CardContent>
-                    </StatsCard>
+                    </Card>
                   </Grid>
-                  
                   <Grid item xs={12} sm={6} md={3}>
-                    <StatsCard>
+                    <Card sx={cardSx}>
                       <CardContent>
                         <Typography color="textSecondary" gutterBottom>Задачи по приоритету</Typography>
                         <Box height={120}>
-                          {priorityData.some(item => item.value > 0) ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={priorityData.filter(item => item.value > 0)}
-                                  dataKey="value"
-                                  nameKey="name"
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={40}
-                                  outerRadius={60}
-                                  paddingAngle={2}
-                                >
-                                  {priorityData.filter(item => item.value > 0).map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                  ))}
-                                </Pie>
-                                <Tooltip />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          ) : (
-                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                              <Typography color="textSecondary">Нет данных</Typography>
-                            </Box>
-                          )}
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={priorityData.filter((item) => item.value > 0)} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={55}>
+                                {priorityData.filter((item) => item.value > 0).map((entry) => (
+                                  <Cell key={entry.name} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip />
+                            </PieChart>
+                          </ResponsiveContainer>
                         </Box>
-                        <Box display="flex" justifyContent="space-between" mt={1}>
-                          <Chip
-                            label={`Высокий: ${filteredTasks.filter(task => task.priority === 'high').length}`}
-                            size="small"
-                            style={{ backgroundColor: '#ff6b6b', color: 'white' }}
-                          />
-                          <Chip
-                            label={`Средний: ${filteredTasks.filter(task => task.priority === 'medium').length}`}
-                            size="small"
-                            style={{ backgroundColor: '#ffd166', color: 'black' }}
-                          />
-                          <Chip
-                            label={`Низкий: ${filteredTasks.filter(task => task.priority === 'low').length}`}
-                            size="small"
-                            style={{ backgroundColor: '#06d6a0', color: 'white' }}
-                          />
+                        <Box display="flex" justifyContent="space-between" mt={1} gap={1}>
+                          {priorityData.map((item) => (
+                            <Chip key={item.name} label={`${item.name}: ${item.value}`} size="small" sx={{ backgroundColor: item.color, color: item.name === 'Средний' ? '#111' : '#fff' }} />
+                          ))}
                         </Box>
                       </CardContent>
-                    </StatsCard>
+                    </Card>
                   </Grid>
                 </Grid>
               </Box>
 
-              {/* Раздел: Дедлайны */}
-<Box sx={{ mb: 4 }}>
-  <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-    Дедлайны
-  </Typography>
-  <Grid container spacing={3}>
-<Grid item xs={12} md={8}>
-  <ChartCard sx={{ width: 1500 }}>
-    <CardContent sx={{ 
-      flex: 1, 
-      display: 'flex', 
-      flexDirection: 'column', 
-      minHeight: '500px',
-      width: '100%',  // добавить
-      overflow: 'auto' // если нужно скроллить
-    }}>
-      <Typography variant="h6" gutterBottom>
-        <EventIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
-        Календарь дедлайнов
-      </Typography>
-      <div style={{ width: '100%', flex: 1, minHeight: '450px' }}>
-        <DeadlineCalendar events={getCalendarEvents()} />
-      </div>
-    </CardContent>
-  </ChartCard>
-</Grid>
-    <Grid item xs={12} md={5}>
-      <ChartCard>
-        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="h6" gutterBottom>
-            <EventIcon fontSize="small" style={{ verticalAlign: 'middle', marginRight: 8 }} />
-            График предстоящих дедлайнов
-          </Typography>
-          <ChartContainer>
-            <ResponsiveContainer width={400} height={600}>
-              <BarChart
-                data={deadlineData}
-                layout="vertical"
-                margin={{ top: 20, right: 30, left: 0, bottom: 40 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                <XAxis
-                  type="number"
-                  dataKey="deadline"
-                  tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
-                  tick={{ fontSize: 12, fill: '#555' }}
-                  axisLine={{ stroke: '#ddd' }}
-                  label={{
-                    value: 'Дата выполнения',
-                    position: 'bottom',
-                    offset: 20,
-                    fontSize: 12,
-                    fill: '#555'
-                  }}
-                />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={110}
-                  tick={{ fontSize: 12, fill: '#333' }}
-                  tickFormatter={value => value.length > 15 ? `${value.substring(0, 12)}...` : value}
-                />
-                <Tooltip 
-                  content={({ active, payload }) => {
-                    if (!active || !payload || !payload.length) return null;
-                    const task = payload[0].payload;
-                    const deadline = new Date(task.deadline);
-                    return (
-                      <div style={{
-                        background: '#fff',
-                        padding: '10px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '4px',
-                        fontSize: '14px'
-                      }}>
-                        <div style={{ fontWeight: 600, marginBottom: '5px' }}>{task.name}</div>
-                        <div style={{ marginBottom: '5px' }}>
-                          <strong>Срок:</strong> {deadline.toLocaleDateString('ru-RU')}
-                        </div>
-                        <div style={{ 
-                          color: task.overdue ? '#f44336' : task.status === 'done' ? '#4caf50' : '#2196f3'
-                        }}>
-                          {task.overdue ? 'Просрочено' : task.status === 'done' ? 'Завершено' : 'Активно'}
-                        </div>
-                      </div>
-                    );
-                  }}
-                />
-                <Bar dataKey="deadline" barSize={20} radius={[0, 4, 4, 0]}>
-                  {deadlineData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={
-                        entry.overdue ? '#f44336' :
-                        entry.status === 'done' ? '#4caf50' :
-                        '#2196f3'
-                      }
-                    />
-                  ))}
-                </Bar>
-                <ReferenceLine
-                  x={new Date().getTime()}
-                  stroke="#ff9800"
-                  strokeWidth={2}
-                  label={{
-                    value: 'Сегодня',
-                    position: 'right',
-                    fill: '#ff9800',
-                    fontSize: 12
-                  }}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </ChartCard>
-    </Grid>
-  </Grid>
-</Box>
-
-{/* Раздел: Статусы задач */}
-<Box sx={{ mb: 4 }}>
-  <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-    Статусы задач
-  </Typography>
-  <Grid container spacing={3}>
-    <Grid item xs={12} lg={6}> {/* Изменяем md на lg для лучшего контроля */}
-      <ChartCard sx={{ height: '500px' }}> {/* Фиксированная высота */}
-        <CardContent sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          flexDirection: 'column',
-          padding: '20px' // Увеличиваем отступы
-        }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}> {/* Увеличиваем отступ */}
-            Распределение задач по статусу
-          </Typography>
-          <ChartContainer>
-            {statusData?.some(item => item.value > 0) && (
-              <ResponsiveContainer width={600} height="100%">
-                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <Pie
-                    data={statusData.filter(item => item.value > 0)}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100} // Увеличиваем радиус
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {statusData.filter(item => item.value > 0).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value) => [`${value} задач`, 'Количество']}
-                    contentStyle={{ fontSize: '14px' }} // Увеличиваем шрифт
-                  />
-                  <Legend 
-                    layout="horizontal" 
-                    verticalAlign="bottom" 
-                    wrapperStyle={{ paddingTop: '20px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </ChartContainer>
-        </CardContent>
-      </ChartCard>
-    </Grid>
-    
-    <Grid item xs={12} lg={6}>
-      <ChartCard sx={{ height: '500px' }}>
-        <CardContent sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          flexDirection: 'column',
-          padding: '20px'
-        }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-            Время, затраченное на задачу
-          </Typography>
-          <ChartContainer>
-            {timePerTaskData?.length > 0 && (
-              <ResponsiveContainer width={500} height="100%">
-                <BarChart 
-                  data={timePerTaskData}
-                  margin={{ top: 20, right: 30, left: 30, bottom: 60 }} // Увеличиваем отступы
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis 
-                    dataKey="name" 
-                    tickFormatter={value => value.length > 10 ? `${value.substring(0, 8)}...` : value}
-                    tick={{ fontSize: 12 }}
-                    interval={0}
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => formatTime(value).split(' ')[0]}
-                    tick={{ fontSize: 12 }}
-                    width={80}
-                  />
-                  <Tooltip
-                    formatter={(value) => [formatTime(value), 'Затраченное время']}
-                    labelFormatter={(value) => `Задача: ${value}`}
-                    contentStyle={{ fontSize: '14px' }}
-                  />
-                  <Legend 
-                    wrapperStyle={{ paddingTop: '10px' }}
-                  />
-                  <Bar
-                    dataKey="time"
-                    name="Затраченное время"
-                    fill="#8884d8"
-                    radius={[4, 4, 0, 0]}
-                    barSize={30} // Увеличиваем размер баров
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartContainer>
-        </CardContent>
-      </ChartCard>
-    </Grid>
-  </Grid>
-</Box>
-              {/* Раздел: Работа команды */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Работа команды
-                </Typography>
+                <Typography variant="h5" gutterBottom sx={sectionTitleSx}>Дедлайны</Typography>
                 <Grid container spacing={3}>
                   <Grid item xs={12}>
-                    <UsersPerformanceTable performersData={performersData} />
+                    <Card sx={cardSx}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom><EventIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />Календарь дедлайнов</Typography>
+                        <CalendarBlock
+                          events={calendarEvents}
+                          date={calendarDate}
+                          view={calendarView}
+                          onNavigate={handleCalendarNavigate}
+                          onView={handleCalendarView}
+                        />
+                        <Box mt={2} display="flex" gap={1} flexWrap="wrap">
+                          <Chip label="Новая" size="small" sx={{ backgroundColor: STATUS_COLORS.new, color: '#fff' }} />
+                          <Chip label="В работе" size="small" sx={{ backgroundColor: STATUS_COLORS.in_progress, color: '#fff' }} />
+                          <Chip label="На ревью" size="small" sx={{ backgroundColor: STATUS_COLORS.rew, color: '#fff' }} />
+                          <Chip label="Провалено" size="small" sx={{ backgroundColor: STATUS_COLORS.failed, color: '#fff' }} />
+                          <Chip label="Завершено" size="small" sx={{ backgroundColor: STATUS_COLORS.done, color: '#fff' }} />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Card sx={cardSx}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom><EventIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />График предстоящих дедлайнов</Typography>
+                        {deadlineData.length > 0 ? (
+                          <ChartContainer style={{ height: 480 }}>
+                            <ResponsiveContainer width={800} height="100%">
+                              <BarChart data={deadlineData} layout="vertical" margin={{ top: 16, right: 32, left: 0, bottom: 12 }} barCategoryGap={14}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#edf2f7" />
+                                <XAxis
+                                  type="number"
+                                  domain={[0, 'dataMax + 1']}
+                                  tickFormatter={(value) => `${value} дн.`}
+                                  tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                  dataKey="name"
+                                  type="category"
+                                  width={210}
+                                  tick={{ fontSize: 12, fill: '#334155' }}
+                                  tickFormatter={(value) => (value.length > 24 ? `${value.substring(0, 21)}...` : value)}
+                                />
+                                <Tooltip content={({ active, payload }) => {
+                                  if (!active || !payload || !payload.length) return null;
+                                  const task = payload[0].payload;
+                                  return (
+                                    <Box sx={{ background: '#fff', p: 1.5, border: '1px solid #e2e8f0', borderRadius: 1.5, boxShadow: '0 10px 25px rgba(15, 23, 42, 0.08)' }}>
+                                      <Typography variant="subtitle2">{task.fullTitle}</Typography>
+                                      <Typography variant="body2">Срок: {task.deadlineLabel}</Typography>
+                                      <Typography variant="body2">{task.offsetLabel}</Typography>
+                                      <Typography variant="body2" sx={{ color: getStatusColor(task.status) }}>{getStatusLabel(task.status)}</Typography>
+                                    </Box>
+                                  );
+                                }} />
+                                <Bar dataKey="timelineValue" barSize={18} radius={[0, 8, 8, 0]}>
+                                  {deadlineData.map((entry) => (
+                                    <Cell key={`${entry.name}-${entry.deadlineLabel}`} fill={getStatusColor(entry.status)} />
+                                  ))}
+                                </Bar>
+                                <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={2} label={{ value: 'Сегодня', position: 'insideTopRight', fill: '#64748b', fontSize: 12 }} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        ) : (
+                          <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography color="textSecondary">Нет задач с дедлайнами для отображения</Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
                   </Grid>
                 </Grid>
               </Box>
 
-              {/* Раздел: Динамика выполнения */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Динамика выполнения
-                </Typography>
+                <Typography variant="h5" gutterBottom sx={sectionTitleSx}>Статусы задач</Typography>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <ChartCard>
+                  <Grid item xs={12} lg={4}>
+                    <Card sx={cardSx}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Распределение задач по статусу</Typography>
+                        <ChartContainer>
+                          <ResponsiveContainer width={800} height="100%">
+                            <PieChart>
+                              <Pie data={statusData.filter((item) => item.value > 0)} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                                {statusData.filter((item) => item.value > 0).map((entry) => (
+                                  <Cell key={entry.name} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip formatter={(value) => [`${value} задач`, 'Количество']} />
+                              <Legend />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} lg={8}>
+                    <Card sx={cardSx}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Время, затраченное на задачу</Typography>
+                        <ChartContainer style={{ height: 420 }}>
+                          <ResponsiveContainer width={800} height="100%">
+                            <BarChart data={timePerTaskData} margin={{ top: 20, right: 20, left: 20, bottom: 60 }}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" interval={0} tickFormatter={(value) => (value.length > 14 ? `${value.substring(0, 11)}...` : value)} />
+                              <YAxis tickFormatter={(value) => formatTime(value)} width={90} />
+                              <Tooltip formatter={(value) => [formatTime(Number(value)), 'Затраченное время']} labelFormatter={(value) => `Задача: ${value}`} />
+                              <Bar dataKey="time" name="Затраченное время" radius={[4, 4, 0, 0]}>
+                                {timePerTaskData.map((entry) => (
+                                  <Cell key={`${entry.name}-${entry.time}`} fill={getStatusColor(entry.status)} />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h4" gutterBottom sx={sectionTitleSx}>Динамика выполнения</Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Card sx={cardSx}>
                       <CardContent>
                         <Typography variant="h5" gutterBottom>По периоду задания</Typography>
-                        {getActivityTimeline().length > 0 ? (
-                          <ResponsiveContainer width={1900} height={300}>
-                            <AreaChart data={getActivityTimeline()}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="name" />
-                              <YAxis />
-                              <Tooltip 
-                                formatter={(value, name) => [
-                                  `${value} задач`, 
-                                  name === 'completed' ? 'Завершено' : 
-                                  name === 'inProgress' ? 'В работе' : 
-                                  name === 'new' ? 'Новые' : 'Всего'
-                                ]}
-                              />
-                              <Area 
-                                type="monotone" 
-                                dataKey="completed" 
-                                stackId="1" 
-                                stroke="#4caf50" 
-                                fill="#4caf50" 
-                                name="Завершено" 
-                              />
-                              <Area 
-                                type="monotone" 
-                                dataKey="inProgress" 
-                                stackId="2" 
-                                stroke="#2196f3" 
-                                fill="#2196f3" 
-                                name="В работе" 
-                              />
-                              <Area 
-                                type="monotone" 
-                                dataKey="new" 
-                                stackId="3" 
-                                stroke="#ff9800" 
-                                fill="#ff9800" 
-                                name="Новые" 
-                              />
-                              <Legend />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                            <Typography color="textSecondary">Нет данных для отображения</Typography>
-                          </Box>
-                        )}
+                        <ResponsiveContainer width={800} height={430}>
+                          <AreaChart data={activityTimeline}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Area type="monotone" dataKey="completed" stroke={STATUS_COLORS.done} fill={STATUS_COLORS.done} name="Завершено" />
+                            <Area type="monotone" dataKey="inProgress" stroke={STATUS_COLORS.in_progress} fill={STATUS_COLORS.in_progress} name="В работе" />
+                            <Area type="monotone" dataKey="new" stroke={STATUS_COLORS.new} fill={STATUS_COLORS.new} name="Новые" />
+                            <Area type="monotone" dataKey="review" stroke={STATUS_COLORS.rew} fill={STATUS_COLORS.rew} name="На ревью" />
+                            <Area type="monotone" dataKey="failed" stroke={STATUS_COLORS.failed} fill={STATUS_COLORS.failed} name="Провалено" />
+                            <Legend />
+                          </AreaChart>
+                        </ResponsiveContainer>
                       </CardContent>
-                    </ChartCard>
+                    </Card>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <ChartCard>
+                  <Grid item xs={12}>
+                    <Card sx={cardSx}>
                       <CardContent>
                         <Typography variant="h5" gutterBottom>Последние 4 недели</Typography>
-                        {getWeeklyProgress().length > 0 ? (
-                          <ResponsiveContainer width={1000} height={300}>
-                            <AreaChart data={getWeeklyProgress()}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="name" />
-                              <YAxis />
-                              <Tooltip 
-                                formatter={(value, name) => [
-                                  `${value} задач`, 
-                                  name === 'completed' ? 'Завершено' : 'Всего'
-                                ]}
-                              />
-                              <Area 
-                                type="monotone" 
-                                dataKey="completed" 
-                                stackId="1" 
-                                stroke="#8884d8" 
-                                fill="#8884d8" 
-                                name="Завершено" 
-                              />
-                              <Area 
-                                type="monotone" 
-                                dataKey="total" 
-                                stackId="2" 
-                                stroke="#82ca9d" 
-                                fill="#82ca9d" 
-                                name="Всего задач" 
-                              />
-                              <Legend />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                            <Typography color="textSecondary">Нет данных для отображения</Typography>
-                          </Box>
-                        )}
+                        <ResponsiveContainer width={800} height={430}>
+                          <AreaChart data={weeklyProgress}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Area type="monotone" dataKey="total" stroke="#82ca9d" fill="#82ca9d" name="Всего задач" />
+                            <Area type="monotone" dataKey="completed" stroke={STATUS_COLORS.done} fill={STATUS_COLORS.done} name="Завершено" />
+                            <Area type="monotone" dataKey="review" stroke={STATUS_COLORS.rew} fill={STATUS_COLORS.rew} name="На ревью" />
+                            <Area type="monotone" dataKey="failed" stroke={STATUS_COLORS.failed} fill={STATUS_COLORS.failed} name="Провалено" />
+                            <Legend />
+                          </AreaChart>
+                        </ResponsiveContainer>
                       </CardContent>
-                    </ChartCard>
+                    </Card>
                   </Grid>
                 </Grid>
               </Box>
 
-              {/* Раздел: Производительность */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', mb: 2 }}>
-                  Производительность
-                </Typography>
                 <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <ChartCard>
+                  <Grid item xs={12} lg={8}>
+                    <Typography variant="h4" gutterBottom sx={sectionTitleSx}>Производительность</Typography>
+                    <Card sx={cardSx}>
                       <CardContent>
                         <Typography variant="h6" gutterBottom>Показатели производительности</Typography>
-                        <ResponsiveContainer width={500} height={300}>
-                          <RadarChart outerRadius={90} data={getPerformanceMetrics()}>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                          Это составная оценка по пяти осям. Ниже есть краткая расшифровка, чтобы было понятно, откуда берётся каждый коэффициент.
+                        </Typography>
+                        <ResponsiveContainer width="100%" height={380}>
+                          <RadarChart outerRadius={130} data={performanceMetrics}>
                             <PolarGrid />
                             <PolarAngleAxis dataKey="subject" />
                             <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                            <Radar 
-                              name="Производительность" 
-                              dataKey="A" 
-                              stroke="#8884d8" 
-                              fill="#8884d8" 
-                              fillOpacity={0.6} 
-                            />
+                            <Radar name="Производительность" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
                             <Legend />
                           </RadarChart>
                         </ResponsiveContainer>
+                        <Box sx={{ mt: 2, display: 'grid', gap: 1.5 }}>
+                          {performanceMetrics.map((metric) => (
+                            <Box key={metric.subject} sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#f8fafc', border: '1px solid #e6edf5' }}>
+                              <Typography variant="subtitle2" sx={{ color: '#1f3b64', fontWeight: 700 }}>
+                                {metric.subject}: {metric.A}%
+                              </Typography>
+                              <Typography variant="body2" color="textSecondary">
+                                {performanceMetricDescriptions[metric.subject]}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
                       </CardContent>
-                    </ChartCard>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} lg={4}>
+                    <Typography variant="h4" gutterBottom sx={sectionTitleSx}>Работа команды</Typography>
+                    <Card sx={cardSx}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom><PeopleIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />Исполнители и выполненные задачи</Typography>
+                        {performersData.length > 0 ? (
+                          <>
+                            <TableContainer component={Paper} sx={{ maxHeight: 430, overflowX: 'auto' }}>
+                              <Table stickyHeader size="small">
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>Исполнитель</TableCell>
+                                    <TableCell align="right">Всего</TableCell>
+                                    <TableCell align="right">Готово</TableCell>
+                                    <TableCell align="right">Ревью</TableCell>
+                                    <TableCell align="right">Провалено</TableCell>
+                                    <TableCell align="right">% эффективности</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {performersData.map((performer) => (
+                                    <TableRow key={performer.name} hover>
+                                      <TableCell>
+                                        <Box display="flex" alignItems="center">
+                                          <Avatar sx={{ width: 24, height: 24, mr: 1 }}>{performer.name.charAt(0).toUpperCase()}</Avatar>
+                                          {performer.name}
+                                        </Box>
+                                      </TableCell>
+                                      <TableCell align="right">{performer.total}</TableCell>
+                                      <TableCell align="right"><Box color="success.main">{performer.completed}</Box></TableCell>
+                                      <TableCell align="right"><Box color="info.main">{performer.review}</Box></TableCell>
+                                      <TableCell align="right"><Box color="error.main">{performer.failed}</Box></TableCell>
+                                      <TableCell align="right" sx={{ minWidth: 140 }}>
+                                        <LinearProgress
+                                          variant="determinate"
+                                          value={performer.completionRate}
+                                          color={performer.completionRate > 75 ? 'success' : performer.completionRate > 50 ? 'warning' : 'error'}
+                                          sx={{ height: 8, borderRadius: 4 }}
+                                        />
+                                        <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                          {performer.completionRate}%
+                                        </Typography>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                            <Box mt={2} display="flex" gap={1} flexWrap="wrap">
+                              <Chip label={`Всего: ${performersData.reduce((sum, p) => sum + p.total, 0)}`} size="small" />
+                              <Chip label={`Ревью: ${performersData.reduce((sum, p) => sum + p.review, 0)}`} size="small" color="warning" />
+                              <Chip label={`Провалено: ${performersData.reduce((sum, p) => sum + p.failed, 0)}`} size="small" color="error" />
+                            </Box>
+                          </>
+                        ) : (
+                          <Box display="flex" justifyContent="center" alignItems="center" height={220}>
+                            <Typography color="textSecondary">Нет данных об исполнителях</Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
                   </Grid>
                 </Grid>
               </Box>
@@ -1590,6 +1041,6 @@ const getActivityTimeline = () => {
       </ScrollableContainer>
     </PageContainer>
   );
-};
+}
 
 export default Dashboard;
