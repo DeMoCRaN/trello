@@ -16,6 +16,7 @@ function SelectedAssignmentDetails({
   timers,
   formatTime,
   activeTasks = [],
+  reviewTasks = [],
   archivedTasks = [],
   failedTasks = []
 }) {
@@ -25,7 +26,9 @@ function SelectedAssignmentDetails({
     'new': 'Новые',
     'in_progress': 'В работе',
     'done': 'Завершённые',
-    'failed': 'Проваленные'
+    'failed': 'Проваленные',
+    'rew': 'На ревью',
+    'other': 'Прочее',
   };
 
 
@@ -56,10 +59,36 @@ function SelectedAssignmentDetails({
     }
   };
 
+  const handleFailTask = async (taskId, reason) => {
+    try {
+      await onStatusChange(taskId, {
+        status_id: 4,
+        failed_reason: reason,
+      });
+    } catch (error) {
+      console.error('Ошибка провала задачи:', error);
+      alert(error.message);
+    }
+  };
+
+  const handleRestoreTask = async (taskId, restoreData) => {
+    try {
+      await onStatusChange(taskId, {
+        status_id: 1,
+        title: restoreData.title,
+        deadline: restoreData.deadline,
+      });
+    } catch (error) {
+      console.error('Ошибка восстановления задачи:', error);
+      alert(error.message);
+    }
+  };
+
   const groupTasksByStatus = (tasks) => {
     const grouped = {
       'new': [],
       'in_progress': [],
+      'rew': [],
       'done': [],
     };
     
@@ -68,7 +97,7 @@ function SelectedAssignmentDetails({
       if (grouped[statusKey]) {
         grouped[statusKey].push(task);
       } else {
-        // Неизвестный статус показывать как "other"
+        // Неизвестный статус показываем как "other"
         if (!grouped['other']) grouped['other'] = [];
         grouped['other'].push(task);
       }
@@ -77,7 +106,13 @@ function SelectedAssignmentDetails({
     return grouped;
   };
 
-  const currentTasks = activeTab === 'active' ? activeTasks : activeTab === 'archived' ? archivedTasks : failedTasks;
+  const currentTasks = activeTab === 'active'
+    ? activeTasks.filter(task => task.status !== 'rew')
+    : activeTab === 'review'
+      ? reviewTasks
+      : activeTab === 'archived'
+        ? archivedTasks.filter(task => task.status !== 'rew')
+        : failedTasks;
   const groupedTasks = groupTasksByStatus(currentTasks);
   const orderedStatuses = Object.keys(groupedTasks);
 
@@ -92,6 +127,12 @@ function SelectedAssignmentDetails({
           onClick={() => setActiveTab('active')}
         >
           Активные задачи ({activeTasks.length})
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'review' ? 'active' : ''}`}
+          onClick={() => setActiveTab('review')}
+        >
+          На ревью ({reviewTasks?.length || 0})
         </button>
         <button 
           className={`tab-button ${activeTab === 'archived' ? 'active' : ''}`}
@@ -111,8 +152,10 @@ function SelectedAssignmentDetails({
         {orderedStatuses.map(statusKey => (
           <div key={statusKey} className="tasks-column">
             <h3>
-              {statusTranslations[statusKey] || statusKey}
-{activeTab === 'archived' && ' (Архив)'}{activeTab === 'failed' && ' (Провалено)'}
+              {activeTab === 'failed'
+                ? 'Проваленные'
+                : statusTranslations[statusKey] || statusKey}
+              {activeTab === 'archived' && ' (Архив)'}
             </h3>
             
             {groupedTasks[statusKey].length > 0 ? (
@@ -128,8 +171,9 @@ function SelectedAssignmentDetails({
                   onStopWork={onStopWork}
                   onResumeWork={onResumeWork}
                   onCompleteWork={handleCompleteWork}
-onFail={async (taskId) => await handleStatusChange(taskId, 4)}
-userId={1}
+                  onFail={handleFailTask}
+                  onRestore={handleRestoreTask}
+                  isProjectAuthor={true}
                   creatorName={task.creator_name || task.creator_id}
                   assigneeName={task.assignee_name || task.assignee_id}
                   createdAt={task.created_at}
@@ -137,11 +181,12 @@ userId={1}
                   timer={timers[task.id]}
                   formatTime={formatTime}
                   isArchived={activeTab === 'archived'}
+                  activeTab={activeTab}
                 />
               ))
             ) : (
               <p className="no-tasks-message">
-                {activeTab === 'archived' ? 'Нет архивных задач' : activeTab === 'failed' ? 'Нет проваленных задач' : 'Нет задач'}
+                {activeTab === 'archived' ? 'Нет архивных задач' : activeTab === 'failed' ? 'Нет проваленных задач' : activeTab === 'review' ? 'Нет задач на ревью' : 'Нет задач'}
               </p>
             )}
           </div>

@@ -78,7 +78,7 @@ function MainPage({ userEmail }) {
   // eslint-disable-next-line no-unused-vars
   const failedInvitations = invitations.filter(inv => inv.status === 'failed');
 
-  const processTasks = (tasks) => {
+  const processTasks = useCallback((tasks) => {
     return tasks.map(task => ({
       ...task,
       status: statuses.find(s => s.id === task.status_id)?.name || 'new',
@@ -91,7 +91,7 @@ function MainPage({ userEmail }) {
       created_at: task.created_at || new Date().toISOString(),
       createdAt: task.created_at || task.createdAt || new Date().toISOString()
     }));
-  };
+  }, [statuses, priorities]);
 
   const fetchAssignments = useCallback(async () => {
     try {
@@ -129,7 +129,7 @@ function MainPage({ userEmail }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedAssignment, statuses, priorities]);
+  }, [selectedAssignment]);
 
   const fetchAssignedTasks = useCallback(async () => {
     const now = Date.now();
@@ -174,7 +174,7 @@ function MainPage({ userEmail }) {
     } finally {
       setLoadingAssignedTasks(false);
     }
-  }, [lastFetchTime, statuses, priorities]);
+  }, [lastFetchTime, processTasks]);
 
   const fetchComments = useCallback(async () => {
     try {
@@ -352,6 +352,7 @@ function MainPage({ userEmail }) {
     };
 
     loadInitialData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -543,18 +544,21 @@ function MainPage({ userEmail }) {
     }
   }, [fetchAssignments, fetchAssignedTasks]);
 
-  const handleStatusChange = useCallback(async (taskId, newStatusId) => {
+  const handleStatusChange = useCallback(async (taskId, statusPayload) => {
     setStatusChangeLoading(prev => ({ ...prev, [taskId]: true }));
     
     try {
       const token = localStorage.getItem('token');
+      const requestBody = typeof statusPayload === 'object'
+        ? statusPayload
+        : { status_id: statusPayload };
       const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ status_id: newStatusId }),
+        body: JSON.stringify(requestBody),
       });
       
       if (!response.ok) {
@@ -728,72 +732,84 @@ function MainPage({ userEmail }) {
                 </div>
               </div>
             ) : (
-              <SelectedAssignmentDetails
-                selectedAssignment={selectedAssignment}
-                statuses={statuses}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDeleteTask}
-                onDetails={handleShowDetails}
-                assignedTasks={assignedTasks}
-                loadingAssignedTasks={loadingAssignedTasks}
-                currentTab={currentTab}
-                statusChangeLoading={statusChangeLoading}
-                timers={timers}
-                formatTime={formatTime}
-                activeTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived && task.status !== 'failed') || []}
-                archivedTasks={selectedAssignment?.tasks?.filter(task => task.isArchived) || []}
-                failedTasks={selectedAssignment?.tasks?.filter(task => task.status === 'failed') || []}
-                onStartWork={async (taskId) => {
-                  try {
-                    const token = localStorage.getItem('token');
-                    if (!token) throw new Error('User not logged in');
-                    const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                      method: 'PATCH',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer ' + token,
-                      },
-                      body: JSON.stringify({ status_id: 2, action: 'start' }),
-                    });
-                    if (!response.ok) {
-                      const errorText = await response.text();
-                      throw new Error('Failed to start work: ' + errorText);
+              <>
+                <SelectedAssignmentDetails
+                  selectedAssignment={selectedAssignment}
+                  statuses={statuses}
+                  onStatusChange={handleStatusChange}
+                  onDelete={handleDeleteTask}
+                  onDetails={handleShowDetails}
+                  assignedTasks={assignedTasks}
+                  loadingAssignedTasks={loadingAssignedTasks}
+                  currentTab={currentTab}
+                  statusChangeLoading={statusChangeLoading}
+                  timers={timers}
+                  formatTime={formatTime}
+                  activeTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived && task.status !== 'failed' && task.status !== 'rew') || []}
+                  reviewTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived && task.status === 'rew') || []}
+                  archivedTasks={selectedAssignment?.tasks?.filter(task => task.isArchived) || []}
+                  failedTasks={selectedAssignment?.tasks?.filter(task => !task.isArchived && task.status === 'failed') || []}
+                  onStartWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: 'Bearer ' + token,
+                        },
+                        body: JSON.stringify({ status_id: 2, action: 'start' }),
+                      });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to start work: ' + errorText);
+                      }
+                      await Promise.all([
+                        fetchAssignments(),
+                        fetchAssignedTasks()
+                      ]);
+                      window.dispatchEvent(new Event('taskUpdated'));
+                    } catch (err) {
+                      alert(err.message);
                     }
-                    await Promise.all([
-                      fetchAssignments(),
-                      fetchAssignedTasks()
-                    ]);
-                    window.dispatchEvent(new Event('taskUpdated'));
-                  } catch (err) {
-                    alert(err.message);
-                  }
-                }}
-                onCompleteWork={async (taskId) => {
-                  try {
-                    const token = localStorage.getItem('token');
-                    if (!token) throw new Error('User not logged in');
-                    const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
-                      method: 'PATCH',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer ' + token,
-                      },
-                      body: JSON.stringify({ status_id: 3, action: 'done' }),
-                    });
-                    if (!response.ok) {
-                      const errorText = await response.text();
-                      throw new Error('Failed to complete work: ' + errorText);
+                  }}
+                  onCompleteWork={async (taskId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) throw new Error('User not logged in');
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: 'Bearer ' + token,
+                        },
+                        body: JSON.stringify({ status_id: 3, action: 'done' }),
+                      });
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error('Failed to complete work: ' + errorText);
+                      }
+                      await Promise.all([
+                        fetchAssignments(),
+                        fetchAssignedTasks()
+                      ]);
+                      window.dispatchEvent(new Event('taskUpdated'));
+                    } catch (err) {
+                      alert(err.message);
                     }
-                    await Promise.all([
-                      fetchAssignments(),
-                      fetchAssignedTasks()
-                    ]);
-                    window.dispatchEvent(new Event('taskUpdated'));
-                  } catch (err) {
-                    alert(err.message);
-                  }
-                }}
-              />
+                  }}
+                />
+                {showDetailsForm && detailsFormTask && (
+                  <div className="details-form-container">
+                    <TaskDetailsForm
+                      task={detailsFormTask}
+                      onClose={handleCloseDetails}
+                      token={localStorage.getItem('token')}
+                    />
+                  </div>
+                )}
+              </>
             )}
             
             <div className="floating-buttons-group">

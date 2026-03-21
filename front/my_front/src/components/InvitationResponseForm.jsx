@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { FiX, FiCheck } from 'react-icons/fi';
 import './InvitationResponseForm.css';
@@ -9,6 +8,7 @@ function InvitationResponseForm({ invitation, onClose, onRespond }) {
 
   const handleRespond = async (status) => {
     setIsSubmitting(true);
+
     try {
       await onRespond(invitation.id, status);
       onClose();
@@ -33,7 +33,7 @@ function InvitationResponseForm({ invitation, onClose, onRespond }) {
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         className="invitation-response-form"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
         <div className="invitation-response-header">
           <h3>Приглашение в проект</h3>
@@ -56,7 +56,7 @@ function InvitationResponseForm({ invitation, onClose, onRespond }) {
             <div className="invitation-meta">
               <p><strong>Пригласил:</strong> {invitation.invited_by_name}</p>
               <p><strong>Email пригласившего:</strong> {invitation.invited_by_email}</p>
-              <p><strong>Дата приглашения:</strong> {new Date(invitation.invited_at).toLocaleString()}</p>
+              <p><strong>Дата приглашения:</strong> {new Date(invitation.invited_at).toLocaleString('ru-RU')}</p>
             </div>
           </div>
 

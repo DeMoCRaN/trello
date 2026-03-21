@@ -175,11 +175,13 @@ const DeadlineCalendar = ({ events }) => {
         onMouseEnter={() => setHoveredEvent(event)}
         onMouseLeave={() => setHoveredEvent(null)}
         style={{
-          backgroundColor: event.overdue 
-            ? '#ff6b6b' 
-            : event.status === 'done' 
-              ? '#4caf50' 
-              : '#1976d2',
+            backgroundColor: event.overdue 
+              ? '#ff6b6b' 
+              : event.status === 'done' 
+                ? '#4caf50' 
+                : event.status === 'rew'
+                  ? '#ff9800'
+                  : '#1976d2',
           color: 'white',
           border: '0px',
           borderRadius: '4px',
@@ -356,7 +358,9 @@ const CustomShowMore = ({ date, events }) => {
               ? '#ff6b6b' 
               : event.status === 'done' 
                 ? '#4caf50' 
-                : '#1976d2',
+                : event.status === 'rew'
+                  ? '#ff9800'
+                  : '#1976d2',
             color: 'white',
             borderRadius: '4px',
             border: 'none'
@@ -376,6 +380,8 @@ const getStatusById = (id) => {
     case 1: return 'new';
     case 2: return 'in_progress';
     case 3: return 'done';
+    case 4: return 'failed';
+    case 5: return 'rew';
     default: return 'unknown';
   }
 };
@@ -476,7 +482,7 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
       const data = await response.json();
       const processedTasks = data.map(task => ({
         ...task,
-        status: getStatusById(Number(task.status_id)),
+        status: task.status || getStatusById(Number(task.status_id)),
         priority: getPriorityById(Number(task.priority_id)),
         work_duration: Number(task.work_duration) || 0,
         due_date: task.deadline || new Date().toISOString(),
@@ -547,6 +553,7 @@ const Dashboard = ({ userEmail: propUserEmail }) => {
   const completedTasks = filteredTasks.filter(task => task.status === 'done').length;
   const inProgressTasks = filteredTasks.filter(task => task.status === 'in_progress').length;
   const notStartedTasks = filteredTasks.filter(task => task.status === 'new').length;
+  const reviewTasks = filteredTasks.filter(task => task.status === 'rew').length;
   const overdueTasks = filteredTasks.filter(task => new Date(task.due_date) < new Date() && task.status !== 'done').length;
 
   // Получение данных для календаря
@@ -670,6 +677,7 @@ const DeadlineChart = ({ data = [] }) => {
                     fill={
                       entry.overdue ? '#f44336' :
                       entry.status === 'done' ? '#4caf50' :
+                      entry.status === 'rew' ? '#ff9800' :
                       '#2196f3'
                     }
                   />
@@ -733,6 +741,7 @@ const getActivityTimeline = () => {
     const weekCompleted = weekTasks.filter(task => task.status === 'done').length;
     const weekInProgress = weekTasks.filter(task => task.status === 'in_progress').length;
     const weekNew = weekTasks.filter(task => task.status === 'new').length;
+    const weekReview = weekTasks.filter(task => task.status === 'rew').length;
     
     weeks.push({
       name: moment(currentWeekStart).format('DD MMM'),
@@ -741,7 +750,8 @@ const getActivityTimeline = () => {
       total: weekTasks.length,
       completed: weekCompleted,
       inProgress: weekInProgress,
-      new: weekNew
+      new: weekNew,
+      review: weekReview
     });
     
     currentWeekStart = new Date(currentWeekEnd);
@@ -789,7 +799,8 @@ const getActivityTimeline = () => {
           total: 0,
           completed: 0,
           inProgress: 0,
-          new: 0
+          new: 0,
+          review: 0
         };
       }
       acc[task.assignee_email].total++;
@@ -798,6 +809,8 @@ const getActivityTimeline = () => {
         acc[task.assignee_email].completed++;
       } else if (task.status === 'in_progress') {
         acc[task.assignee_email].inProgress++;
+      } else if (task.status === 'rew') {
+        acc[task.assignee_email].review++;
       } else if (task.status === 'new') {
         acc[task.assignee_email].new++;
       }
@@ -844,7 +857,7 @@ const getActivityTimeline = () => {
     time: Number(task.work_duration) || 0
   }));
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+  const COLORS = ['#0088FE', '#00C49F', '#FF9800', '#FFBB28'];
 
   const getPerformanceMetrics = () => {
     const efficiency = completionPercentage;

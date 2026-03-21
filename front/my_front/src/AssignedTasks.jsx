@@ -278,6 +278,7 @@ function AssignedTasks({ userEmail }) {
     const groups = {
       new: [],
       in_progress: [],
+      rew: [],
       done: [],
     };
 
@@ -365,7 +366,11 @@ function AssignedTasks({ userEmail }) {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + token,
         },
-        body: JSON.stringify({ status_id: statusId, action }),
+        body: JSON.stringify(
+          statusId
+            ? { status_id: statusId, action }
+            : { status_name: action, action }
+        ),
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -593,12 +598,12 @@ const renderTaskCard = useCallback((task) => {
               {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
             </button>
             <button
-              onClick={() => updateTaskStatus(task.id, 3, 'done')}
+              onClick={() => updateTaskStatus(task.id, 5, 'rew')}
               disabled={updatingTaskId === task.id}
               className="task-button complete-button"
               style={{ order: 4 }}
             >
-              {updatingTaskId === task.id ? 'Завершение...' : 'Завершить'}
+              {updatingTaskId === task.id ? 'Отправка...' : 'На ревью'}
             </button>
           </>
         )}
@@ -723,6 +728,7 @@ const renderTaskCard = useCallback((task) => {
                 <h3 className="status-header">
                   {status === 'new' ? 'Новые' : 
                    status === 'in_progress' ? 'В работе' : 
+                   status === 'rew' ? 'На ревью' :
                    'Завершённые'}
                 </h3>
                 {tasksList.length === 0 ? (

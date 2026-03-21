@@ -105,7 +105,7 @@ async function updateTaskStatusWithAudit(pool, taskId, statusId, action = null, 
         params.push(newDuration);
         paramIndex++;
       }
-    } else if (validatedStatusId === 3 && task.in_progress_since) { // done
+    } else if (task.in_progress_since) {
       const elapsedMs = now - new Date(task.in_progress_since);
       const newDuration = (task.work_duration || 0) + Math.floor(elapsedMs / 1000);
       query += `, in_progress_since = NULL, work_duration = $${paramIndex}`;
@@ -313,12 +313,88 @@ async function deleteTaskWithAudit(pool, taskId, permanent = false, currentUserI
     const taskType = taskCheck.rows[0].type;
 
     if (taskType === 'active' && !permanent) {
+      const activeTaskResult = await safeQuery(client,
+        `SELECT
+           id,
+           assignment_id,
+           title,
+           description,
+           deadline,
+           creator_id,
+           assignee_id,
+           status_id,
+           priority_id,
+           created_at,
+           updated_at,
+           seen_at,
+           in_progress_since,
+           work_duration,
+           progress_percentage,
+           failed_reason,
+           failed_at
+         FROM tasks
+         WHERE id = $1`,
+        [validatedId]
+      );
+
+      const activeTask = activeTaskResult.rows[0];
+
+      if (activeTask && Number(activeTask.status_id) === 4) {
+        await safeQuery(client,
+          `INSERT INTO deleted_failed_tasks (
+             original_task_id,
+             assignment_id,
+             title,
+             description,
+             deadline,
+             creator_id,
+             assignee_id,
+             status_id,
+             priority_id,
+             created_at,
+             updated_at,
+             seen_at,
+             in_progress_since,
+             work_duration,
+             progress_percentage,
+             failed_reason,
+             failed_at,
+             deleted_at
+           )
+           VALUES (
+             $1, $2, $3, $4, $5, $6, $7, $8, $9,
+             $10, $11, $12, $13, $14, $15, $16, $17, NOW()
+           )`,
+          [
+            activeTask.id,
+            activeTask.assignment_id,
+            activeTask.title,
+            activeTask.description,
+            activeTask.deadline,
+            activeTask.creator_id,
+            activeTask.assignee_id,
+            activeTask.status_id,
+            activeTask.priority_id,
+            activeTask.created_at,
+            activeTask.updated_at,
+            activeTask.seen_at,
+            activeTask.in_progress_since,
+            activeTask.work_duration,
+            activeTask.progress_percentage,
+            activeTask.failed_reason || null,
+            activeTask.failed_at || null
+          ]
+        );
+
+        await safeQuery(client, 'DELETE FROM tasks WHERE id = $1', [validatedId]);
+      } else {
         await safeQuery(client,
           `INSERT INTO archived_tasks (id, assignment_id, title, description, deadline, creator_id, assignee_id, status_id, priority_id, created_at, updated_at, seen_at, in_progress_since, work_duration, progress_percentage, deleted_at)
            SELECT id, assignment_id, title, description, deadline, creator_id, assignee_id, status_id, priority_id, created_at, updated_at, seen_at, in_progress_since, work_duration, progress_percentage, NOW() FROM tasks WHERE id = $1`,
           [validatedId]
         );
-      await safeQuery(client, 'DELETE FROM tasks WHERE id = $1', [validatedId]);
+        await safeQuery(client, 'DELETE FROM tasks WHERE id = $1', [validatedId]);
+      }
     } else {
       await safeQuery(client, 'DELETE FROM task_comments WHERE task_id = $1', [validatedId]);
       await safeQuery(client,

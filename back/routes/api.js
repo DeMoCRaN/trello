@@ -20,6 +20,77 @@ const pool = new Pool({
 
 const router = express.Router();
 
+const DELETED_FAILED_FULL_PENALTY_DAYS = 30;
+const DELETED_FAILED_DECAY_STEP_DAYS = 3;
+const DELETED_FAILED_DECAY_STEP = 0.05;
+
+async function ensureDeletedFailedTasksTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS deleted_failed_tasks (
+      id SERIAL PRIMARY KEY,
+      original_task_id integer,
+      assignment_id integer,
+      title character varying(255) NOT NULL,
+      description text,
+      deadline timestamp without time zone,
+      creator_id integer NOT NULL,
+      assignee_id integer,
+      status_id integer NOT NULL,
+      priority_id integer NOT NULL,
+      created_at timestamp without time zone,
+      updated_at timestamp without time zone,
+      seen_at timestamp without time zone,
+      in_progress_since timestamp without time zone,
+      work_duration integer DEFAULT 0,
+      progress_percentage double precision DEFAULT 0,
+      failed_reason text,
+      failed_at timestamp without time zone,
+      deleted_at timestamp without time zone DEFAULT now()
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_deleted_failed_tasks_assignee_id
+    ON deleted_failed_tasks (assignee_id)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_deleted_failed_tasks_creator_id
+    ON deleted_failed_tasks (creator_id)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_deleted_failed_tasks_deleted_at
+    ON deleted_failed_tasks (deleted_at)
+  `);
+}
+
+function getDeletedFailedTaskWeight(deletedAt, canDecay) {
+  if (!deletedAt) {
+    return 1;
+  }
+
+  if (!canDecay) {
+    return 1;
+  }
+
+  const deletedDate = new Date(deletedAt);
+  const daysSinceDeletion = Math.max(
+    0,
+    Math.floor((Date.now() - deletedDate.getTime()) / (1000 * 60 * 60 * 24))
+  );
+
+  if (daysSinceDeletion <= DELETED_FAILED_FULL_PENALTY_DAYS) {
+    return 1;
+  }
+
+  const decayPeriods = Math.floor(
+    (daysSinceDeletion - DELETED_FAILED_FULL_PENALTY_DAYS) / DELETED_FAILED_DECAY_STEP_DAYS
+  );
+
+  return Math.max(0, 1 - (decayPeriods * DELETED_FAILED_DECAY_STEP));
+}
+
 // Middleware для проверки аутентификации
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -522,26 +593,36 @@ router.get('/users/:id/metrics', authenticateToken, validateIdParam, async (req,
     // Получаем статистику по задачам пользователя
     const tasksStats = await pool.query(`
       SELECT 
-COUNT(*) as total_tasks,
-        COUNT(CASE WHEN status_id = 3 THEN 1 END) as completed_tasks,
-        COUNT(CASE WHEN status_id = 2 THEN 1 END) as in_progress_tasks,
-        COUNT(CASE WHEN status_id = 1 THEN 1 END) as new_tasks,
-        COUNT(CASE WHEN status_id = 4 THEN 1 END) as failed_tasks,
-        COUNT(CASE WHEN deadline < NOW() AND status_id != 3 AND status_id != 4 THEN 1 END) as overdue_tasks,
+        COUNT(CASE WHEN ts.name != 'rew' THEN 1 END) as total_tasks,
+        COUNT(CASE WHEN ts.name = 'done' THEN 1 END) as completed_tasks,
+        COUNT(CASE WHEN ts.name = 'in_progress' THEN 1 END) as in_progress_tasks,
+        COUNT(CASE WHEN ts.name = 'new' THEN 1 END) as new_tasks,
+        COUNT(CASE WHEN ts.name = 'failed' THEN 1 END) as failed_tasks,
+        COUNT(CASE WHEN ts.name = 'rew' THEN 1 END) as review_tasks,
+        COUNT(CASE WHEN deadline < NOW() AND ts.name NOT IN ('done', 'failed', 'rew') THEN 1 END) as overdue_tasks,
         COALESCE(SUM(work_duration), 0) as total_work_time,
         COALESCE(AVG(work_duration), 0) as avg_work_time
-      FROM tasks 
-      WHERE assignee_id = $1 OR creator_id = $1
+      FROM tasks t
+      LEFT JOIN task_statuses ts ON t.status_id = ts.id
+      WHERE t.assignee_id = $1 OR t.creator_id = $1
     `, [userId]);
 
     // Получаем статистику по архивным задачам
-  const archivedStats = await pool.query(`
+    const archivedStats = await pool.query(`
       SELECT 
-        COUNT(*) as archived_tasks,
-        COUNT(CASE WHEN status_id = 3 THEN 1 END) as archived_completed,
-        COUNT(CASE WHEN status_id = 4 THEN 1 END) as archived_failed,
-        COUNT(CASE WHEN status_id != 3 AND status_id != 4 THEN 1 END) as archived_not_done
-      FROM archived_tasks 
+        COUNT(CASE WHEN ts.name != 'rew' THEN 1 END) as archived_tasks,
+        COUNT(CASE WHEN ts.name = 'done' THEN 1 END) as archived_completed,
+        COUNT(CASE WHEN ts.name = 'failed' THEN 1 END) as archived_failed,
+        COUNT(CASE WHEN ts.name = 'rew' THEN 1 END) as archived_review,
+        COUNT(CASE WHEN ts.name NOT IN ('done', 'failed', 'rew') THEN 1 END) as archived_not_done
+      FROM archived_tasks at
+      LEFT JOIN task_statuses ts ON at.status_id = ts.id
+      WHERE at.assignee_id = $1 OR at.creator_id = $1
+    `, [userId]);
+
+    const deletedFailedStats = await pool.query(`
+      SELECT deleted_at
+      FROM deleted_failed_tasks
       WHERE assignee_id = $1 OR creator_id = $1
     `, [userId]);
 
@@ -555,19 +636,43 @@ COUNT(*) as total_tasks,
       return res.status(404).json({ message: 'Пользователь не найден' });
     }
 
+    const activeTotal = parseInt(tasksStats.rows[0].total_tasks || 0);
+    const archivedTotal = parseInt(archivedStats.rows[0].archived_tasks || 0);
+    const completedTotal =
+      parseInt(tasksStats.rows[0].completed_tasks || 0) +
+      parseInt(archivedStats.rows[0].archived_completed || 0);
+    const visibleFailedTotal =
+      parseInt(tasksStats.rows[0].failed_tasks || 0) +
+      parseInt(archivedStats.rows[0].archived_failed || 0);
+    const deletedFailedCount = deletedFailedStats.rows.length;
+    const totalFailedForDecay = visibleFailedTotal + deletedFailedCount;
+    const canDecayDeletedFailed = totalFailedForDecay < 10;
+    const deletedFailedPenalty = deletedFailedStats.rows.reduce((sum, row) => (
+      sum + getDeletedFailedTaskWeight(row.deleted_at, canDecayDeletedFailed)
+    ), 0);
+    const actualTotal = activeTotal + archivedTotal + deletedFailedCount;
+    const effectiveTotal = activeTotal + archivedTotal + deletedFailedPenalty;
+    const completionRate = effectiveTotal > 0
+      ? Math.round((completedTotal / effectiveTotal) * 100)
+      : 0;
+
     const metrics = {
       user: userResult.rows[0],
       tasks: {
-        total: parseInt(tasksStats.rows[0].total_tasks),
-        completed: parseInt(tasksStats.rows[0].completed_tasks) + parseInt(archivedStats.rows[0].archived_completed),
+        total: actualTotal,
+        completed: completedTotal,
         inProgress: parseInt(tasksStats.rows[0].in_progress_tasks),
         new: parseInt(tasksStats.rows[0].new_tasks),
+        review: parseInt(tasksStats.rows[0].review_tasks || 0) + parseInt(archivedStats.rows[0].archived_review || 0),
         overdue: parseInt(tasksStats.rows[0].overdue_tasks),
-        archived: parseInt(archivedStats.rows[0].archived_tasks)
+        archived: archivedTotal
       },
-performance: {
-        completionRate: parseInt(tasksStats.rows[0].total_tasks || 0) > 0 ? Math.round((parseInt(tasksStats.rows[0].completed_tasks || 0) / parseInt(tasksStats.rows[0].total_tasks || 0)) * 100) : 0,
-        failedTasks: parseInt(tasksStats.rows[0].failed_tasks || 0) + parseInt(archivedStats.rows[0].archived_failed || 0),
+      performance: {
+        completionRate,
+        failedTasks: visibleFailedTotal + deletedFailedCount,
+        deletedFailedTasks: deletedFailedCount,
+        effectiveTotal: Math.round(effectiveTotal * 100) / 100,
+        deletedFailedPenalty: Math.round(deletedFailedPenalty * 100) / 100,
         totalWorkTime: parseInt(tasksStats.rows[0].total_work_time),
         avgWorkTime: Math.round(parseFloat(tasksStats.rows[0].avg_work_time))
       }
@@ -587,20 +692,34 @@ router.patch('/tasks/:id/status', authenticateToken, validateIdParam, async (req
   try {
     console.log('PATCH /tasks/:id/status called with params:', req.params, 'body:', req.body);
     const taskId = parseInt(req.params.id, 10);
-    const { status_id, title, deadline, failed_reason, action } = req.body;
-    
-    if (!status_id) {
-      return res.status(400).json({ error: 'status_id is required' });
+    const { status_id, status_name, title, deadline, failed_reason, action } = req.body;
+    let resolvedStatusId = status_id;
+
+    if (!resolvedStatusId && status_name) {
+      const statusResult = await pool.query(
+        'SELECT id FROM task_statuses WHERE name = $1 LIMIT 1',
+        [status_name]
+      );
+
+      if (statusResult.rows.length === 0) {
+        return res.status(400).json({ error: `Unknown status_name: ${status_name}` });
+      }
+
+      resolvedStatusId = statusResult.rows[0].id;
+    }
+
+    if (!resolvedStatusId) {
+      return res.status(400).json({ error: 'status_id or status_name is required' });
     }
     
-    let updatedTask = await tasksController.updateTaskStatus(pool, taskId, status_id, action, req.user.userId);
+    let updatedTask = await tasksController.updateTaskStatus(pool, taskId, resolvedStatusId, action, req.user.userId);
     
     // Update title and deadline if provided
     if (title || deadline !== undefined) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        const updateQuery = 'UPDATE tasks SET ';
+        let updateQuery = 'UPDATE tasks SET ';
         const params = [];
         let paramIndex = 1;
         
@@ -630,10 +749,15 @@ router.patch('/tasks/:id/status', authenticateToken, validateIdParam, async (req
     }
     
     // Save failed reason if provided
-    if (failed_reason && status_id === 4) {
+    if (failed_reason && Number(resolvedStatusId) === 4) {
       await pool.query(
         'UPDATE tasks SET failed_reason = $1, failed_at = NOW() WHERE id = $2',
         [failed_reason, taskId]
+      );
+    } else if (Number(resolvedStatusId) !== 4) {
+      await pool.query(
+        'UPDATE tasks SET failed_reason = NULL, failed_at = NULL WHERE id = $1',
+        [taskId]
       );
     }
     
@@ -896,5 +1020,8 @@ router.get('/repositories/:id/branches', authenticateToken, validateIdParam, asy
 });
 
 module.exports = (app) => {
+  ensureDeletedFailedTasksTable().catch((error) => {
+    console.error('Не удалось подготовить таблицу deleted_failed_tasks:', error);
+  });
   app.use('/api', router);
 };

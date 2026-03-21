@@ -1,8 +1,22 @@
 import React, { useEffect, useState } from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiBell, FiX, FiChevronDown, FiChevronUp, FiMessageSquare } from 'react-icons/fi';
 import './TaskNotification.css';
+
+function getCountLabel(count, one, few, many) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${count} ${one}`;
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${count} ${few}`;
+  }
+
+  return `${count} ${many}`;
+}
 
 function TaskNotification({
   tasks = [],
@@ -11,16 +25,16 @@ function TaskNotification({
   onClose,
   onTaskClick,
   onCommentClick,
-  onInvitationClick
+  onInvitationClick,
 }) {
   const [visible, setVisible] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isBellRinging, setIsBellRinging] = useState(false);
   const [activeTab, setActiveTab] = useState('tasks');
 
-  const newTasks = tasks?.filter(task => task?.status === 'new') || [];
-  const newComments = comments?.filter(comment => comment?.is_new) || [];
-  const pendingInvitations = invitations?.filter(inv => inv?.status === 'pending') || [];
+  const newTasks = tasks?.filter((task) => task?.status === 'new') || [];
+  const newComments = comments?.filter((comment) => comment?.is_new) || [];
+  const pendingInvitations = invitations?.filter((invitation) => invitation?.status === 'pending') || [];
 
   useEffect(() => {
     if (pendingInvitations.length > 0) {
@@ -35,46 +49,80 @@ function TaskNotification({
   const hasNotifications = newTasks.length > 0 || newComments.length > 0 || pendingInvitations.length > 0;
 
   const notificationPriority = () => {
-    if (newTasks.some(t => t.priority === 'high')) return 'high';
-    if (newComments.length > 0) return 'medium';
-    if (newTasks.some(t => t.priority === 'medium')) return 'medium';
+    if (newTasks.some((task) => task.priority === 'high')) {
+      return 'high';
+    }
+
+    if (newComments.length > 0) {
+      return 'medium';
+    }
+
+    if (newTasks.some((task) => task.priority === 'medium')) {
+      return 'medium';
+    }
+
     return 'low';
   };
 
   useEffect(() => {
     setVisible(hasNotifications);
+
     if (hasNotifications && !isBellRinging) {
       setIsBellRinging(true);
-
-      // Stop bell animation after 5 seconds
       const timer = setTimeout(() => setIsBellRinging(false), 5000);
-
       return () => clearTimeout(timer);
-    } else if (!hasNotifications) {
+    }
+
+    if (!hasNotifications) {
       setIsBellRinging(false);
     }
+
+    return undefined;
   }, [hasNotifications, isBellRinging]);
 
-  const handleClose = (e) => {
-    e.stopPropagation();
-    setVisible(false);
-    onClose?.();
-  };
-
-  const handleTaskClick = (e, taskId) => {
-    e.stopPropagation();
-    onTaskClick?.(taskId);
-  };
-
-  const handleCommentClick = (e, comment) => {
-    e.stopPropagation();
-    onCommentClick?.(comment);
-  };
-
-  if (!visible || !hasNotifications) return null;
+  if (!visible || !hasNotifications) {
+    return null;
+  }
 
   const priority = notificationPriority();
   const priorityClass = `notification-${priority}`;
+  const tasksLabel = getCountLabel(newTasks.length, 'новая задача', 'новые задачи', 'новых задач');
+  const commentsLabel = getCountLabel(newComments.length, 'новый комментарий', 'новых комментария', 'новых комментариев');
+  const invitationsLabel = getCountLabel(pendingInvitations.length, 'новое приглашение', 'новых приглашения', 'новых приглашений');
+
+  const title = (() => {
+    if (newTasks.length > 0 && newComments.length > 0 && pendingInvitations.length > 0) {
+      return 'Новые задачи, комментарии и приглашения';
+    }
+
+    if (newTasks.length > 0 && newComments.length > 0) {
+      return 'Новые задачи и комментарии';
+    }
+
+    if (newTasks.length > 0 && pendingInvitations.length > 0) {
+      return 'Новые задачи и приглашения';
+    }
+
+    if (newComments.length > 0 && pendingInvitations.length > 0) {
+      return 'Новые комментарии и приглашения';
+    }
+
+    if (newTasks.length > 0) {
+      return 'Новые назначенные задачи';
+    }
+
+    if (newComments.length > 0) {
+      return 'Новые комментарии';
+    }
+
+    return 'Новые приглашения';
+  })();
+
+  const subtitle = [
+    newTasks.length > 0 ? tasksLabel : null,
+    newComments.length > 0 ? commentsLabel : null,
+    pendingInvitations.length > 0 ? invitationsLabel : null,
+  ].filter(Boolean).join(', ');
 
   return (
     <AnimatePresence>
@@ -90,7 +138,7 @@ function TaskNotification({
             <motion.div
               animate={isBellRinging ? {
                 rotate: [0, 15, -15, 15, -15, 0],
-                transition: { duration: 0.5, repeat: 2 }
+                transition: { duration: 0.5, repeat: 2 },
               } : {}}
               onHoverStart={() => setIsBellRinging(true)}
               onHoverEnd={() => setIsBellRinging(false)}
@@ -98,37 +146,30 @@ function TaskNotification({
               <FiBell size={20} className={`notification-priority-${priority}`} />
             </motion.div>
             <div>
-              <h4 className="notification-title">
-                {newTasks.length > 0 && newComments.length > 0 && pendingInvitations.length > 0 ? 'New Tasks, Comments & Invitations' :
-                 newTasks.length > 0 && newComments.length > 0 ? 'New Tasks & Comments' :
-                 newTasks.length > 0 && pendingInvitations.length > 0 ? 'New Tasks & Invitations' :
-                 newComments.length > 0 && pendingInvitations.length > 0 ? 'New Comments & Invitations' :
-                 newTasks.length > 0 ? 'New Tasks Assigned' :
-                 newComments.length > 0 ? 'New Comments' : 'New Invitations'}
-              </h4>
-              <p className="notification-subtitle">
-                {newTasks.length > 0 && `${newTasks.length} new task${newTasks.length > 1 ? 's' : ''}`}
-                {(newTasks.length > 0 && (newComments.length > 0 || pendingInvitations.length > 0)) ? ', ' : ''}
-                {newComments.length > 0 && `${newComments.length} new comment${newComments.length > 1 ? 's' : ''}`}
-                {(newComments.length > 0 && pendingInvitations.length > 0) ? ', ' : ''}
-                {pendingInvitations.length > 0 && `${pendingInvitations.length} new invitation${pendingInvitations.length > 1 ? 's' : ''}`}
-              </p>
+              <h4 className="notification-title">{title}</h4>
+              <p className="notification-subtitle">{subtitle}</p>
             </div>
           </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 setExpanded(!expanded);
               }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
             >
               {expanded ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
             </motion.button>
-            <motion.button 
-              onClick={handleClose}
+
+            <motion.button
+              onClick={(event) => {
+                event.stopPropagation();
+                setVisible(false);
+                onClose?.();
+              }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="notification-close-btn"
@@ -147,41 +188,41 @@ function TaskNotification({
               transition={{ duration: 0.2 }}
               className="notification-body"
             >
-              {/* Tabs for switching between tasks, comments, and invitations */}
               <div className="notification-tabs">
                 <button
                   className={`notification-tab ${activeTab === 'tasks' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={(event) => {
+                    event.stopPropagation();
                     setActiveTab('tasks');
                   }}
                   disabled={newTasks.length === 0}
                 >
-                  Tasks ({newTasks.length})
+                  Задачи ({newTasks.length})
                 </button>
+
                 <button
                   className={`notification-tab ${activeTab === 'comments' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={(event) => {
+                    event.stopPropagation();
                     setActiveTab('comments');
                   }}
                   disabled={newComments.length === 0}
                 >
-                  Comments ({newComments.length})
+                  Комментарии ({newComments.length})
                 </button>
+
                 <button
                   className={`notification-tab ${activeTab === 'invitations' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={(event) => {
+                    event.stopPropagation();
                     setActiveTab('invitations');
                   }}
                   disabled={pendingInvitations.length === 0}
                 >
-                  Invitations ({pendingInvitations.length})
+                  Приглашения ({pendingInvitations.length})
                 </button>
               </div>
 
-              {/* Tasks list */}
               {activeTab === 'tasks' && newTasks.length > 0 && (
                 <ul className="notification-list">
                   {newTasks.map((task, index) => (
@@ -190,7 +231,10 @@ function TaskNotification({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={(e) => handleTaskClick(e, task.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onTaskClick?.(task.id);
+                      }}
                       className="notification-item"
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -201,7 +245,7 @@ function TaskNotification({
                       </div>
                       {task.dueDate && (
                         <p className="notification-due-date">
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
+                          Срок: {new Date(task.dueDate).toLocaleDateString('ru-RU')}
                         </p>
                       )}
                     </motion.li>
@@ -209,7 +253,6 @@ function TaskNotification({
                 </ul>
               )}
 
-              {/* Comments list */}
               {activeTab === 'comments' && newComments.length > 0 && (
                 <ul className="notification-list">
                   {newComments.map((comment, index) => (
@@ -218,13 +261,16 @@ function TaskNotification({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={(e) => handleCommentClick(e, comment)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onCommentClick?.(comment);
+                      }}
                       className="notification-item"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <FiMessageSquare size={16} />
                         <span className="notification-comment-text">
-                          New comment on task: {comment.task_title || `Task ${comment.task_id}`}
+                          Новый комментарий к задаче: {comment.task_title || `Задача ${comment.task_id}`}
                         </span>
                       </div>
                       <p className="notification-comment-preview">
@@ -233,14 +279,13 @@ function TaskNotification({
                           : comment.text}
                       </p>
                       <p className="notification-comment-meta">
-                        By {comment.author_name} • {new Date(comment.created_at).toLocaleString()}
+                        {comment.author_name} • {new Date(comment.created_at).toLocaleString('ru-RU')}
                       </p>
                     </motion.li>
                   ))}
                 </ul>
               )}
 
-              {/* Invitations list */}
               {activeTab === 'invitations' && pendingInvitations.length > 0 && (
                 <ul className="notification-list">
                   {pendingInvitations.map((invitation, index) => (
@@ -249,8 +294,8 @@ function TaskNotification({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={(event) => {
+                        event.stopPropagation();
                         onInvitationClick?.(invitation);
                       }}
                       className="notification-item"
@@ -258,7 +303,7 @@ function TaskNotification({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <FiBell size={16} />
                         <span className="notification-invitation-text">
-                          Invitation to project: {invitation.assignment_title}
+                          Приглашение в проект: {invitation.assignment_title}
                         </span>
                       </div>
                       <p className="notification-invitation-preview">
@@ -266,10 +311,10 @@ function TaskNotification({
                           ? (invitation.assignment_description.length > 50
                             ? `${invitation.assignment_description.substring(0, 50)}...`
                             : invitation.assignment_description)
-                          : 'No description available'}
+                          : 'Описание отсутствует'}
                       </p>
                       <p className="notification-invitation-meta">
-                        Invited by {invitation.invited_by_name} • {new Date(invitation.invited_at).toLocaleString()}
+                        Пригласил: {invitation.invited_by_name} • {new Date(invitation.invited_at).toLocaleString('ru-RU')}
                       </p>
                     </motion.li>
                   ))}
