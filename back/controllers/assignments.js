@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const logger = require('../logger');
 const auditController = require('./audit-backend');
+const { createUserNotification } = require('../services/user-notifications.service');
 
 // =============================================
 // БЕЗОПАСНЫЕ УТИЛИТЫ
@@ -462,9 +463,10 @@ async function respondToInvitation(pool, invitationId, userId, status, assignmen
 
         // Улучшенная проверка: убеждаемся, что приглашение принадлежит пользователю и проекту
         let query = `
-            SELECT am.id, am.assignment_id, am.user_id, am.status, a.title as assignment_title
+            SELECT am.id, am.assignment_id, am.user_id, am.invited_by, am.status, a.title as assignment_title, u.username as invitee_name
             FROM assignment_members am
             JOIN assignments a ON am.assignment_id = a.id
+            JOIN users u ON am.user_id = u.id
             WHERE am.id = $1 AND am.user_id = $2 AND am.status = 'pending'
         `;
         let params = [validatedInvitationId, validatedUserId];
@@ -494,16 +496,27 @@ async function respondToInvitation(pool, invitationId, userId, status, assignmen
             [status, validatedInvitationId]
         );
 
-        // Если приглашение принято, можно добавить дополнительную логику
-        // например, отправку уведомлений другим членам команды
+        // If invitation is accepted, notify inviter
         if (status === 'accepted') {
-            logger.info('Пользователь принял приглашение в проект', {
+            logger.info('Invitation accepted by user', {
                 userId: validatedUserId,
                 assignmentId: invitation.assignment_id,
                 assignmentTitle: invitation.assignment_title
             });
+
+            if (invitation.invited_by && Number(invitation.invited_by) !== validatedUserId) {
+                await createUserNotification(client, {
+                    recipientId: Number(invitation.invited_by),
+                    actorId: validatedUserId,
+                    assignmentId: invitation.assignment_id,
+                    invitationId: validatedInvitationId,
+                    type: 'team_invite_accepted',
+                    title: 'Invitation accepted',
+                    message: `${invitation.invitee_name || 'User'} accepted the invitation to project "${invitation.assignment_title}".`,
+                });
+            }
         } else {
-            logger.info('Пользователь отклонил приглашение в проект', {
+            logger.info('Invitation rejected by user', {
                 userId: validatedUserId,
                 assignmentId: invitation.assignment_id,
                 assignmentTitle: invitation.assignment_title
@@ -587,3 +600,4 @@ module.exports = {
         validateText
     }
 };
+

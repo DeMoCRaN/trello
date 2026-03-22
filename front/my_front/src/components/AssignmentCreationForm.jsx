@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import BaseModal from './BaseModal';
 import './Components.css';
 
 function AssignmentCreationForm({
@@ -10,14 +11,14 @@ function AssignmentCreationForm({
   const [newAssignmentTitle, setNewAssignmentTitle] = useState(assignment ? assignment.title : '');
   const [newAssignmentDescription, setNewAssignmentDescription] = useState(assignment ? assignment.description : '');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
     if (isDetailsView) {
       onClose();
       return;
     }
-    
+
     const assignmentData = {
       title: newAssignmentTitle,
       description: newAssignmentDescription,
@@ -25,52 +26,55 @@ function AssignmentCreationForm({
 
     onCreateAssignment(assignmentData);
 
-    // Emit event for immediate refresh
     import('./../utils/eventBus').then(({ default: eventBus }) => {
       eventBus.emit('assignmentCreated', assignmentData);
     });
 
     if (!assignment) {
-      // Reset form only when creating new assignment
       setNewAssignmentTitle('');
       setNewAssignmentDescription('');
     }
   };
 
+  const modalTitle = isDetailsView ? 'Детали задания' : assignment ? 'Редактировать задание' : 'Создать новый проект';
+
   return (
-    <div className={`task-form-overlay ${isDetailsView ? 'details-form-overlay' : ''}`}>
-      <form className="task-creation-form" onSubmit={handleSubmit}>
-        <button type="button" className="close-button" onClick={onClose}>×</button>
-        <h3>{isDetailsView ? 'Детали задания' : assignment ? 'Редактировать задание' : 'Создать новое задание'}</h3>
-        
+    <BaseModal
+      onClose={onClose}
+      title={modalTitle}
+      size="sm"
+      panelClassName="task-creation-form"
+      bodyClassName="task-creation-form__body"
+    >
+      <form onSubmit={handleSubmit}>
         <label>
-          Название задания:
+          Название проекта:
           <input
             type="text"
-            placeholder="Введите название задания"
+            placeholder="Введите название проекта"
             value={newAssignmentTitle}
-            onChange={(e) => setNewAssignmentTitle(e.target.value)}
+            onChange={(event) => setNewAssignmentTitle(event.target.value)}
             required
             readOnly={isDetailsView}
           />
         </label>
 
         <label>
-          Описание задания:
+          Описание проекта:
           <textarea
-            placeholder="Введите описание задания"
+            placeholder="Введите описание проекта"
             value={newAssignmentDescription}
-            onChange={(e) => setNewAssignmentDescription(e.target.value)}
+            onChange={(event) => setNewAssignmentDescription(event.target.value)}
             rows="4"
             readOnly={isDetailsView}
           />
         </label>
 
         <button type="submit" className="submit-button">
-          {isDetailsView ? 'Закрыть' : assignment ? 'Обновить задание' : 'Создать задание'}
+          {isDetailsView ? 'Закрыть' : assignment ? 'Обновить задание' : 'Создать проект'}
         </button>
       </form>
-    </div>
+    </BaseModal>
   );
 }
 

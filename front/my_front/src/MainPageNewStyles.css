@@ -331,6 +331,9 @@ body {
   width: 18px;
   height: 18px;
 }
+.task-form-overlay{
+  margin-top: 20px;
+}
 
 /* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {

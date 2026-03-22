@@ -1,77 +1,22 @@
-/* Task Details Form Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 20px;
+.task-details-modal__body {
+  padding-top: 20px;
 }
 
-.modal-content, .task-creation-form {
-  background: white;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow: hidden;
+.task-details-modal__content {
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border: 1px solid #e0e0e0;
+  gap: 24px;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #ffffff;
-  background-color: #f8f9fa;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #333;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-  color: #666;
-  line-height: 1;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+.task-details-loading {
+  min-height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
 }
 
-.close-button:hover {
-  background-color: #e0e0e0;
-  color: #333;
-}
-
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* Task Info Section */
 .task-info-section {
-  margin-bottom: 24px;
+  margin-bottom: 0;
   padding-bottom: 24px;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -136,9 +81,8 @@
   color: #f44336;
 }
 
-/* Activity Section */
 .task-activity-section {
-  margin-top: 16px;
+  margin-top: 0;
 }
 
 .activity-header {
@@ -179,7 +123,6 @@
   border-color: #1976d2;
 }
 
-/* Comment Form */
 .comment-form {
   display: flex;
   gap: 12px;
@@ -222,7 +165,6 @@
   cursor: not-allowed;
 }
 
-/* Activity List */
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -245,8 +187,8 @@
   border-left: 3px solid #1976d2;
 }
 
-/* Comment Item */
-.comment-item {
+.comment-item,
+.commit-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -269,17 +211,12 @@
   color: #888;
 }
 
-.comment-content {
+.comment-content,
+.commit-message {
   color: #333;
   line-height: 1.4;
   font-size: 0.95rem;
-}
-
-/* Commit Item */
-.commit-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin: 0;
 }
 
 .commit-header {
@@ -303,12 +240,6 @@
   font-size: 0.85rem;
 }
 
-.commit-message {
-  color: #333;
-  font-size: 0.95rem;
-  margin: 0;
-}
-
 .commit-meta {
   display: flex;
   gap: 16px;
@@ -316,7 +247,6 @@
   color: #888;
 }
 
-/* Loading State */
 .loading {
   text-align: center;
   padding: 40px;
@@ -324,22 +254,15 @@
   font-size: 1.1rem;
 }
 
-/* Responsive */
 @media (max-width: 600px) {
-  .modal-content {
-    max-width: 100%;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-  
   .task-meta-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .comment-form {
     flex-direction: column;
   }
-  
+
   .activity-header {
     flex-direction: column;
     align-items: flex-start;

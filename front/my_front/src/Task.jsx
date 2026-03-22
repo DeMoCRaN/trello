@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import DeadlineProgressBar from './DeadlineProgressBar';
+import BaseModal from './components/BaseModal';
 import './components/Components.css';
 
 const getPriorityClass = (priority) => {
@@ -26,32 +27,42 @@ function FailedTaskModal({ onClose, onConfirm, loading }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(event) => event.stopPropagation()}>
-        <h2>Провалить задачу</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="failed-reason">Причина</label>
-            <textarea
-              id="failed-reason"
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              rows={4}
-              placeholder="Опишите, почему задача провалена"
-            />
-          </div>
+    <BaseModal onClose={onClose} title="Провалить задачу" size="sm">
+      <form onSubmit={handleSubmit}>
+        <div className="modal-form-group">
+          <label htmlFor="failed-reason" className="modal-label">
+            Причина провала
+          </label>
+          <textarea
+            id="failed-reason"
+            className="modal-textarea"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            rows={5}
+            placeholder="Опишите, почему задача не может быть выполнена..."
+            autoFocus
+          />
+        </div>
 
-          <div className="task-actions">
-            <button type="button" onClick={onClose} disabled={loading}>
-              Отмена
-            </button>
-            <button type="submit" className="fail-button" disabled={loading}>
-              Подтвердить провал
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="modal-actions">
+          <button
+            type="button"
+            className="modal-button modal-button-cancel"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            className="modal-button modal-button-fail"
+            disabled={loading}
+          >
+            {loading ? 'Провал...' : 'Подтвердить провал'}
+          </button>
+        </div>
+      </form>
+    </BaseModal>
   );
 }
 
@@ -76,42 +87,55 @@ function RestoreTaskModal({ task, onClose, onConfirm, loading }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(event) => event.stopPropagation()}>
-        <h2>Восстановить задачу</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="restore-title">Название</label>
-            <input
-              id="restore-title"
-              type="text"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Название задачи"
-            />
-          </div>
+    <BaseModal onClose={onClose} title="Восстановить задачу" size="sm">
+      <form onSubmit={handleSubmit}>
+        <div className="modal-form-group">
+          <label htmlFor="restore-title" className="modal-label">
+            Название задачи
+          </label>
+          <input
+            id="restore-title"
+            className="modal-input"
+            type="text"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Введите название задачи"
+            autoFocus
+          />
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="restore-deadline">Дедлайн</label>
-            <input
-              id="restore-deadline"
-              type="datetime-local"
-              value={deadline}
-              onChange={(event) => setDeadline(event.target.value)}
-            />
-          </div>
+        <div className="modal-form-group">
+          <label htmlFor="restore-deadline" className="modal-label">
+            Дедлайн
+          </label>
+          <input
+            id="restore-deadline"
+            className="modal-input"
+            type="datetime-local"
+            value={deadline}
+            onChange={(event) => setDeadline(event.target.value)}
+          />
+        </div>
 
-          <div className="task-actions">
-            <button type="button" onClick={onClose} disabled={loading}>
-              Отмена
-            </button>
-            <button type="submit" className="complete-button" disabled={loading}>
-              Восстановить
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="modal-actions">
+          <button
+            type="button"
+            className="modal-button modal-button-cancel"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            className="modal-button modal-button-restore"
+            disabled={loading}
+          >
+            {loading ? 'Восстановление...' : 'Восстановить'}
+          </button>
+        </div>
+      </form>
+    </BaseModal>
   );
 }
 
@@ -156,9 +180,9 @@ function Task({
 
   const deadline = normalizedTask.deadline ? new Date(normalizedTask.deadline) : null;
   const priorityClass = getPriorityClass(normalizedTask.priority);
-  const isOverdue = deadline &&
-    new Date() > deadline &&
-    !['done', 'failed'].includes(normalizedTask.status);
+  const isOverdue = deadline
+    && new Date() > deadline
+    && !['done', 'failed'].includes(normalizedTask.status);
   const isFailed = normalizedTask.status === 'failed';
   const isReview = normalizedTask.status === 'rew';
   const canComplete = !isArchived && !isFailed && normalizedTask.status !== 'done';
@@ -242,7 +266,7 @@ function Task({
       >
         {isUpdating && (
           <div className="task-update-overlay">
-            <div className="task-update-spinner"></div>
+            <div className="task-update-spinner" />
             <span className="task-update-text">
               {lastAction === 'delete' && 'Удаление...'}
               {lastAction === 'complete' && 'Завершение...'}

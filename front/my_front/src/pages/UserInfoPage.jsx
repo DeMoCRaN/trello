@@ -88,8 +88,6 @@ const performanceMetricDescriptions = {
   'Стабильность': 'Оценивает, насколько ровно пользователь доводит задачи до результата без срывов.',
 };
 
-const clampPercent = (value) => Math.max(0, Math.min(100, Math.round(value)));
-
 const formatTime = (seconds) => {
   if (isNaN(seconds) || seconds <= 0) return '0м';
   const hours = Math.floor(seconds / 3600);
@@ -174,20 +172,14 @@ const UserInfoPage = () => {
   const performanceMetrics = useMemo(() => {
     if (!userMetrics) return [];
 
-    const { tasks, performance } = userMetrics;
-    const countedTotal = Math.max((performance.effectiveTotal || (tasks.total - (tasks.review || 0))), 1);
-    const completionRate = performance.completionRate || 0;
-    const productivity = clampPercent((((tasks.completed || 0) * 1) + ((tasks.review || 0) * 0.8) + ((tasks.inProgress || 0) * 0.45) + ((tasks.new || 0) * 0.1)) / Math.max(tasks.total || 1, 1) * 100);
-    const quality = clampPercent(100 - ((((performance.failedTasks || 0) * 1.25) + ((tasks.overdue || 0) * 0.6)) / countedTotal * 100));
-    const timeliness = clampPercent(((((tasks.completed || 0) * 1) + ((tasks.review || 0) * 0.7) + ((tasks.inProgress || 0) * 0.35) - ((tasks.overdue || 0) * 0.85)) / countedTotal) * 100);
-    const stability = clampPercent(100 - ((((performance.failedTasks || 0) * 1.4) + ((tasks.overdue || 0) * 0.8) + ((tasks.new || 0) * 0.15)) / countedTotal * 100));
+    const kpis = userMetrics.performance?.kpis || {};
 
     return [
-      { subject: 'Эффективность', A: completionRate, fullMark: 100 },
-      { subject: 'Продуктивность', A: productivity, fullMark: 100 },
-      { subject: 'Качество', A: quality, fullMark: 100 },
-      { subject: 'Сроки', A: timeliness, fullMark: 100 },
-      { subject: 'Стабильность', A: stability, fullMark: 100 },
+      { subject: 'Эффективность', A: kpis.efficiency ?? 0, fullMark: 100 },
+      { subject: 'Продуктивность', A: kpis.productivity ?? 0, fullMark: 100 },
+      { subject: 'Качество', A: kpis.quality ?? 0, fullMark: 100 },
+      { subject: 'Сроки', A: kpis.timeliness ?? 0, fullMark: 100 },
+      { subject: 'Стабильность', A: kpis.stability ?? 0, fullMark: 100 },
     ];
   }, [userMetrics]);
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import './Header.css';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiBell } from 'react-icons/fi';
+import { FiInbox } from 'react-icons/fi';
 
 function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClick }) {
   const navigate = useNavigate();
@@ -24,9 +24,9 @@ function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClic
           <button
             className="notification-bell"
             onClick={onCommentsClick}
-            title="Уведомления"
+            title="Notifications Center"
           >
-            <FiBell size={20} />
+            <FiInbox size={20} />
             {unreadCommentsCount > 0 && (
               <span className="notification-badge">{unreadCommentsCount}</span>
             )}
@@ -50,3 +50,5 @@ function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClic
 }
 
 export default Header;
+
+

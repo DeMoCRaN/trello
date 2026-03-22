@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiBell, FiX } from 'react-icons/fi';
@@ -58,8 +58,10 @@ function MainPage({ userEmail }) {
   const [showNotification, setShowNotification] = useState(false);
   const [timers, setTimers] = useState({});
   const [invitations, setInvitations] = useState([]);
+  const [systemNotifications, setSystemNotifications] = useState([]);
   const [showInvitationForm, setShowInvitationForm] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState(null);
+  const lastNotificationCountRef = useRef(0);
 
   const mappedAssignedTasks = assignedTasks.map(task => ({
     ...task,
@@ -77,6 +79,7 @@ function MainPage({ userEmail }) {
   const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
   // eslint-disable-next-line no-unused-vars
   const failedInvitations = invitations.filter(inv => inv.status === 'failed');
+  const notificationTotal = newTasks.length + comments.length + pendingInvitations.length;
 
   const processTasks = useCallback((tasks) => {
     return tasks.map(task => ({
@@ -121,15 +124,27 @@ function MainPage({ userEmail }) {
       });
 
       setAssignments(enrichedData);
-      if (enrichedData.length > 0 && !selectedAssignment) {
-        setSelectedAssignment(enrichedData[0]);
-      }
+      setSelectedAssignment((prevSelectedAssignment) => {
+        if (!enrichedData.length) {
+          return null;
+        }
+
+        if (!prevSelectedAssignment) {
+          return enrichedData[0];
+        }
+
+        const refreshedSelectedAssignment = enrichedData.find(
+          (assignment) => assignment.id === prevSelectedAssignment.id
+        );
+
+        return refreshedSelectedAssignment || enrichedData[0];
+      });
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [selectedAssignment]);
+  }, []);
 
   const fetchAssignedTasks = useCallback(async () => {
     const now = Date.now();
@@ -176,13 +191,13 @@ function MainPage({ userEmail }) {
     }
   }, [lastFetchTime, processTasks]);
 
-  const fetchComments = useCallback(async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No auth token found');
       }
-      const response = await fetch('http://localhost:3000/api/comments/unread', {
+      const response = await fetch('http://localhost:3000/api/notifications/summary', {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -190,49 +205,25 @@ function MainPage({ userEmail }) {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch comments: ' + response.status);
+        throw new Error('Failed to fetch notifications: ' + response.status);
       }
       const data = await response.json();
-
-      const filteredComments = data.filter(comment =>
-        comment.author_email !== userEmail
-      );
-
-      setUnreadCommentsCount(filteredComments.length);
-
-      if (filteredComments.length > 0) {
-        // Browser notifications removed - only internal TaskNotification component
-      }
-
-      setComments(filteredComments);
+      setComments(Array.isArray(data.comments) ? data.comments : []);
+      setInvitations(Array.isArray(data.invitations) ? data.invitations : []);
+      setSystemNotifications(Array.isArray(data.systemNotifications) ? data.systemNotifications : []);
+      setUnreadCommentsCount(Number(data?.counts?.total) || 0);
     } catch (error) {
-      console.error('Ошибка загрузки комментариев:', error);
-    }
-  }, [userEmail]);
-
-  const fetchInvitations = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No auth token found');
-      }
-      const response = await fetch('http://localhost:3000/api/users/me/invitations', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch invitations: ' + response.status);
-      }
-      const data = await response.json();
-
-      setInvitations(data);
-    } catch (error) {
-      console.error('Ошибка загрузки приглашений:', error);
+      console.error('Error loading notifications:', error);
     }
   }, []);
+
+  const fetchComments = useCallback(async () => {
+    await fetchNotifications();
+  }, [fetchNotifications]);
+
+  const fetchInvitations = useCallback(async () => {
+    await fetchNotifications();
+  }, [fetchNotifications]);
 
   const fetchTeamMembers = useCallback(async (assignmentId) => {
     if (!assignmentId) return;
@@ -354,6 +345,13 @@ function MainPage({ userEmail }) {
     loadInitialData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (notificationTotal > 0 && notificationTotal > lastNotificationCountRef.current) {
+      setShowNotification(true);
+    }
+    lastNotificationCountRef.current = notificationTotal;
+  }, [notificationTotal]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -669,6 +667,7 @@ function MainPage({ userEmail }) {
           tasks={assignedTasks}
           comments={comments}
           invitations={invitations}
+          systemNotifications={systemNotifications}
           onClose={() => setShowNotification(false)}
           onInvitationClick={handleInvitationClick}
         />
@@ -824,7 +823,7 @@ function MainPage({ userEmail }) {
               <FloatingButton onClick={() => setShowTaskForm(true)} />
             </div>
             
-            <div className={`task-form-overlay ${showTaskForm ? '' : 'hidden'}`}>
+            {showTaskForm && (
               <TaskCreationForm
                 onCreateTask={handleCreateTask}
                 statuses={statuses}
@@ -833,19 +832,19 @@ function MainPage({ userEmail }) {
                 initialCreatorEmail={userEmail}
                 teamMembers={teamMembers}
               />
-            </div>
-            <div className={`task-form-overlay ${showTeamMembersPanel ? '' : 'hidden'}`}>
+            )}
+            {showTeamMembersPanel && (
               <TeamMembersPanel
                 assignmentId={selectedAssignment?.id}
                 onClose={() => setShowTeamMembersPanel(false)}
               />
-            </div>
-            <div className={`task-form-overlay ${showAssignmentCreationForm ? '' : 'hidden'}`}>
+            )}
+            {showAssignmentCreationForm && (
               <AssignmentCreationForm
                 onCreateAssignment={handleCreateAssignment}
                 onClose={() => setShowAssignmentCreationForm(false)}
               />
-            </div>
+            )}
           </>
         )}
         {currentPage === 'user-info' && (
@@ -871,3 +870,5 @@ function MainPage({ userEmail }) {
 }
 
 export default MainPage;
+
+

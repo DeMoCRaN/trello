@@ -1,64 +1,9 @@
-/* TeamMembersPanel.css */
-.task-form-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
 .task-creation-form {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 600px;
   width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
 }
 
 .team-members-panel {
   max-width: 500px;
-}
-
-.close-button {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 5px;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease;
-}
-
-.close-button:hover {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.task-creation-form h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 24px;
-  text-align: center;
-  font-weight: 600;
 }
 
 .team-stats {
@@ -107,7 +52,6 @@
 .invite-form {
   background: #f8f9fa;
   padding: 20px;
-  height: inherit;
   border-radius: 8px;
   border: 1px solid #e9ecef;
   width: 100%;
@@ -123,11 +67,8 @@
 
 .form-group {
   margin-bottom: 15px;
-  width: 600px;
-  height: 100%;
 }
 
-/* ИСПРАВЛЕННОЕ ПОЛЕ ВВОДА */
 .email-input {
   width: 100%;
   padding: 14px 16px;
@@ -137,15 +78,14 @@
   box-sizing: border-box;
   transition: all 0.3s ease;
   background: white;
-  height: 48px;
   min-height: 48px;
   line-height: 1.5;
 }
 
 .email-input:focus {
   outline: none;
-  border-color: #7dfa6d;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
 }
 
 .email-input::placeholder {
@@ -153,7 +93,6 @@
   font-size: 14px;
 }
 
-/* ИСПРАВЛЕННЫЕ КНОПКИ - ТЕПЕРЬ ОНИ ПОД ПОЛЕМ ВВОДА */
 .invite-buttons {
   display: flex;
   gap: 12px;
@@ -165,18 +104,16 @@
 .invite-buttons button {
   flex: 1;
   min-width: 120px;
-  padding: 12px 20px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
 }
 
 .cancel-button {
   background: #6c757d;
   color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .cancel-button:hover {
@@ -186,6 +123,8 @@
 
 .team-members-list {
   margin: 25px 0;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .team-members-list h4 {
@@ -269,98 +208,6 @@
   font-size: 16px;
 }
 
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-  .task-form-overlay {
-    padding: 10px;
-  }
-  
-  .task-creation-form {
-    padding: 20px;
-    margin: 10px;
-    max-height: 95vh;
-  }
-  
-  .team-members-panel {
-    max-width: none;
-  }
-  
-  .invite-buttons {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .invite-buttons button {
-    width: 100%;
-    min-width: auto;
-  }
-  
-  .email-input {
-    font-size: 16px; /* Сохраняем читаемый размер на мобильных */
-    height: 44px;
-  }
-  
-  .team-member-item {
-    padding: 12px;
-  }
-  
-  .member-info {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .task-creation-form {
-    padding: 15px;
-  }
-  
-  .task-creation-form h3 {
-    font-size: 20px;
-    margin-bottom: 15px;
-  }
-  
-  .invite-form {
-    padding: 15px;
-  }
-  
-  .invite-form h4 {
-    font-size: 16px;
-  }
-  
-  .email-input {
-    padding: 12px 14px;
-    font-size: 16px;
-    height: 44px;
-  }
-  
-  .invite-buttons button {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-}
-
-/* Анимации */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.task-creation-form {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Стили для скроллбара */
-.team-members-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
 .team-members-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -377,4 +224,48 @@
 
 .team-members-list::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+@media (max-width: 768px) {
+  .team-members-panel {
+    max-width: none;
+  }
+
+  .invite-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .invite-buttons button {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .email-input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .team-member-item {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .invite-form {
+    padding: 15px;
+  }
+
+  .invite-form h4 {
+    font-size: 16px;
+  }
+
+  .email-input {
+    padding: 12px 14px;
+  }
+
+  .invite-buttons button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
 }

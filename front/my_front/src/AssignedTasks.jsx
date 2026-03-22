@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Header from './components/Header';
@@ -11,6 +11,7 @@ function AssignedTasks({ userEmail }) {
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
   const [invitations, setInvitations] = useState([]);
+  const [systemNotifications, setSystemNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingTaskId, setUpdatingTaskId] = useState(null);
@@ -28,18 +29,18 @@ function AssignedTasks({ userEmail }) {
 
   const navigate = useNavigate();
   const statusLabels = {
-    new: 'Новая',
-    in_progress: 'В работе',
-    rew: 'На ревью',
-    done: 'Завершена',
+    new: '�����',
+    in_progress: '� ������',
+    rew: '�� �����',
+    done: '���������',
   };
   const priorityLabels = {
-    low: 'Низкий',
-    medium: 'Средний',
-    high: 'Высокий',
+    low: '������',
+    medium: '�������',
+    high: '�������',
   };
 
-  // Р”РµР±Р°СѓРЅСЃ РґР»СЏ Р·Р°РїСЂРѕСЃР° Р·Р°РґР°С‡
+  // Дебаунс для запроса задач
   const debouncedFetchTasks = useCallback(() => {
     let timeoutId;
     return () => {
@@ -50,7 +51,7 @@ function AssignedTasks({ userEmail }) {
     };
   }, []);
 
-  // РќР°РІРёРіР°С†РёСЏ
+  // Навигация
   function onNavigate(page) {
     switch (page) {
       case 'main':
@@ -64,14 +65,14 @@ function AssignedTasks({ userEmail }) {
     }
   }
 
-  // РџРѕР»СѓС‡РµРЅРёРµ Р·Р°РґР°С‡ СЃ СЃРµСЂРІРµСЂР°
+  // Получение задач с сервера
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ');
+        setError('Пользователь не авторизован');
         setLoading(false);
         return;
       }
@@ -84,7 +85,7 @@ function AssignedTasks({ userEmail }) {
       });
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё Р·Р°РґР°С‡: ' + errorText);
+        throw new Error('Ошибка загрузки задач: ' + errorText);
       }
       const data = await response.json();
 
@@ -122,7 +123,7 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
-  // РџРѕР»СѓС‡РµРЅРёРµ РЅР°Р·РІР°РЅРёР№ Р·Р°РґР°РЅРёР№
+  // Получение названий заданий
   const fetchAssignmentNames = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -133,95 +134,52 @@ function AssignedTasks({ userEmail }) {
           Authorization: 'Bearer ' + token,
         },
       });
-      if (!response.ok) throw new Error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё Р·Р°РґР°РЅРёР№');
+      if (!response.ok) throw new Error('Ошибка загрузки заданий');
       const assignments = await response.json();
       
       const namesMap = {};
       assignments.forEach(assignment => {
-        namesMap[assignment.id] = assignment.title || assignment.name || `Задание ${assignment.id}`;
+        namesMap[assignment.id] = assignment.title || assignment.name || `������� ${assignment.id}`;
       });
       setAssignmentNames(namesMap);
     } catch (err) {
-      console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё Р·Р°РґР°РЅРёР№:', err);
+      console.error('Ошибка загрузки заданий:', err);
     }
   }, []);
 
-  // РџРѕР»СѓС‡РµРЅРёРµ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+      const response = await fetch('http://localhost:3000/api/notifications/summary', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch notifications: ' + response.status);
+      }
+      const data = await response.json();
+      setComments(Array.isArray(data.comments) ? data.comments : []);
+      setInvitations(Array.isArray(data.invitations) ? data.invitations : []);
+      setSystemNotifications(Array.isArray(data.systemNotifications) ? data.systemNotifications : []);
+      setUnreadCommentsCount(Number(data?.counts?.total) || 0);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  }, []);
+
   const fetchComments = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No auth token found');
-      }
-      const response = await fetch('http://localhost:3000/api/comments/unread', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments: ' + response.status);
-      }
-      const data = await response.json();
+    await fetchNotifications();
+  }, [fetchNotifications]);
 
-      const filteredComments = data.filter(comment =>
-        comment.author_email !== userEmail
-      ).map(comment => ({
-        ...comment,
-        is_new: true
-      }));
-
-      if (filteredComments.length > 0 && unreadCommentsCount !== filteredComments.length) {
-        setUnreadCommentsCount(filteredComments.length);
-
-        if (Notification.permission === 'granted') {
-          new Notification('РќРѕРІС‹Рµ РєРѕРјРјРµРЅС‚Р°СЂРёРё', {
-            body: `РЈ РІР°СЃ ${filteredComments.length} РЅРѕРІС‹С… РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ`,
-            icon: '/favicon.ico'
-          });
-        }
-
-      }
-
-      setComments(filteredComments);
-    } catch (error) {
-      console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ:', error);
-    }
-  }, [userEmail, unreadCommentsCount]);
-
-  // РџРѕР»СѓС‡РµРЅРёРµ РїСЂРёРіР»Р°С€РµРЅРёР№
   const fetchInvitations = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No auth token found');
-      }
-      const response = await fetch('http://localhost:3000/api/users/me/invitations', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch invitations: ' + response.status);
-      }
-      const data = await response.json();
-
-      setInvitations(data);
-
-      if (data.length > 0) {
-        if (Notification.permission === 'granted') {
-          new Notification('РќРѕРІС‹Рµ РїСЂРёРіР»Р°С€РµРЅРёСЏ', {
-            body: `РЈ РІР°СЃ ${data.length} РЅРѕРІС‹С… РїСЂРёРіР»Р°С€РµРЅРёР№ РІ РїСЂРѕРµРєС‚С‹`,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РїСЂРёРіР»Р°С€РµРЅРёР№:', error);
-    }
-  }, []);
+    await fetchNotifications();
+  }, [fetchNotifications]);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission !== 'denied') {
@@ -284,7 +242,7 @@ function AssignedTasks({ userEmail }) {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Р“СЂСѓРїРїРёСЂРѕРІРєР° Р·Р°РґР°С‡ РїРѕ СЃС‚Р°С‚СѓСЃСѓ
+  // Группировка задач по статусу
   const tasksGroupedByStatus = React.useMemo(() => {
     const groups = {
       new: [],
@@ -308,12 +266,12 @@ function AssignedTasks({ userEmail }) {
     ))
   ), [tasks, taskViewMode]);
 
-  // Р“СЂСѓРїРїРёСЂРѕРІРєР° Р·Р°РґР°С‡ РїРѕ Р·Р°РґР°РЅРёСЏРј
+  // Группировка задач по заданиям
   const tasksGroupedByAssignment = React.useMemo(() => {
     const groups = {};
     
     groups['none'] = {
-      name: taskViewMode === 'execution' ? 'Все задачи для выполнения' : 'Задачи на ревью и завершённые',
+      name: taskViewMode === 'execution' ? '��� ������ ��� ����������' : '������ �� ����� � �����������',
       tasks: []
     };
 
@@ -324,7 +282,7 @@ function AssignedTasks({ userEmail }) {
       
       if (!groups[assignmentId]) {
         groups[assignmentId] = {
-          name: assignmentNames[assignmentId] || `Задание ${assignmentId}`,
+          name: assignmentNames[assignmentId] || `������� ${assignmentId}`,
           tasks: []
         };
       }
@@ -348,12 +306,12 @@ function AssignedTasks({ userEmail }) {
       : ['rew', 'done']
   ), [taskViewMode]);
 
-  // РџРѕР»СѓС‡РµРЅРёРµ РґРµС‚Р°Р»РµР№ Р·Р°РґР°С‡Рё
+  // Получение деталей задачи
   const fetchTaskDetails = useCallback(async (taskId) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ');
+        setError('Пользователь не авторизован');
         return null;
       }
       
@@ -369,7 +327,7 @@ function AssignedTasks({ userEmail }) {
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РґРµС‚Р°Р»РµР№ Р·Р°РґР°С‡Рё: ' + errorText);
+        throw new Error('Ошибка загрузки деталей задачи: ' + errorText);
       }
       
       const taskData = await response.json();
@@ -382,14 +340,14 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
-  // РћР±РЅРѕРІР»РµРЅРёРµ СЃС‚Р°С‚СѓСЃР° Р·Р°РґР°С‡Рё
+  // Обновление статуса задачи
   const updateTaskStatus = useCallback(async (taskId, statusId, action) => {
 
     setUpdatingTaskId(taskId);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ');
+        setError('Пользователь не авторизован');
         setUpdatingTaskId(null);
         return;
       }
@@ -407,7 +365,7 @@ function AssignedTasks({ userEmail }) {
       });
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error('РћС€РёР±РєР° РѕР±РЅРѕРІР»РµРЅРёСЏ СЃС‚Р°С‚СѓСЃР°: ' + errorText);
+        throw new Error('Ошибка обновления статуса: ' + errorText);
       }
       await fetchTasks();
       window.dispatchEvent(new Event('taskUpdated'));
@@ -418,7 +376,7 @@ function AssignedTasks({ userEmail }) {
     }
   }, [fetchTasks]);
 
-  // Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ РІСЂРµРјРµРЅРё
+  // Форматирование времени
   const formatTime = useCallback((seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -428,7 +386,7 @@ function AssignedTasks({ userEmail }) {
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // РћР±СЂР°Р±РѕС‚С‡РёРє РєР»РёРєР° РїРѕ СѓРІРµРґРѕРјР»РµРЅРёСЋ
+  // Обработчик клика по уведомлению
   const handleNotificationClick = useCallback((taskId) => {
     const element = document.getElementById(`task-${taskId}`);
     if (element) {
@@ -440,7 +398,7 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
-  // РћР±СЂР°Р±РѕС‚С‡РёРє РєР»РёРєР° РїРѕ РєРѕРјРјРµРЅС‚Р°СЂРёСЋ
+  // Обработчик клика по комментарию
   const handleCommentClick = useCallback(async (comment) => {
     try {
       const token = localStorage.getItem('token');
@@ -479,28 +437,28 @@ function AssignedTasks({ userEmail }) {
     }
   }, []);
 
-  // РћР±СЂР°Р±РѕС‚С‡РёРє РєР»РёРєР° РїРѕ РїСЂРёРіР»Р°С€РµРЅРёСЋ
+  // Обработчик клика по приглашению
   const handleInvitationClick = useCallback((invitation) => {
     setSelectedInvitation(invitation);
     setShowInvitationForm(true);
   }, []);
 
-  // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ
+  // Обработчик ответа на приглашение
   const handleRespondToInvitation = useCallback(async (invitationId, status) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('РўРѕРєРµРЅ Р°РІС‚РѕСЂРёР·Р°С†РёРё РЅРµ РЅР°Р№РґРµРЅ');
+        throw new Error('Токен авторизации не найден');
       }
 
-      // РџРѕР»СѓС‡Р°РµРј assignmentId РёР· selectedInvitation
+      // Получаем assignmentId из selectedInvitation
       const assignmentId = selectedInvitation?.assignment_id;
       if (!assignmentId) {
         console.error('selectedInvitation:', selectedInvitation);
-        throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ ID Р·Р°РґР°РЅРёСЏ РґР»СЏ РїСЂРёРіР»Р°С€РµРЅРёСЏ. РџСЂРѕРІРµСЂСЊС‚Рµ, С‡С‚Рѕ РїСЂРёРіР»Р°С€РµРЅРёРµ РІС‹Р±СЂР°РЅРѕ РїСЂР°РІРёР»СЊРЅРѕ.');
+        throw new Error('Не удалось получить ID задания для приглашения. Проверьте, что приглашение выбрано правильно.');
       }
 
-      console.log('РћС‚РїСЂР°РІРєР° РѕС‚РІРµС‚Р° РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ:', {
+      console.log('Отправка ответа на приглашение:', {
         invitationId,
         assignmentId,
         status,
@@ -518,35 +476,35 @@ function AssignedTasks({ userEmail }) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('РћС€РёР±РєР° СЃРµСЂРІРµСЂР° РїСЂРё РѕС‚РІРµС‚Рµ РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ:', {
+        console.error('Ошибка сервера при ответе на приглашение:', {
           status: response.status,
           statusText: response.statusText,
           errorText
         });
-        throw new Error(`РћС€РёР±РєР° СЃРµСЂРІРµСЂР°: ${response.status} ${response.statusText}. ${errorText}`);
+        throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}. ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('РЈСЃРїРµС€РЅС‹Р№ РѕС‚РІРµС‚ РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ:', result);
+      console.log('Успешный ответ на приглашение:', result);
 
-      // РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє РїСЂРёРіР»Р°С€РµРЅРёР№
+      // Обновляем список приглашений
       await fetchInvitations();
       setShowInvitationForm(false);
       setSelectedInvitation(null);
     } catch (error) {
-      console.error('РћС€РёР±РєР° РїСЂРё РѕС‚РІРµС‚Рµ РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ:', error);
-      alert(`РћС€РёР±РєР° РїСЂРё РѕС‚РІРµС‚Рµ РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ: ${error.message}`);
+      console.error('Ошибка при ответе на приглашение:', error);
+      alert(`Ошибка при ответе на приглашение: ${error.message}`);
       throw error;
     }
   }, [selectedInvitation, fetchInvitations]);
 
-  // Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ РґРµРґР»Р°Р№РЅР°
+  // Форматирование дедлайна
   const formatDeadline = useCallback((deadline) => {
     const date = new Date(deadline);
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
   }, []);
 
-  // Р РµРЅРґРµСЂ РєР°СЂС‚РѕС‡РєРё Р·Р°РґР°С‡Рё
+  // �ендер карточки задачи
 const renderTaskCard = useCallback((task) => {
   const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
   const isInProgress = task.status === 'in_progress' || timer.isRunning;
@@ -574,15 +532,15 @@ const renderTaskCard = useCallback((task) => {
       <h4 style={{ marginTop: 0 }}>{task.title}</h4>
       <p>{task.description}</p>
       {task.assignment_id && (
-        <p><strong>Проект:</strong> {assignmentNames[task.assignment_id] || `Задание ${task.assignment_id}`}</p>
+        <p><strong>������:</strong> {assignmentNames[task.assignment_id] || `������� ${task.assignment_id}`}</p>
       )}
-      <p><strong>Срок:</strong> {task.deadline ? formatDeadline(task.deadline) : 'Нет'}</p>
-      <p><strong>Автор:</strong> {task.creator_email}</p>
-      <p><strong>Статус:</strong> {statusLabels[task.status] || task.status}</p>
-      <p><strong>Приоритет:</strong> {priorityLabels[task.priority] || task.priority}</p>
-      <p><strong>Создана:</strong> {new Date(task.created_at).toLocaleString()}</p>
-      <p><strong>Обновлена:</strong> {new Date(task.updated_at).toLocaleString()}</p>
-      <p><strong>Время работы:</strong> {formatTime(timer.elapsedSeconds)}</p>
+      <p><strong>����:</strong> {task.deadline ? formatDeadline(task.deadline) : '���'}</p>
+      <p><strong>�����:</strong> {task.creator_email}</p>
+      <p><strong>������:</strong> {statusLabels[task.status] || task.status}</p>
+      <p><strong>���������:</strong> {priorityLabels[task.priority] || task.priority}</p>
+      <p><strong>�������:</strong> {new Date(task.created_at).toLocaleString()}</p>
+      <p><strong>���������:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+      <p><strong>����� ������:</strong> {formatTime(timer.elapsedSeconds)}</p>
       
       <div className="task-buttons-wrapper" style={{ 
         display: 'flex', 
@@ -598,7 +556,7 @@ const renderTaskCard = useCallback((task) => {
             className="task-button start-button"
             style={{ order: 1 }}
           >
-            {updatingTaskId === task.id ? 'Запуск...' : 'Начать работу'}
+            {updatingTaskId === task.id ? '������...' : '������ ������'}
           </button>
         )}
         
@@ -610,7 +568,7 @@ const renderTaskCard = useCallback((task) => {
               className="task-button stop-button"
               style={{ order: 2 }}
             >
-              {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
+              {updatingTaskId === task.id ? '���������...' : '����������'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 2, 'resume')}
@@ -618,7 +576,7 @@ const renderTaskCard = useCallback((task) => {
               className="task-button resume-button"
               style={{ order: 3 }}
             >
-              {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
+              {updatingTaskId === task.id ? '�������������...' : '����������'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 5, 'rew')}
@@ -626,14 +584,14 @@ const renderTaskCard = useCallback((task) => {
               className="task-button complete-button"
               style={{ order: 4 }}
             >
-              {updatingTaskId === task.id ? 'Отправка...' : 'На ревью'}
+              {updatingTaskId === task.id ? '��������...' : '�� �����'}
             </button>
           </>
         )}
         
         <button
           onClick={async () => {
-            console.log('РџРѕРґСЂРѕР±РЅРµРµ clicked for task:', task.id);
+            console.log('Подробнее clicked for task:', task.id);
             const taskDetails = await fetchTaskDetails(task.id);
             if (taskDetails) {
               setSelectedTask(taskDetails);
@@ -648,14 +606,14 @@ const renderTaskCard = useCallback((task) => {
             color: 'white'
           }}
         >
-          Подробнее
+          ���������
         </button>
 
       </div>
       
       {task.status === 'done' && (
         <p className="task-completed" style={{ marginTop: '8px', color: '#4caf50' }}>
-          Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
+          ������ ���������. ����� ����� ������: {formatTime(timer.elapsedSeconds)}
         </p>
       )}
 
@@ -665,47 +623,47 @@ const renderTaskCard = useCallback((task) => {
 
 
 
-  // РЎРѕСЃС‚РѕСЏРЅРёСЏ Р·Р°РіСЂСѓР·РєРё
+  // Состояния загрузки
   if (loading) {
     return (
       <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="loading-container">
           <div className="spinner"></div>
-          <p>Загрузка задач...</p>
+          <p>�������� �����...</p>
         </div>
       </div>
     );
   }
 
-  // РћС€РёР±РєР°
+  // Ошибка
   if (error) {
     return (
       <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="error-container">
-          <p>Ошибка: {error}</p>
+          <p>������: {error}</p>
           <button onClick={fetchTasks} className="retry-button">
-            Повторить
+            ���������
           </button>
         </div>
       </div>
     );
   }
 
-  // РќРµС‚ Р·Р°РґР°С‡
+  // Нет задач
   if (!tasks || tasks.length === 0) {
     return (
       <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="no-tasks-container">
-          <p>Нет назначенных задач.</p>
+          <p>��� ����������� �����.</p>
         </div>
       </div>
     );
   }
 
-  // РћСЃРЅРѕРІРЅРѕР№ СЂРµРЅРґРµСЂ
+  // Основной рендер
   return (
     <div className="page-container">
       <Header 
@@ -720,6 +678,7 @@ const renderTaskCard = useCallback((task) => {
           tasks={tasks}
           comments={comments}
           invitations={invitations}
+          systemNotifications={systemNotifications}
           onClose={() => setShowNotification(false)}
           onTaskClick={handleNotificationClick}
           onCommentClick={handleCommentClick}
@@ -734,28 +693,28 @@ const renderTaskCard = useCallback((task) => {
               onClick={() => setTaskViewMode('execution')}
               className={`toggle-sort-button ${taskViewMode === 'execution' ? 'active-toggle' : ''}`}
             >
-              К выполнению
+              � ����������
             </button>
             <button
               onClick={() => setTaskViewMode('review')}
               className={`toggle-sort-button ${taskViewMode === 'review' ? 'active-toggle' : ''}`}
             >
-              Ревью и завершённые
+              ����� � �����������
             </button>
           </div>
         </div>
 
         <div className="tasks-summary">
-          <div className="summary-pill summary-total">Всего: {taskSummary.total}</div>
+          <div className="summary-pill summary-total">�����: {taskSummary.total}</div>
           {taskViewMode === 'execution' ? (
             <>
-              <div className="summary-pill summary-new">Новые: {taskSummary.new}</div>
-              <div className="summary-pill summary-progress">В работе: {taskSummary.inProgress}</div>
+              <div className="summary-pill summary-new">�����: {taskSummary.new}</div>
+              <div className="summary-pill summary-progress">� ������: {taskSummary.inProgress}</div>
             </>
           ) : (
             <>
-              <div className="summary-pill summary-review">На ревью: {taskSummary.review}</div>
-              <div className="summary-pill summary-done">Завершённые: {taskSummary.done}</div>
+              <div className="summary-pill summary-review">�� �����: {taskSummary.review}</div>
+              <div className="summary-pill summary-done">�����������: {taskSummary.done}</div>
             </>
           )}
         </div>
@@ -776,13 +735,13 @@ const renderTaskCard = useCallback((task) => {
                   {visibleStatusColumns.map((status) => (
                     <div key={`${assignmentId}-${status}`} className="status-column">
                       <h3 className="status-header">
-                        {status === 'new' ? 'Новые' :
-                         status === 'in_progress' ? 'В работе' :
-                         status === 'rew' ? 'На ревью' :
-                         'Завершённые'}
+                        {status === 'new' ? '�����' :
+                         status === 'in_progress' ? '� ������' :
+                         status === 'rew' ? '�� �����' :
+                         '�����������'}
                       </h3>
                       {groupedTasksByStatus[status].length === 0 ? (
-                        <p className="no-tasks-message">Нет задач в этой категории</p>
+                        <p className="no-tasks-message">��� ����� � ���� ���������</p>
                       ) : (
                         groupedTasksByStatus[status].map(renderTaskCard)
                       )}
@@ -807,7 +766,7 @@ const renderTaskCard = useCallback((task) => {
         />
       )}
 
-      {/* Р¤РѕСЂРјР° РѕС‚РІРµС‚Р° РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ */}
+      {/* Форма ответа на приглашение */}
       {showInvitationForm && selectedInvitation && (
         <InvitationResponseForm
           invitation={selectedInvitation}
@@ -823,4 +782,7 @@ const renderTaskCard = useCallback((task) => {
 }
 
 export default AssignedTasks;
+
+
+
 

@@ -1,59 +1,9 @@
-.invitation-response-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .invitation-response-form {
-  background: white;
-  border-radius: 12px;
-  padding: 0;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-.invitation-response-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e1e5e9;
-}
-
-.invitation-response-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a202c;
-}
-
-.invitation-response-close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #718096;
-  padding: 4px;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.invitation-response-close-btn:hover {
-  background: #f7fafc;
-  color: #2d3748;
+  max-width: 560px;
 }
 
 .invitation-response-content {
-  padding: 24px;
+  padding: 4px 0 0;
 }
 
 .invitation-details {
@@ -74,9 +24,9 @@
 }
 
 .invitation-meta {
-  background: #f7fafc;
+  background: #f8fafc;
   padding: 16px;
-  border-radius: 8px;
+  border-radius: 14px;
   border: 1px solid #e2e8f0;
 }
 
@@ -98,38 +48,35 @@
 
 .invitation-accept-btn,
 .invitation-reject-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 20px;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: 10px;
+  font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .invitation-accept-btn {
-  background: #48bb78;
+  background: #6effa3;
   color: white;
 }
 
 .invitation-accept-btn:hover:not(:disabled) {
-  background: #38a169;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+  background: #41fc85;
 }
 
 .invitation-reject-btn {
-  background: #f56565;
-  color: white;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .invitation-reject-btn:hover:not(:disabled) {
-  background: #e53e3e;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 101, 101, 0.3);
+background: #fda3a3;
 }
 
 .invitation-accept-btn:disabled,
@@ -142,8 +89,7 @@
 
 @media (max-width: 640px) {
   .invitation-response-form {
-    width: 95%;
-    margin: 20px;
+    max-width: 100%;
   }
 
   .invitation-actions {
@@ -153,6 +99,5 @@
   .invitation-accept-btn,
   .invitation-reject-btn {
     width: 100%;
-    justify-content: center;
   }
 }

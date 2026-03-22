@@ -22,6 +22,7 @@ function TaskNotification({
   tasks = [],
   comments = [],
   invitations = [],
+  systemNotifications = [],
   onClose,
   onTaskClick,
   onCommentClick,
@@ -33,20 +34,23 @@ function TaskNotification({
   const [activeTab, setActiveTab] = useState('tasks');
 
   const newTasks = tasks?.filter((task) => task?.status === 'new') || [];
-  const newComments = comments?.filter((comment) => comment?.is_new) || [];
+  const newComments = comments || [];
   const pendingInvitations = invitations?.filter((invitation) => invitation?.status === 'pending') || [];
+  const teamEvents = systemNotifications || [];
 
   useEffect(() => {
-    if (pendingInvitations.length > 0) {
+    if (teamEvents.length > 0) {
+      setActiveTab('events');
+    } else if (pendingInvitations.length > 0) {
       setActiveTab('invitations');
     } else if (newComments.length > 0) {
       setActiveTab('comments');
     } else if (newTasks.length > 0) {
       setActiveTab('tasks');
     }
-  }, [pendingInvitations.length, newComments.length, newTasks.length]);
+  }, [teamEvents.length, pendingInvitations.length, newComments.length, newTasks.length]);
 
-  const hasNotifications = newTasks.length > 0 || newComments.length > 0 || pendingInvitations.length > 0;
+  const hasNotifications = newTasks.length > 0 || newComments.length > 0 || pendingInvitations.length > 0 || teamEvents.length > 0;
 
   const notificationPriority = () => {
     if (newTasks.some((task) => task.priority === 'high')) {
@@ -54,6 +58,10 @@ function TaskNotification({
     }
 
     if (newComments.length > 0) {
+      return 'medium';
+    }
+
+    if (teamEvents.length > 0) {
       return 'medium';
     }
 
@@ -86,11 +94,15 @@ function TaskNotification({
 
   const priority = notificationPriority();
   const priorityClass = `notification-${priority}`;
-  const tasksLabel = getCountLabel(newTasks.length, 'новая задача', 'новые задачи', 'новых задач');
-  const commentsLabel = getCountLabel(newComments.length, 'новый комментарий', 'новых комментария', 'новых комментариев');
-  const invitationsLabel = getCountLabel(pendingInvitations.length, 'новое приглашение', 'новых приглашения', 'новых приглашений');
+  const tasksLabel = getCountLabel(newTasks.length, 'Новая задача', 'Новые задачи', 'овые задачи');
+  const commentsLabel = getCountLabel(newComments.length, 'Новый коментарий', 'Новые коментарии', 'Новые коментарии');
+  const invitationsLabel = getCountLabel(pendingInvitations.length, 'Новое приглашение', 'Новые приглашения', 'Новые приглашения');
+  const eventsLabel = getCountLabel(teamEvents.length, 'Новое событие', 'Новые события', 'Новые события');
 
   const title = (() => {
+    if (teamEvents.length > 0) {
+      return 'Командная активность обновлена';
+    }
     if (newTasks.length > 0 && newComments.length > 0 && pendingInvitations.length > 0) {
       return 'Новые задачи, комментарии и приглашения';
     }
@@ -122,6 +134,7 @@ function TaskNotification({
     newTasks.length > 0 ? tasksLabel : null,
     newComments.length > 0 ? commentsLabel : null,
     pendingInvitations.length > 0 ? invitationsLabel : null,
+    teamEvents.length > 0 ? eventsLabel : null,
   ].filter(Boolean).join(', ');
 
   return (
@@ -189,6 +202,17 @@ function TaskNotification({
               className="notification-body"
             >
               <div className="notification-tabs">
+                <button
+                  className={`notification-tab ${activeTab === 'events' ? 'active' : ''}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setActiveTab('events');
+                  }}
+                  disabled={teamEvents.length === 0}
+                >
+                  События ({teamEvents.length})
+                </button>
+
                 <button
                   className={`notification-tab ${activeTab === 'tasks' ? 'active' : ''}`}
                   onClick={(event) => {
@@ -279,7 +303,7 @@ function TaskNotification({
                           : comment.text}
                       </p>
                       <p className="notification-comment-meta">
-                        {comment.author_name} • {new Date(comment.created_at).toLocaleString('ru-RU')}
+                        {comment.author_name || comment.author_email || 'Пользователь'} • {new Date(comment.created_at).toLocaleString('ru-RU')}
                       </p>
                     </motion.li>
                   ))}
@@ -320,6 +344,33 @@ function TaskNotification({
                   ))}
                 </ul>
               )}
+
+              {activeTab === 'events' && teamEvents.length > 0 && (
+                <ul className="notification-list">
+                  {teamEvents.map((eventItem, index) => (
+                    <motion.li
+                      key={`event-${eventItem.id || index}`}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="notification-item"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FiBell size={16} />
+                        <span className="notification-invitation-text">
+                          {eventItem.title || 'Team event'}
+                        </span>
+                      </div>
+                      <p className="notification-invitation-preview">
+                        {eventItem.message}
+                      </p>
+                      <p className="notification-invitation-meta">
+                        {new Date(eventItem.created_at).toLocaleString('ru-RU')}
+                      </p>
+                    </motion.li>
+                  ))}
+                </ul>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -329,3 +380,10 @@ function TaskNotification({
 }
 
 export default TaskNotification;
+
+
+
+
+
+
+

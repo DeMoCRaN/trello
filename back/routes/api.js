@@ -5,6 +5,12 @@ const tasksController = require('../controllers/tasks');
 const assignmentsController = require('../controllers/assignments');
 const commentsController = require('../controllers/comments');
 const gitController = require('../controllers/git');
+const { authenticateToken } = require('../middlewares/auth-jwt');
+const { validateIdParam } = require('../middlewares/validate-id-param');
+const { ensureDeletedFailedTasksTable } = require('../services/deleted-failed-tasks.service');
+const { ensureUserNotificationsTable, consumeUnreadUserNotifications } = require('../services/user-notifications.service');
+const { normalizeScope, buildAssignmentKpisFromRows, buildUserPerformance } = require('../services/metrics.service');
+const { toAssignmentMetricsDto, toUserMetricsDto } = require('../dto/metrics.dto');
 
 const { Pool } = require('pg');
 
@@ -19,104 +25,6 @@ const pool = new Pool({
 });
 
 const router = express.Router();
-
-const DELETED_FAILED_FULL_PENALTY_DAYS = 30;
-const DELETED_FAILED_DECAY_STEP_DAYS = 3;
-const DELETED_FAILED_DECAY_STEP = 0.05;
-
-async function ensureDeletedFailedTasksTable() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS deleted_failed_tasks (
-      id SERIAL PRIMARY KEY,
-      original_task_id integer,
-      assignment_id integer,
-      title character varying(255) NOT NULL,
-      description text,
-      deadline timestamp without time zone,
-      creator_id integer NOT NULL,
-      assignee_id integer,
-      status_id integer NOT NULL,
-      priority_id integer NOT NULL,
-      created_at timestamp without time zone,
-      updated_at timestamp without time zone,
-      seen_at timestamp without time zone,
-      in_progress_since timestamp without time zone,
-      work_duration integer DEFAULT 0,
-      progress_percentage double precision DEFAULT 0,
-      failed_reason text,
-      failed_at timestamp without time zone,
-      deleted_at timestamp without time zone DEFAULT now()
-    )
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_deleted_failed_tasks_assignee_id
-    ON deleted_failed_tasks (assignee_id)
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_deleted_failed_tasks_creator_id
-    ON deleted_failed_tasks (creator_id)
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_deleted_failed_tasks_deleted_at
-    ON deleted_failed_tasks (deleted_at)
-  `);
-}
-
-function getDeletedFailedTaskWeight(deletedAt, canDecay) {
-  if (!deletedAt) {
-    return 1;
-  }
-
-  if (!canDecay) {
-    return 1;
-  }
-
-  const deletedDate = new Date(deletedAt);
-  const daysSinceDeletion = Math.max(
-    0,
-    Math.floor((Date.now() - deletedDate.getTime()) / (1000 * 60 * 60 * 24))
-  );
-
-  if (daysSinceDeletion <= DELETED_FAILED_FULL_PENALTY_DAYS) {
-    return 1;
-  }
-
-  const decayPeriods = Math.floor(
-    (daysSinceDeletion - DELETED_FAILED_FULL_PENALTY_DAYS) / DELETED_FAILED_DECAY_STEP_DAYS
-  );
-
-  return Math.max(0, 1 - (decayPeriods * DELETED_FAILED_DECAY_STEP));
-}
-
-// Middleware для проверки аутентификации
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Требуется авторизация' });
-  }
-
-  jwt.verify(token, 'your_jwt_secret_key', (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ error: 'Неверный токен' });
-    }
-    req.user = decoded;
-    next();
-  });
-};
-
-// Middleware для проверки параметров ID
-const validateIdParam = (req, res, next) => {
-  const id = req.params.id;
-  if (!/^\d+$/.test(id)) {
-    return res.status(400).json({ error: 'Неверный формат ID' });
-  }
-  next();
-};
 
 router.get('/assignments/:id/tasks', authenticateToken, validateIdParam, async (req, res) => {
   try {
@@ -266,21 +174,6 @@ router.get('/tasks/assigned', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/tasks/:id', authenticateToken, validateIdParam, async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.id, 10);
-    console.log(`GET /tasks/:id called with id param: ${taskId}`);
-
-    const task = await tasksController.getTaskById(pool, taskId);
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-    res.json(task);
-  } catch (error) {
-    console.error('Error fetching task by ID:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Маршрут для логина
 router.post('/login', async (req, res) => {
@@ -528,6 +421,61 @@ router.get('/assignments/:id/team', authenticateToken, validateIdParam, async (r
   }
 });
 
+router.get('/assignments/:id/metrics', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id, 10);
+    const scope = normalizeScope(req.query.scope);
+
+    const assignment = await pool.query(
+      `SELECT * FROM assignments
+       WHERE id = $1 AND (creator_id = $2 OR EXISTS (
+         SELECT 1 FROM tasks WHERE assignment_id = $1 AND assignee_id = $2
+       ))`,
+      [assignmentId, req.user.userId]
+    );
+
+    if (assignment.rows.length === 0) {
+      return res.status(403).json({ error: 'Доступ запрещен или задание не найдено' });
+    }
+
+    const tasksResult = await pool.query(`
+      SELECT
+        t.id,
+        ts.name AS status,
+        t.deadline,
+        t.updated_at,
+        u.email AS assignee_email,
+        FALSE AS is_archived
+      FROM tasks t
+      LEFT JOIN task_statuses ts ON t.status_id = ts.id
+      LEFT JOIN users u ON t.assignee_id = u.id
+      WHERE t.assignment_id = $1
+      UNION ALL
+      SELECT
+        at.id,
+        ts.name AS status,
+        at.deadline,
+        at.updated_at,
+        u.email AS assignee_email,
+        TRUE AS is_archived
+      FROM archived_tasks at
+      LEFT JOIN task_statuses ts ON at.status_id = ts.id
+      LEFT JOIN users u ON at.assignee_id = u.id
+      WHERE at.assignment_id = $1
+    `, [assignmentId]);
+
+    const assignmentMetrics = buildAssignmentKpisFromRows(tasksResult.rows, scope);
+    res.json(toAssignmentMetricsDto({
+      assignmentId,
+      scope: assignmentMetrics.scope,
+      kpis: assignmentMetrics.kpis,
+    }));
+  } catch (error) {
+    console.error('Ошибка при получении метрик задания:', error);
+    res.status(500).json({ error: 'Ошибка при получении метрик задания' });
+  }
+});
+
 router.post('/assignments/:assignmentId/invitations/:invitationId/respond', authenticateToken, async (req, res) => {
   try {
     console.log('Route hit: POST /assignments/:assignmentId/invitations/:invitationId/respond');
@@ -636,49 +584,34 @@ router.get('/users/:id/metrics', authenticateToken, validateIdParam, async (req,
       return res.status(404).json({ message: 'Пользователь не найден' });
     }
 
-    const activeTotal = parseInt(tasksStats.rows[0].total_tasks || 0);
-    const archivedTotal = parseInt(archivedStats.rows[0].archived_tasks || 0);
-    const completedTotal =
-      parseInt(tasksStats.rows[0].completed_tasks || 0) +
-      parseInt(archivedStats.rows[0].archived_completed || 0);
-    const visibleFailedTotal =
-      parseInt(tasksStats.rows[0].failed_tasks || 0) +
-      parseInt(archivedStats.rows[0].archived_failed || 0);
-    const deletedFailedCount = deletedFailedStats.rows.length;
-    const totalFailedForDecay = visibleFailedTotal + deletedFailedCount;
-    const canDecayDeletedFailed = totalFailedForDecay < 10;
-    const deletedFailedPenalty = deletedFailedStats.rows.reduce((sum, row) => (
-      sum + getDeletedFailedTaskWeight(row.deleted_at, canDecayDeletedFailed)
-    ), 0);
-    const actualTotal = activeTotal + archivedTotal + deletedFailedCount;
-    const effectiveTotal = activeTotal + archivedTotal + deletedFailedPenalty;
-    const completionRate = effectiveTotal > 0
-      ? Math.round((completedTotal / effectiveTotal) * 100)
-      : 0;
+    const userPerformance = buildUserPerformance({
+      tasksStatsRow: tasksStats.rows[0],
+      archivedStatsRow: archivedStats.rows[0],
+      deletedFailedRows: deletedFailedStats.rows,
+    });
 
-    const metrics = {
+    res.json(toUserMetricsDto({
       user: userResult.rows[0],
       tasks: {
-        total: actualTotal,
-        completed: completedTotal,
-        inProgress: parseInt(tasksStats.rows[0].in_progress_tasks),
-        new: parseInt(tasksStats.rows[0].new_tasks),
-        review: parseInt(tasksStats.rows[0].review_tasks || 0) + parseInt(archivedStats.rows[0].archived_review || 0),
-        overdue: parseInt(tasksStats.rows[0].overdue_tasks),
-        archived: archivedTotal
+        total: userPerformance.totals.actualTotal,
+        completed: userPerformance.totals.completedTotal,
+        inProgress: userPerformance.totals.inProgressTotal,
+        new: userPerformance.totals.newTotal,
+        review: userPerformance.totals.reviewTotal,
+        overdue: userPerformance.totals.overdueTotal,
+        archived: userPerformance.totals.archivedTotal,
       },
       performance: {
-        completionRate,
-        failedTasks: visibleFailedTotal + deletedFailedCount,
-        deletedFailedTasks: deletedFailedCount,
-        effectiveTotal: Math.round(effectiveTotal * 100) / 100,
-        deletedFailedPenalty: Math.round(deletedFailedPenalty * 100) / 100,
-        totalWorkTime: parseInt(tasksStats.rows[0].total_work_time),
-        avgWorkTime: Math.round(parseFloat(tasksStats.rows[0].avg_work_time))
-      }
-    };
-
-    res.json(metrics);
+        completionRate: userPerformance.performance.completionRate,
+        failedTasks: userPerformance.totals.failedTotal,
+        deletedFailedTasks: userPerformance.performance.deletedFailedTasks,
+        effectiveTotal: userPerformance.performance.effectiveTotal,
+        deletedFailedPenalty: userPerformance.performance.deletedFailedPenalty,
+        totalWorkTime: parseInt(tasksStats.rows[0].total_work_time, 10),
+        avgWorkTime: Math.round(parseFloat(tasksStats.rows[0].avg_work_time)),
+        kpis: userPerformance.performance.kpis,
+      },
+    }));
   } catch (error) {
     console.error('Ошибка при получении метрик пользователя:', error);
     res.status(500).json({ error: 'Ошибка при получении метрик пользователя' });
@@ -797,6 +730,57 @@ router.get('/task_priorities', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Ошибка при получении приоритетов задач:', error);
     res.status(500).json({ error: 'Ошибка при получении приоритетов задач' });
+  }
+});
+
+router.get('/notifications/summary', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const [comments, invitations, tasksResult, systemNotifications] = await Promise.all([
+      commentsController.getUnreadComments(pool, userId),
+      assignmentsController.getPendingInvitations(pool, userId),
+      pool.query(
+        `SELECT
+           t.id,
+           t.title,
+           tp.name AS priority,
+           t.deadline AS due_date,
+           t.assignment_id
+         FROM tasks t
+         LEFT JOIN task_statuses ts ON t.status_id = ts.id
+         LEFT JOIN task_priorities tp ON t.priority_id = tp.id
+         WHERE t.assignee_id = $1
+           AND ts.name = 'new'
+         ORDER BY t.created_at DESC
+         LIMIT 50`,
+        [userId]
+      ),
+      consumeUnreadUserNotifications(pool, userId),
+    ]);
+
+    const tasks = tasksResult.rows.map((task) => ({
+      ...task,
+      status: 'new',
+      dueDate: task.due_date ? new Date(task.due_date).toISOString() : null,
+    }));
+
+    res.json({
+      counts: {
+        tasks: tasks.length,
+        comments: comments.length,
+        invitations: invitations.length,
+        system: systemNotifications.length,
+        total: tasks.length + comments.length + invitations.length + systemNotifications.length,
+      },
+      tasks,
+      comments,
+      invitations,
+      systemNotifications,
+    });
+  } catch (error) {
+    console.error('Ошибка при получении сводки уведомлений:', error);
+    res.status(500).json({ error: 'Ошибка при получении сводки уведомлений' });
   }
 });
 
@@ -1020,8 +1004,12 @@ router.get('/repositories/:id/branches', authenticateToken, validateIdParam, asy
 });
 
 module.exports = (app) => {
-  ensureDeletedFailedTasksTable().catch((error) => {
-    console.error('Не удалось подготовить таблицу deleted_failed_tasks:', error);
+  ensureDeletedFailedTasksTable(pool).catch((error) => {
+    console.error('�� ������� ����������� ������� deleted_failed_tasks:', error);
+  });
+  ensureUserNotificationsTable(pool).catch((error) => {
+    console.error('Failed to prepare user_notifications table:', error);
   });
   app.use('/api', router);
 };
+

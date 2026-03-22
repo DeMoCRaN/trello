@@ -1,5 +1,5 @@
 ﻿
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
@@ -168,7 +168,6 @@ const getPriorityById = (id) => ({
 
 const getStatusColor = (status) => STATUS_COLORS[status] || STATUS_COLORS.unknown;
 const getStatusLabel = (status) => STATUS_LABELS[status] || STATUS_LABELS.unknown;
-const clampPercent = (value) => Math.max(0, Math.min(100, Math.round(value)));
 
 const toValidDate = (value) => {
   if (!value) return null;
@@ -293,8 +292,13 @@ function Dashboard({ userEmail: propUserEmail }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
+  const [invitations, setInvitations] = useState([]);
+  const [notificationTasks, setNotificationTasks] = useState([]);
+  const [systemNotifications, setSystemNotifications] = useState([]);
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
+  const [assignmentMetrics, setAssignmentMetrics] = useState(null);
+  const lastNotificationCountRef = useRef(0);
 
   const onNavigate = useCallback((page) => navigate(`/${page}`), [navigate]);
 
@@ -370,27 +374,47 @@ function Dashboard({ userEmail: propUserEmail }) {
     }
   }, [selectedAssignment]);
 
-  const fetchComments = useCallback(async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const response = await fetch('http://localhost:3000/api/comments/unread', {
+      const response = await fetch('http://localhost:3000/api/notifications/summary', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) return;
       const data = await response.json();
-      const filteredComments = data.filter((comment) => comment.author_email !== userEmail);
-      setComments(filteredComments);
-      setUnreadCommentsCount(filteredComments.length);
+      setComments(Array.isArray(data.comments) ? data.comments : []);
+      setInvitations(Array.isArray(data.invitations) ? data.invitations : []);
+      setNotificationTasks(Array.isArray(data.tasks) ? data.tasks : []);
+      setSystemNotifications(Array.isArray(data.systemNotifications) ? data.systemNotifications : []);
+      setUnreadCommentsCount(Number(data?.counts?.total) || 0);
     } catch (fetchError) {
-      console.error('Ошибка при загрузке комментариев:', fetchError);
+      console.error('Ошибка при загрузке уведомлений:', fetchError);
     }
-  }, [userEmail]);
+  }, []);
+
+  const fetchAssignmentMetrics = useCallback(async () => {
+    if (!selectedAssignment) return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const response = await fetch(
+        `http://localhost:3000/api/assignments/${selectedAssignment}/metrics?scope=${taskFilter}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) throw new Error(`Не удалось загрузить метрики: ${response.status}`);
+      const data = await response.json();
+      setAssignmentMetrics(data?.kpis || null);
+    } catch (fetchError) {
+      console.error('Ошибка при загрузке метрик проекта:', fetchError);
+      setAssignmentMetrics(null);
+    }
+  }, [selectedAssignment, taskFilter]);
 
   useEffect(() => {
     fetchAssignments();
-    fetchComments();
-  }, [fetchAssignments, fetchComments]);
+    fetchNotifications();
+  }, [fetchAssignments, fetchNotifications]);
 
   useEffect(() => {
     if (!selectedAssignment) return;
@@ -398,6 +422,17 @@ function Dashboard({ userEmail: propUserEmail }) {
     const assignment = assignments.find((item) => item.id === selectedAssignment);
     if (assignment) setSelectedAssignmentData(assignment);
   }, [selectedAssignment, assignments, fetchTasks]);
+
+  useEffect(() => {
+    fetchAssignmentMetrics();
+  }, [fetchAssignmentMetrics]);
+
+  useEffect(() => {
+    if (unreadCommentsCount > 0 && unreadCommentsCount > lastNotificationCountRef.current) {
+      setShowNotification(true);
+    }
+    lastNotificationCountRef.current = unreadCommentsCount;
+  }, [unreadCommentsCount]);
 
   const filteredTasks = useMemo(() => {
     if (taskFilter === 'active') return tasks.filter((task) => !task.isArchived);
@@ -413,7 +448,8 @@ function Dashboard({ userEmail: propUserEmail }) {
   const reviewTasks = filteredTasks.filter((task) => task.status === 'rew').length;
   const failedTasks = filteredTasks.filter((task) => task.status === 'failed').length;
   const overdueTasks = filteredTasks.filter(isOverdueTask).length;
-  const completionPercentage = countedTasks.length > 0 ? Math.round((completedTasks / countedTasks.length) * 100) : 0;
+  const localCompletionPercentage = countedTasks.length > 0 ? Math.round((completedTasks / countedTasks.length) * 100) : 0;
+  const completionPercentage = assignmentMetrics?.efficiency ?? localCompletionPercentage;
   const totalTime = filteredTasks.reduce((sum, task) => sum + (Number(task.work_duration) || 0), 0);
   const avgTimePerTask = totalTasks > 0 ? Math.round(totalTime / totalTasks) : 0;
   const fastestTaskTime = filteredTasks.length > 0 ? Math.min(...filteredTasks.map((task) => Number(task.work_duration) || 0)) : 0;
@@ -545,45 +581,13 @@ function Dashboard({ userEmail: propUserEmail }) {
     return weeks;
   }, [filteredTasks]);
 
-  const performanceMetrics = useMemo(() => {
-    const totalVisibleTasks = Math.max(filteredTasks.length, 1);
-    const reviewedTasks = filteredTasks.filter((task) => task.status === 'rew').length;
-    const activeOnTrackTasks = tasksWithDeadlines.filter((task) => ['new', 'in_progress'].includes(task.status) && task.deadlineDate >= new Date()).length;
-    const reviewOnTrackTasks = tasksWithDeadlines.filter((task) => task.status === 'rew' && task.deadlineDate >= new Date()).length;
-    const completedOnTimeTasks = tasksWithDeadlines.filter((task) => task.status === 'done' && (!task.updated_at || new Date(task.updated_at) <= task.deadlineDate)).length;
-    const deadlineTrackedCount = tasksWithDeadlines.length;
-    const averageTeamLoad = performersData.length > 0
-      ? performersData.reduce((sum, performer) => sum + performer.total, 0) / performersData.length
-      : 0;
-    const loadDeviation = performersData.length > 0
-      ? performersData.reduce((sum, performer) => sum + Math.abs(performer.total - averageTeamLoad), 0) / performersData.length
-      : 0;
-    const balanceScore = averageTeamLoad > 0
-      ? Math.max(0, 100 - ((loadDeviation / averageTeamLoad) * 35))
-      : 100;
-
-    const efficiency = completionPercentage;
-    const productivity = clampPercent(
-      ((completedTasks * 1) + (reviewedTasks * 0.8) + (inProgressTasks * 0.45) + (newTasks * 0.1)) / totalVisibleTasks * 100
-    );
-    const quality = clampPercent(
-      100 - ((((failedTasks * 1.25) + (overdueTasks * 0.6)) / Math.max(countedTasks.length, 1)) * 100)
-    );
-    const timeliness = deadlineTrackedCount > 0
-      ? clampPercent((((completedOnTimeTasks * 1) + (reviewOnTrackTasks * 0.75) + (activeOnTrackTasks * 0.55)) / deadlineTrackedCount) * 100)
-      : 100;
-    const collaboration = performersData.length > 0
-      ? clampPercent((balanceScore * 0.55) + ((((completedTasks + (reviewedTasks * 0.6)) / performersData.length) * 18) * 0.45))
-      : 0;
-
-    return [
-      { subject: 'Эффективность', A: efficiency, fullMark: 100 },
-      { subject: 'Продуктивность', A: productivity, fullMark: 100 },
-      { subject: 'Качество', A: quality, fullMark: 100 },
-      { subject: 'Сроки', A: timeliness, fullMark: 100 },
-      { subject: 'Согласованность', A: collaboration, fullMark: 100 },
-    ];
-  }, [completionPercentage, countedTasks.length, completedTasks, failedTasks, filteredTasks, inProgressTasks, newTasks, overdueTasks, performersData, tasksWithDeadlines]);
+  const performanceMetrics = useMemo(() => ([
+    { subject: 'Эффективность', A: assignmentMetrics?.efficiency ?? 0, fullMark: 100 },
+    { subject: 'Продуктивность', A: assignmentMetrics?.productivity ?? 0, fullMark: 100 },
+    { subject: 'Качество', A: assignmentMetrics?.quality ?? 0, fullMark: 100 },
+    { subject: 'Сроки', A: assignmentMetrics?.timeliness ?? 0, fullMark: 100 },
+    { subject: 'Согласованность', A: assignmentMetrics?.collaboration ?? 0, fullMark: 100 },
+  ]), [assignmentMetrics]);
 
   const handleAssignmentChange = (event) => {
     const assignmentId = event.target.value;
@@ -649,7 +653,7 @@ function Dashboard({ userEmail: propUserEmail }) {
   return (
     <PageContainer>
       <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} onCommentsClick={() => setShowNotification(true)} />
-      {showNotification && <TaskNotification tasks={tasks} comments={comments} invitations={[]} onClose={() => setShowNotification(false)} />}
+      {showNotification && <TaskNotification tasks={notificationTasks} comments={comments} invitations={invitations} systemNotifications={systemNotifications} onClose={() => setShowNotification(false)} />}
       <ScrollableContainer>
         <ContentContainer>
           <DashboardTitle variant="h4">Дашборд проекта</DashboardTitle>
