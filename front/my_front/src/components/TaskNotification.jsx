@@ -358,7 +358,7 @@ function TaskNotification({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <FiBell size={16} />
                         <span className="notification-invitation-text">
-                          {eventItem.title || 'Team event'}
+'Событие команды'
                         </span>
                       </div>
                       <p className="notification-invitation-preview">

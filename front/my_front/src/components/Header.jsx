@@ -24,7 +24,7 @@ function Header({ userEmail, onNavigate, unreadCommentsCount = 0, onCommentsClic
           <button
             className="notification-bell"
             onClick={onCommentsClick}
-            title="Notifications Center"
+title="Центр уведомлений"
           >
             <FiInbox size={20} />
             {unreadCommentsCount > 0 && (

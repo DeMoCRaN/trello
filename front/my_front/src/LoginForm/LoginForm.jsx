@@ -80,7 +80,7 @@ function LoginForm() {
         <h4>Войдите для использования</h4>
         
         <div className="input-container">
-          <label>Email:</label>
+          <label>Электронная почта:</label>
           <input
             type="email"
             value={email}
