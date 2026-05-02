@@ -33,8 +33,8 @@ function UserInfo({ userEmail, onBack }) {
   return (
     <div>
       <h2>Информация о пользователе</h2>
-      <p><strong>ID:</strong> {userInfo.id}</p>
-      <p><strong>Email:</strong> {userInfo.email}</p>
+      <p><strong>Идентификатор:</strong> {userInfo.id}</p>
+      <p><strong>Электронная почта:</strong> {userInfo.email}</p>
       <p><strong>Роль:</strong> {userInfo.role_id}</p>
       <button onClick={onBack}>Назад</button>
     </div>
@@ -42,3 +42,4 @@ function UserInfo({ userEmail, onBack }) {
 }
 
 export default UserInfo;
+

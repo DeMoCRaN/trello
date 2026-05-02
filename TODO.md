@@ -1,18 +1,15 @@
-# TODO: Перевод фронтенда на русский язык
+# Трекинг прогресса фичи: Уведомления о приглашениях в tab 'invitations'
 
-## План шагов:
-1. [ ] ✅ Создать TODO.md (текущий шаг)
-2. [✅] Edit front/my_front/src/components/Header.jsx: заменить title="Notifications Center" на title="Центр уведомлений"
-3. [✅] Edit front/my_front/src/components/TaskNotification.jsx: заменить &#39;Team event&#39; на &#39;Событие команды&#39;
-4. [ ] Edit front/my_front/src/LoginForm/LoginForm.jsx: заменить "Email:" на "Электронная почта:"
-5. [ ] Edit front/my_front/src/components/UserProfileForm.jsx: 
-   - "Email:" → "Электронная почта:"
-   - "ID:" → "Идентификатор:"
-   - "GitHub username:" → "Имя пользователя GitHub:"
-6. [ ] Edit front/my_front/src/components/UserInfo.jsx:
-   - "ID:" → "Идентификатор:"
-   - "Email:" → "Электронная почта:"
-7. [ ] Запустить тест: cd front/my_front && npm run dev
-8. [ ] Завершить задачу
+## 📋 План (approved)
+1. ✅ [x] Create TODO.md
+2. ✅ Backend: Implement getUserInvitations in assignments.js (pending incoming + accepted outgoing)
+3. [ ] Backend: Update /notifications/summary in api.js to use getUserInvitations
+4. [ ] Backend: Russian message in respondToInvitation notification
+5. [ ] Frontend: Update TaskNotification.jsx to handle accepted invitations (distinguish statuses)
+6. [ ] Test: Send invite -> accept -> verify sender sees in 'invitations' tab
+7. [ ] Complete
 
-## Статус: В процессе
+## Progress
+- Step 1 complete
+
+Next: Edit back/controllers/assignments.js

@@ -203,17 +203,6 @@ function TaskNotification({
             >
               <div className="notification-tabs">
                 <button
-                  className={`notification-tab ${activeTab === 'events' ? 'active' : ''}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setActiveTab('events');
-                  }}
-                  disabled={teamEvents.length === 0}
-                >
-                  События ({teamEvents.length})
-                </button>
-
-                <button
                   className={`notification-tab ${activeTab === 'tasks' ? 'active' : ''}`}
                   onClick={(event) => {
                     event.stopPropagation();

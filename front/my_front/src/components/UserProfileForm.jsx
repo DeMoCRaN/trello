@@ -89,7 +89,7 @@ function UserProfileForm({ userEmail, onClose }) {
         <div className="detail-section">
           <h3>Основная информация</h3>
           <div className="detail-item">
-            <span className="detail-label">Email:</span>
+<span className="detail-label">Электронная почта:</span>
             <span className="detail-value email">{userProfile?.email}</span>
           </div>
           <div className="detail-item">
@@ -110,7 +110,7 @@ function UserProfileForm({ userEmail, onClose }) {
           {userProfile?.github_connected ? (
             <>
               <div className="detail-item">
-                <span className="detail-label">GitHub username:</span>
+                <span className="detail-label">Имя пользователя GitHub:</span>
                 <span className="detail-value github-username">
                   {userProfile?.github_username}
                 </span>
