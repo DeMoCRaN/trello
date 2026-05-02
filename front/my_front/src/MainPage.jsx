@@ -14,6 +14,7 @@ import TeamMembersPanel from './components/TeamMembersPanel';
 import UserProfileForm from './components/UserProfileForm';
 import TaskNotification from './components/TaskNotification';
 import InvitationResponseForm from './components/InvitationResponseForm';
+import SideToast from './components/SideToast';
 
 function parseJwt(token) {
   try {
@@ -61,7 +62,12 @@ function MainPage({ userEmail }) {
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [showInvitationForm, setShowInvitationForm] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState(null);
+  const [sideToast, setSideToast] = useState({ message: '', type: 'error' });
   const lastNotificationCountRef = useRef(0);
+
+  const showSideToast = useCallback((message, type = 'error') => {
+    setSideToast({ message, type });
+  }, []);
 
   const mappedAssignedTasks = assignedTasks.map(task => ({
     ...task,
@@ -224,6 +230,33 @@ function MainPage({ userEmail }) {
   const fetchInvitations = useCallback(async () => {
     await fetchNotifications();
   }, [fetchNotifications]);
+
+  const markSystemNotificationsAsRead = useCallback(async (ids = []) => {
+    const notificationIds = ids
+      .map((id) => Number(id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (notificationIds.length === 0) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+        },
+        body: JSON.stringify({ notificationIds }),
+      });
+
+      setSystemNotifications((prev) => prev.filter((item) => !notificationIds.includes(Number(item.id))));
+      setUnreadCommentsCount((prev) => Math.max(0, prev - notificationIds.length));
+    } catch (error) {
+      console.error('Ошибка при отметке системных уведомлений как прочитанных:', error);
+    }
+  }, []);
 
   const fetchTeamMembers = useCallback(async (assignmentId) => {
     if (!assignmentId) return;
@@ -394,7 +427,7 @@ function MainPage({ userEmail }) {
       return true;
     } catch (error) {
       console.error('Ошибка при создании задания:', error);
-      alert(error.message);
+      showSideToast(error.message);
       return false;
     }
   };
@@ -413,7 +446,7 @@ function MainPage({ userEmail }) {
         const errorData = await response.json();
         
         if (response.status === 409 || errorData.error?.includes('foreign key constraint')) {
-          alert('Невозможно удалить задание: сначала удалите все задачи, связанные с этим заданием');
+          showSideToast('Невозможно удалить задание: сначала удалите все задачи, связанные с этим заданием');
           return;
         }
         
@@ -421,14 +454,14 @@ function MainPage({ userEmail }) {
       }
       
       await fetchAssignments();
-      alert('Задание успешно удалено');
+      showSideToast('Задание успешно удалено', 'success');
     } catch (error) {
       console.error('Ошибка при удалении задания:', error);
       
       if (error.message?.includes('foreign key') || error.message?.includes('referenced')) {
-        alert('Невозможно удалить задание. Сначала удалите все задачи, связанные с этим заданием');
+        showSideToast('Невозможно удалить задание. Сначала удалите все задачи, связанные с этим заданием');
       } else {
-        alert('Невозможно удалить задание. Сначала удалите все задачи, связанные с этим заданием');
+        showSideToast('Невозможно удалить задание. Сначала удалите все задачи, связанные с этим заданием');
       }
     }
   };
@@ -452,11 +485,11 @@ function MainPage({ userEmail }) {
 
   const handleCreateTask = useCallback(async (taskData) => {
     if (!taskData.title.trim()) {
-      alert('Введите название задачи');
+      showSideToast('Введите название задачи');
       return;
     }
     if (!selectedAssignment) {
-      alert('Выберите задание для создания задачи');
+      showSideToast('Выберите задание для создания задачи');
       return;
     }
     try {
@@ -515,9 +548,9 @@ function MainPage({ userEmail }) {
       window.dispatchEvent(new Event('taskUpdated'));
       setShowTaskForm(false);
     } catch (err) {
-      alert(err.message);
+      showSideToast(err.message);
     }
-  }, [selectedAssignment, userId, fetchAssignments, fetchAssignedTasks]);
+  }, [selectedAssignment, userId, fetchAssignments, fetchAssignedTasks, showSideToast]);
 
   const handleDeleteTask = useCallback(async (taskId) => {
     try {
@@ -538,9 +571,9 @@ function MainPage({ userEmail }) {
       ]);
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
-      alert(err.message);
+      showSideToast(err.message);
     }
-  }, [fetchAssignments, fetchAssignedTasks]);
+  }, [fetchAssignments, fetchAssignedTasks, showSideToast]);
 
   const handleStatusChange = useCallback(async (taskId, statusPayload) => {
     setStatusChangeLoading(prev => ({ ...prev, [taskId]: true }));
@@ -571,11 +604,11 @@ function MainPage({ userEmail }) {
       
     } catch (err) {
       console.error('Error updating task status:', err);
-      alert(err.message);
+      showSideToast(err.message);
     } finally {
       setStatusChangeLoading(prev => ({ ...prev, [taskId]: false }));
     }
-  }, [fetchAssignments, fetchAssignedTasks]);
+  }, [fetchAssignments, fetchAssignedTasks, showSideToast]);
 
   const formatTime = useCallback((seconds) => {
     const hrs = Math.floor(seconds / 3600);
@@ -639,10 +672,10 @@ function MainPage({ userEmail }) {
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (error) {
       console.error('Ошибка при ответе на приглашение:', error);
-      alert(`Ошибка при ответе на приглашение: ${error.message}`);
+      showSideToast(`Ошибка при ответе на приглашение: ${error.message}`);
       throw error;
     }
-  }, [selectedInvitation, fetchInvitations]);
+  }, [selectedInvitation, fetchInvitations, showSideToast]);
 
   if (loading) {
     return <div className="loading-container">Загрузка заданий...</div>;
@@ -654,6 +687,13 @@ function MainPage({ userEmail }) {
 
   return (
     <div className="app-container">
+      <SideToast
+        message={sideToast.message}
+        type={sideToast.type}
+        onClose={() => setSideToast({ message: '', type: 'error' })}
+        duration={60000}
+      />
+
       <Header 
         userEmail={userEmail} 
         onNavigate={(page) => setCurrentPage(page)} 
@@ -668,8 +708,14 @@ function MainPage({ userEmail }) {
           comments={comments}
           invitations={invitations}
           systemNotifications={systemNotifications}
-          onClose={() => setShowNotification(false)}
+          onClose={() => {
+            markSystemNotificationsAsRead(systemNotifications.map((item) => item.id));
+            setShowNotification(false);
+          }}
           onInvitationClick={handleInvitationClick}
+          onSystemNotificationClick={(item) => {
+            markSystemNotificationsAsRead([item.id]);
+          }}
         />
       )}
 
@@ -735,6 +781,7 @@ function MainPage({ userEmail }) {
                 <SelectedAssignmentDetails
                   selectedAssignment={selectedAssignment}
                   statuses={statuses}
+                  onNotify={showSideToast}
                   onStatusChange={handleStatusChange}
                   onDelete={handleDeleteTask}
                   onDetails={handleShowDetails}
@@ -770,7 +817,7 @@ function MainPage({ userEmail }) {
                       ]);
                       window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
-                      alert(err.message);
+                      showSideToast(err.message);
                     }
                   }}
                   onCompleteWork={async (taskId) => {
@@ -795,7 +842,7 @@ function MainPage({ userEmail }) {
                       ]);
                       window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
-                      alert(err.message);
+                      showSideToast(err.message);
                     }
                   }}
                 />
@@ -857,6 +904,7 @@ function MainPage({ userEmail }) {
         {showInvitationForm && selectedInvitation && (
           <InvitationResponseForm
             invitation={selectedInvitation}
+            onNotify={showSideToast}
             onClose={() => {
               setShowInvitationForm(false);
               setSelectedInvitation(null);

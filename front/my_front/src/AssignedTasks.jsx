@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+п»їimport React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Header from './components/Header';
@@ -29,15 +29,15 @@ function AssignedTasks({ userEmail }) {
 
   const navigate = useNavigate();
   const statusLabels = {
-    new: 'Новая',
-    in_progress: 'В работе',
-    rew: 'На ревью',
-    done: 'Завершена',
+    new: 'РќРѕРІС‹Рµ',
+    in_progress: 'Р’ СЂР°Р±РѕС‚Рµ',
+    rew: 'РќР° СЂРµРІСЊСЋ',
+    done: 'Р—Р°РІРµСЂС€РµРЅРѕ',
   };
   const priorityLabels = {
-    low: 'Низкий',
-    medium: 'Средний',
-    high: 'Высокий',
+    low: 'РќРёР·РєРёР№',
+    medium: 'РЎСЂРµРґРЅРёР№',
+    high: 'Р’С‹СЃРѕРєРёР№',
   };
 
   // Р”РµР±Р°СѓРЅСЃ РґР»СЏ Р·Р°РїСЂРѕСЃР° Р·Р°РґР°С‡
@@ -139,7 +139,7 @@ function AssignedTasks({ userEmail }) {
       
       const namesMap = {};
       assignments.forEach(assignment => {
-        namesMap[assignment.id] = assignment.title || assignment.name || `Задание ${assignment.id}`;
+        namesMap[assignment.id] = assignment.title || assignment.name || `Р—Р°РґР°РЅРёРµ ${assignment.id}`;
       });
       setAssignmentNames(namesMap);
     } catch (err) {
@@ -151,7 +151,7 @@ function AssignedTasks({ userEmail }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No auth token found');
+        throw new Error('РўРѕРєРµРЅ Р°РІС‚РѕСЂРёР·Р°С†РёРё РЅРµ РЅР°Р№РґРµРЅ');
       }
       const response = await fetch('http://localhost:3000/api/notifications/summary', {
         method: 'GET',
@@ -181,10 +181,34 @@ function AssignedTasks({ userEmail }) {
     await fetchNotifications();
   }, [fetchNotifications]);
 
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission !== 'denied') {
-      Notification.requestPermission();
+  const markSystemNotificationsAsRead = useCallback(async (ids = []) => {
+    const notificationIds = ids
+      .map((id) => Number(id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (notificationIds.length === 0) {
+      return;
     }
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+        },
+        body: JSON.stringify({ notificationIds }),
+      });
+
+      setSystemNotifications((prev) => prev.filter((item) => !notificationIds.includes(Number(item.id))));
+      setUnreadCommentsCount((prev) => Math.max(0, prev - notificationIds.length));
+    } catch (error) {
+      console.error('РћС€РёР±РєР° РїСЂРё РѕС‚РјРµС‚РєРµ СЃРёСЃС‚РµРјРЅС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№ РєР°Рє РїСЂРѕС‡РёС‚Р°РЅРЅС‹С…:', error);
+    }
+  }, []);
+
+  useEffect(() => {
 
     fetchTasks();
     fetchAssignmentNames();
@@ -271,7 +295,7 @@ function AssignedTasks({ userEmail }) {
     const groups = {};
     
     groups['none'] = {
-      name: taskViewMode === 'execution' ? 'Все задачи для выполнения' : 'Задачи на ревью и завершённые',
+      name: taskViewMode === 'execution' ? 'Р’СЃРµ Р·Р°РґР°С‡Рё РґР»СЏ РІС‹РїРѕР»РЅРµРЅРёСЏ' : 'Р—Р°РґР°С‡Рё РЅР° СЂРµРІСЊСЋ Рё Р·Р°РІРµСЂС€С‘РЅРЅС‹Рµ',
       tasks: []
     };
 
@@ -282,7 +306,7 @@ function AssignedTasks({ userEmail }) {
       
       if (!groups[assignmentId]) {
         groups[assignmentId] = {
-          name: assignmentNames[assignmentId] || `Задание ${assignmentId}`,
+          name: assignmentNames[assignmentId] || `Р—Р°РґР°РЅРёРµ ${assignmentId}`,
           tasks: []
         };
       }
@@ -493,7 +517,7 @@ function AssignedTasks({ userEmail }) {
       setSelectedInvitation(null);
     } catch (error) {
       console.error('РћС€РёР±РєР° РїСЂРё РѕС‚РІРµС‚Рµ РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ:', error);
-      alert(`РћС€РёР±РєР° РїСЂРё РѕС‚РІРµС‚Рµ РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ: ${error.message}`);
+      setError(`РћС€РёР±РєР° РїСЂРё РѕС‚РІРµС‚Рµ РЅР° РїСЂРёРіР»Р°С€РµРЅРёРµ: ${error.message}`);
       throw error;
     }
   }, [selectedInvitation, fetchInvitations]);
@@ -504,7 +528,7 @@ function AssignedTasks({ userEmail }) {
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
   }, []);
 
-  // РРµРЅРґРµСЂ РєР°СЂС‚РѕС‡РєРё Р·Р°РґР°С‡Рё
+  // Р РµРЅРґРµСЂ РєР°СЂС‚РѕС‡РєРё Р·Р°РґР°С‡Рё
 const renderTaskCard = useCallback((task) => {
   const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
   const isInProgress = task.status === 'in_progress' || timer.isRunning;
@@ -532,15 +556,15 @@ const renderTaskCard = useCallback((task) => {
       <h4 style={{ marginTop: 0 }}>{task.title}</h4>
       <p>{task.description}</p>
       {task.assignment_id && (
-        <p><strong>Проект:</strong> {assignmentNames[task.assignment_id] || `Задание ${task.assignment_id}`}</p>
+        <p><strong>РџСЂРѕРµРєС‚:</strong> {assignmentNames[task.assignment_id] || `Р—Р°РґР°РЅРёРµ ${task.assignment_id}`}</p>
       )}
-      <p><strong>Срок:</strong> {task.deadline ? formatDeadline(task.deadline) : 'Нет'}</p>
-      <p><strong>Автор:</strong> {task.creator_email}</p>
-      <p><strong>Статус:</strong> {statusLabels[task.status] || task.status}</p>
-      <p><strong>Приоритет:</strong> {priorityLabels[task.priority] || task.priority}</p>
-      <p><strong>Создана:</strong> {new Date(task.created_at).toLocaleString()}</p>
-      <p><strong>Обновлена:</strong> {new Date(task.updated_at).toLocaleString()}</p>
-      <p><strong>Время работы:</strong> {formatTime(timer.elapsedSeconds)}</p>
+      <p><strong>РЎСЂРѕРє:</strong> {task.deadline ? formatDeadline(task.deadline) : 'РќРµС‚'}</p>
+      <p><strong>РђРІС‚РѕСЂ:</strong> {task.creator_email}</p>
+      <p><strong>РЎС‚Р°С‚СѓСЃ:</strong> {statusLabels[task.status] || task.status}</p>
+      <p><strong>РџСЂРёРѕСЂРёС‚РµС‚:</strong> {priorityLabels[task.priority] || task.priority}</p>
+      <p><strong>РЎРѕР·РґР°РЅР°:</strong> {new Date(task.created_at).toLocaleString()}</p>
+      <p><strong>РћР±РЅРѕРІР»РµРЅР°:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+      <p><strong>Р’СЂРµРјСЏ СЂР°Р±РѕС‚С‹:</strong> {formatTime(timer.elapsedSeconds)}</p>
       
       <div className="task-buttons-wrapper" style={{ 
         display: 'flex', 
@@ -556,7 +580,7 @@ const renderTaskCard = useCallback((task) => {
             className="task-button start-button"
             style={{ order: 1 }}
           >
-            {updatingTaskId === task.id ? 'Запуск...' : 'Начать работу'}
+            {updatingTaskId === task.id ? 'Р—Р°РїСѓСЃРє...' : 'РќР°С‡Р°С‚СЊ СЂР°Р±РѕС‚Сѓ'}
           </button>
         )}
         
@@ -568,7 +592,7 @@ const renderTaskCard = useCallback((task) => {
               className="task-button stop-button"
               style={{ order: 2 }}
             >
-              {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
+              {updatingTaskId === task.id ? 'РћСЃС‚Р°РЅРѕРІРєР°...' : 'РћСЃС‚Р°РЅРѕРІРёС‚СЊ'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 2, 'resume')}
@@ -576,7 +600,7 @@ const renderTaskCard = useCallback((task) => {
               className="task-button resume-button"
               style={{ order: 3 }}
             >
-              {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
+              {updatingTaskId === task.id ? 'Р’РѕР·РѕР±РЅРѕРІР»РµРЅРёРµ...' : 'РџСЂРѕРґРѕР»Р¶РёС‚СЊ'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 5, 'rew')}
@@ -584,7 +608,7 @@ const renderTaskCard = useCallback((task) => {
               className="task-button complete-button"
               style={{ order: 4 }}
             >
-              {updatingTaskId === task.id ? 'Отправка...' : 'На ревью'}
+              {updatingTaskId === task.id ? 'РћС‚РїСЂР°РІРєР°...' : 'РќР° СЂРµРІСЊСЋ'}
             </button>
           </>
         )}
@@ -606,14 +630,14 @@ const renderTaskCard = useCallback((task) => {
             color: 'white'
           }}
         >
-          Подробнее
+          РџРѕРґСЂРѕР±РЅРµРµ
         </button>
 
       </div>
       
       {task.status === 'done' && (
         <p className="task-completed" style={{ marginTop: '8px', color: '#4caf50' }}>
-          Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
+          Р—Р°РґР°С‡Р° Р·Р°РІРµСЂС€РµРЅР°. РћР±С‰РµРµ РІСЂРµРјСЏ СЂР°Р±РѕС‚С‹: {formatTime(timer.elapsedSeconds)}
         </p>
       )}
 
@@ -630,7 +654,7 @@ const renderTaskCard = useCallback((task) => {
         <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="loading-container">
           <div className="spinner"></div>
-          <p>Загрузка задач...</p>
+          <p>Р—Р°РіСЂСѓР·РєР° Р·Р°РґР°С‡...</p>
         </div>
       </div>
     );
@@ -642,9 +666,9 @@ const renderTaskCard = useCallback((task) => {
       <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="error-container">
-          <p>Ошибка: {error}</p>
+          <p>РћС€РёР±РєР°: {error}</p>
           <button onClick={fetchTasks} className="retry-button">
-            Повторить
+            РџРѕРІС‚РѕСЂРёС‚СЊ
           </button>
         </div>
       </div>
@@ -657,7 +681,7 @@ const renderTaskCard = useCallback((task) => {
       <div className="page-container">
         <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} />
         <div className="no-tasks-container">
-          <p>Нет назначенных задач.</p>
+          <p>РќРµС‚ РЅР°Р·РЅР°С‡РµРЅРЅС‹С… Р·Р°РґР°С‡.</p>
         </div>
       </div>
     );
@@ -679,10 +703,16 @@ const renderTaskCard = useCallback((task) => {
           comments={comments}
           invitations={invitations}
           systemNotifications={systemNotifications}
-          onClose={() => setShowNotification(false)}
+          onClose={() => {
+            markSystemNotificationsAsRead(systemNotifications.map((item) => item.id));
+            setShowNotification(false);
+          }}
           onTaskClick={handleNotificationClick}
           onCommentClick={handleCommentClick}
           onInvitationClick={handleInvitationClick}
+          onSystemNotificationClick={(item) => {
+            markSystemNotificationsAsRead([item.id]);
+          }}
         />
       )}
       
@@ -693,28 +723,28 @@ const renderTaskCard = useCallback((task) => {
               onClick={() => setTaskViewMode('execution')}
               className={`toggle-sort-button ${taskViewMode === 'execution' ? 'active-toggle' : ''}`}
             >
-              К выполнению
+              Рљ РІС‹РїРѕР»РЅРµРЅРёСЋ
             </button>
             <button
               onClick={() => setTaskViewMode('review')}
               className={`toggle-sort-button ${taskViewMode === 'review' ? 'active-toggle' : ''}`}
             >
-              Ревью и завершённые
+              Р РµРІСЊСЋ Рё Р·Р°РІРµСЂС€С‘РЅРЅС‹Рµ
             </button>
           </div>
         </div>
 
         <div className="tasks-summary">
-          <div className="summary-pill summary-total">Всего: {taskSummary.total}</div>
+          <div className="summary-pill summary-total">Р’СЃРµРіРѕ: {taskSummary.total}</div>
           {taskViewMode === 'execution' ? (
             <>
-              <div className="summary-pill summary-new">Новые: {taskSummary.new}</div>
-              <div className="summary-pill summary-progress">В работе: {taskSummary.inProgress}</div>
+              <div className="summary-pill summary-new">РќРѕРІС‹Рµ: {taskSummary.new}</div>
+              <div className="summary-pill summary-progress">Р’ СЂР°Р±РѕС‚Рµ: {taskSummary.inProgress}</div>
             </>
           ) : (
             <>
-              <div className="summary-pill summary-review">На ревью: {taskSummary.review}</div>
-              <div className="summary-pill summary-done">Завершённые: {taskSummary.done}</div>
+              <div className="summary-pill summary-review">РќР° СЂРµРІСЊСЋ: {taskSummary.review}</div>
+              <div className="summary-pill summary-done">Р—Р°РІРµСЂС€С‘РЅРЅС‹Рµ: {taskSummary.done}</div>
             </>
           )}
         </div>
@@ -735,13 +765,13 @@ const renderTaskCard = useCallback((task) => {
                   {visibleStatusColumns.map((status) => (
                     <div key={`${assignmentId}-${status}`} className="status-column">
                       <h3 className="status-header">
-                        {status === 'new' ? 'Новые' :
-                         status === 'in_progress' ? 'В работе' :
-                         status === 'rew' ? 'На ревью' :
-                         'Завершённые'}
+                        {status === 'new' ? 'РќРѕРІС‹Рµ' :
+                         status === 'in_progress' ? 'Р’ СЂР°Р±РѕС‚Рµ' :
+                         status === 'rew' ? 'РќР° СЂРµРІСЊСЋ' :
+                         'Р—Р°РІРµСЂС€С‘РЅРЅС‹Рµ'}
                       </h3>
                       {groupedTasksByStatus[status].length === 0 ? (
-                        <p className="no-tasks-message">Нет задач в этой категории</p>
+                        <p className="no-tasks-message">РќРµС‚ Р·Р°РґР°С‡ РІ СЌС‚РѕР№ РєР°С‚РµРіРѕСЂРёРё</p>
                       ) : (
                         groupedTasksByStatus[status].map(renderTaskCard)
                       )}

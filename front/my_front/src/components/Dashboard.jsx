@@ -393,6 +393,33 @@ function Dashboard({ userEmail: propUserEmail }) {
     }
   }, []);
 
+  const markSystemNotificationsAsRead = useCallback(async (ids = []) => {
+    const notificationIds = ids
+      .map((id) => Number(id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (notificationIds.length === 0) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ notificationIds }),
+      });
+
+      setSystemNotifications((prev) => prev.filter((item) => !notificationIds.includes(Number(item.id))));
+      setUnreadCommentsCount((prev) => Math.max(0, prev - notificationIds.length));
+    } catch (error) {
+      console.error('Ошибка при отметке системных уведомлений как прочитанных:', error);
+    }
+  }, []);
+
   const fetchAssignmentMetrics = useCallback(async () => {
     if (!selectedAssignment) return;
     try {
@@ -653,7 +680,21 @@ function Dashboard({ userEmail: propUserEmail }) {
   return (
     <PageContainer>
       <Header userEmail={userEmail} onNavigate={onNavigate} unreadCommentsCount={unreadCommentsCount} onCommentsClick={() => setShowNotification(true)} />
-      {showNotification && <TaskNotification tasks={notificationTasks} comments={comments} invitations={invitations} systemNotifications={systemNotifications} onClose={() => setShowNotification(false)} />}
+      {showNotification && (
+        <TaskNotification
+          tasks={notificationTasks}
+          comments={comments}
+          invitations={invitations}
+          systemNotifications={systemNotifications}
+          onClose={() => {
+            markSystemNotificationsAsRead(systemNotifications.map((item) => item.id));
+            setShowNotification(false);
+          }}
+          onSystemNotificationClick={(item) => {
+            markSystemNotificationsAsRead([item.id]);
+          }}
+        />
+      )}
       <ScrollableContainer>
         <ContentContainer>
           <DashboardTitle variant="h4">Дашборд проекта</DashboardTitle>

@@ -19,7 +19,8 @@ function SelectedAssignmentDetails({
   reviewTasks = [],
   archivedTasks = [],
   failedTasks = [],
-  onRefresh // Добавляем пропс для обновления данных
+  onRefresh,
+  onNotify = () => {}
 }) {
   const [activeTab, setActiveTab] = useState('active');
   
@@ -40,7 +41,7 @@ function SelectedAssignmentDetails({
       if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Ошибка изменения статуса:', error);
-      alert(error.message);
+      onNotify(error.message);
     }
   };
 
@@ -51,7 +52,7 @@ function SelectedAssignmentDetails({
       if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Ошибка удаления задачи:', error);
-      alert(error.message);
+      onNotify(error.message);
     }
   };
 
@@ -62,7 +63,7 @@ function SelectedAssignmentDetails({
       if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Ошибка завершения задачи:', error);
-      alert(error.message);
+      onNotify(error.message);
     }
   };
 
@@ -76,7 +77,7 @@ function SelectedAssignmentDetails({
       if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Ошибка провала задачи:', error);
-      alert(error.message);
+      onNotify(error.message);
     }
   };
 
@@ -91,7 +92,7 @@ function SelectedAssignmentDetails({
       if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Ошибка восстановления задачи:', error);
-      alert(error.message);
+      onNotify(error.message);
     }
   };
 
@@ -235,6 +236,7 @@ function SelectedAssignmentDetails({
                     onCompleteWork={handleCompleteWork}
                     onFail={handleFailTask}
                     onRestore={handleRestoreTask}
+                    onNotify={onNotify}
                     isProjectAuthor={true}
                     creatorName={task.creator_name || task.creator_id}
                     assigneeName={task.assignee_name || task.assignee_id}
@@ -263,3 +265,4 @@ function SelectedAssignmentDetails({
 }
 
 export default SelectedAssignmentDetails;
+

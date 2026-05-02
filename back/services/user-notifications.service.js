@@ -1,4 +1,4 @@
-async function ensureUserNotificationsTable(pool) {
+﻿async function ensureUserNotificationsTable(pool) {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_notifications (
       id SERIAL PRIMARY KEY,
@@ -47,41 +47,38 @@ async function createUserNotification(clientOrPool, payload) {
   return result.rows[0];
 }
 
-async function consumeUnreadUserNotifications(pool, recipientId) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
+async function getUnreadUserNotifications(pool, recipientId) {
+  const result = await pool.query(
+    `SELECT id, type, title, message, assignment_id, invitation_id, actor_id, created_at
+     FROM user_notifications
+     WHERE recipient_id = $1 AND is_read = FALSE
+     ORDER BY created_at DESC`,
+    [recipientId]
+  );
 
-    const unreadResult = await client.query(
-      `SELECT id, type, title, message, assignment_id, invitation_id, actor_id, created_at
-       FROM user_notifications
-       WHERE recipient_id = $1 AND is_read = FALSE
-       ORDER BY created_at DESC`,
-      [recipientId]
-    );
+  return result.rows;
+}
 
-    const ids = unreadResult.rows.map((row) => row.id);
-    if (ids.length > 0) {
-      await client.query(
-        `UPDATE user_notifications
-         SET is_read = TRUE
-         WHERE id = ANY($1::int[])`,
-        [ids]
-      );
-    }
-
-    await client.query('COMMIT');
-    return unreadResult.rows;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
+async function markUserNotificationsAsRead(pool, recipientId, notificationIds = []) {
+  if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+    return 0;
   }
+
+  const result = await pool.query(
+    `UPDATE user_notifications
+     SET is_read = TRUE
+     WHERE recipient_id = $1
+       AND id = ANY($2::int[])
+       AND is_read = FALSE`,
+    [recipientId, notificationIds]
+  );
+
+  return result.rowCount || 0;
 }
 
 module.exports = {
   ensureUserNotificationsTable,
   createUserNotification,
-  consumeUnreadUserNotifications,
+  getUnreadUserNotifications,
+  markUserNotificationsAsRead,
 };

@@ -1,23 +1,43 @@
-.task-creation-form {
+﻿.task-creation-form {
   width: 100%;
 }
 
 .team-members-panel {
-  max-width: 500px;
+  max-width: 760px;
 }
 
 .team-stats {
   text-align: center;
   margin-bottom: 20px;
-  padding: 10px;
+  padding: 12px;
   background-color: #f8f9fa;
   border-radius: 8px;
   font-weight: 500;
 }
 
 .team-stats p {
-  margin: 0;
+  margin: 0 0 6px;
   color: #666;
+}
+
+.panel-feedback {
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.panel-feedback--success {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.panel-feedback--error {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
 }
 
 .invite-section {
@@ -35,7 +55,7 @@
   font-size: 14px;
   font-weight: 500;
   transition: all 0.3s ease;
-  min-width: 120px;
+  min-width: 50px;
 }
 
 .submit-button:hover:not(:disabled) {
@@ -71,6 +91,9 @@
 
 .email-input {
   width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  display: block;
   padding: 14px 16px;
   border: 2px solid #e9ecef;
   border-radius: 8px;
@@ -84,8 +107,8 @@
 
 .email-input:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  border-color: #1f6fff;
+  box-shadow: 0 0 0 3px rgba(31, 111, 255, 0.12);
 }
 
 .email-input::placeholder {
@@ -95,35 +118,49 @@
 
 .invite-buttons {
   display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: flex-start;
   width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
 }
 
 .invite-buttons button {
-  flex: 1;
-  min-width: 120px;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
 }
 
 .cancel-button {
-  background: #6c757d;
-  color: white;
-  border: none;
+  background: #eef2f7;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
   padding: 12px 20px;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.cancel-button:hover {
-  background: #5a6268;
+.invite-buttons .submit-button {
+  background: linear-gradient(180deg, #1677ff 0%, #145fda 100%);
+  border: 1px solid #0f4fb6;
+}
+
+.invite-buttons .submit-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, #0f69e8 0%, #0f55c6 100%);
+  transform: translateY(-1px);
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #e5eaf2;
   transform: translateY(-1px);
 }
 
 .team-members-list {
   margin: 25px 0;
-  max-height: 300px;
+  max-height: 360px;
   overflow-y: auto;
 }
 
@@ -162,11 +199,19 @@
   transform: translateY(-1px);
 }
 
+.member-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
 .member-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 8px;
+  min-width: 0;
 }
 
 .member-info strong {
@@ -178,10 +223,15 @@
 .member-email {
   color: #666;
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
-.member-status {
-  margin-bottom: 8px;
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .status-badge {
@@ -193,6 +243,42 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.remove-member-button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #ef4444;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.remove-member-button:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.remove-member-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.team-members-confirm-modal .confirm-text {
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirm-actions .cancel-button,
+.confirm-actions .remove-member-button {
+  min-width: 120px;
 }
 
 .member-invited-by {
@@ -248,6 +334,16 @@
 
   .team-member-item {
     padding: 12px;
+  }
+
+  .member-main-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .member-actions {
+    justify-content: flex-start;
   }
 }
 

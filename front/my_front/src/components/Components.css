@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700&family=Raleway:wght@500;600;700&display=swap');
 
-/* ===== ASSIGNMENTS LIST STYLES ===== */
+/* ===== СТИЛИ СПИСКА ЗАДАНИЙ ===== */
 .assignments-list {
   position: fixed;
   top: 65px;
@@ -231,7 +231,7 @@
   to { opacity: 1; margin-left: 10px; }
 }
 
-/* ===== TASK CARD STYLES ===== */
+/* ===== СТИЛИ КАРТОЧКИ ЗАДАЧИ ===== */
 .task-card {
   background: white;
   border-radius: 16px;
@@ -360,7 +360,7 @@
   background: #ffcdd2;
 }
 
-/* Priority Classes */
+/* Классы приоритетов */
 .priority-low {
   border-top-color: #8bc34a;
 }
@@ -397,7 +397,7 @@
   color: #1e88e5;
 }
 
-/* Deadline Progress Bar Styles */
+/* Стили прогресс-бара дедлайна */
 .deadline-progress-container {
   margin: 16px 0;
 }

@@ -12,14 +12,33 @@ const getPriorityClass = (priority) => {
   return `priority-${priorityName || 'normal'}`;
 };
 
-function FailedTaskModal({ onClose, onConfirm, loading }) {
+const getRussianPriority = (priority) => {
+  const name = typeof priority === 'object' ? priority.name?.toLowerCase() : priority?.toLowerCase();
+  switch (name) {
+    case 'low':
+    case 'низкий':
+      return 'Низкий';
+    case 'medium':
+    case 'средний':
+      return 'Средний';
+    case 'high':
+    case 'высокий':
+      return 'Высокий';
+    case 'critical':
+      return 'Критический';
+    default:
+      return priority?.name || priority || 'Нормальный';
+  }
+};
+
+function FailedTaskModal({ onClose, onConfirm, loading, onNotify }) {
   const [reason, setReason] = useState('');
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
     if (!reason.trim()) {
-      alert('Укажите причину провала задачи');
+      onNotify('Укажите причину провала задачи');
       return;
     }
 
@@ -66,7 +85,7 @@ function FailedTaskModal({ onClose, onConfirm, loading }) {
   );
 }
 
-function RestoreTaskModal({ task, onClose, onConfirm, loading }) {
+function RestoreTaskModal({ task, onClose, onConfirm, loading, onNotify }) {
   const [title, setTitle] = useState(task.title || '');
   const [deadline, setDeadline] = useState(
     task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : ''
@@ -76,7 +95,7 @@ function RestoreTaskModal({ task, onClose, onConfirm, loading }) {
     event.preventDefault();
 
     if (!title.trim()) {
-      alert('Укажите название задачи');
+      onNotify('Укажите название задачи');
       return;
     }
 
@@ -148,6 +167,7 @@ function Task({
   onCompleteWork,
   onFail,
   onRestore,
+  onNotify = () => {},
   isProjectAuthor = false,
   loading = false,
   isArchived = false,
@@ -285,11 +305,11 @@ function Task({
             </span>
           )}
           {isReview && (
-            <span className="late-badge" style={{ backgroundColor: '#ff9800' }}>
+            <span className="late-badge" style={{ backgroundColor: '#fdecd3' }}>
               На ревью
             </span>
           )}
-          <span className="task-priority">{normalizedTask.priority}</span>
+<span className="task-priority">{getRussianPriority(normalizedTask.priority)}</span>
         </div>
 
         <p className="task-description">{normalizedTask.description}</p>
@@ -376,6 +396,7 @@ function Task({
           onClose={() => setShowFailedModal(false)}
           onConfirm={handleFailConfirm}
           loading={isUpdating}
+          onNotify={onNotify}
         />
       )}
 
@@ -385,6 +406,7 @@ function Task({
           onClose={() => setShowRestoreModal(false)}
           onConfirm={handleRestoreConfirm}
           loading={isUpdating}
+          onNotify={onNotify}
         />
       )}
     </>
@@ -395,6 +417,7 @@ FailedTaskModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  onNotify: PropTypes.func,
 };
 
 RestoreTaskModal.propTypes = {
@@ -405,6 +428,7 @@ RestoreTaskModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  onNotify: PropTypes.func,
 };
 
 Task.propTypes = {
@@ -431,6 +455,7 @@ Task.propTypes = {
   onCompleteWork: PropTypes.func.isRequired,
   onFail: PropTypes.func,
   onRestore: PropTypes.func,
+  onNotify: PropTypes.func,
   isProjectAuthor: PropTypes.bool,
   loading: PropTypes.bool,
   isArchived: PropTypes.bool,

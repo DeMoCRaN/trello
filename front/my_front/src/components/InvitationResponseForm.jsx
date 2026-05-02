@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { FiX, FiCheck } from 'react-icons/fi';
 import BaseModal from './BaseModal';
 import './InvitationResponseForm.css';
 
-function InvitationResponseForm({ invitation, onClose, onRespond }) {
+function InvitationResponseForm({ invitation, onClose, onRespond, onNotify }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRespond = async (status) => {
@@ -14,7 +15,7 @@ function InvitationResponseForm({ invitation, onClose, onRespond }) {
       onClose();
     } catch (error) {
       console.error('Ошибка при ответе на приглашение:', error);
-      alert('Ошибка при ответе на приглашение');
+      onNotify('Ошибка при ответе на приглашение', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -60,5 +61,23 @@ function InvitationResponseForm({ invitation, onClose, onRespond }) {
     </BaseModal>
   );
 }
+
+InvitationResponseForm.propTypes = {
+  invitation: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    assignment_title: PropTypes.string,
+    assignment_description: PropTypes.string,
+    invited_by_name: PropTypes.string,
+    invited_by_email: PropTypes.string,
+    invited_at: PropTypes.string,
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onRespond: PropTypes.func.isRequired,
+  onNotify: PropTypes.func,
+};
+
+InvitationResponseForm.defaultProps = {
+  onNotify: () => {},
+};
 
 export default InvitationResponseForm;

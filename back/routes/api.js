@@ -8,7 +8,7 @@ const gitController = require('../controllers/git');
 const { authenticateToken } = require('../middlewares/auth-jwt');
 const { validateIdParam } = require('../middlewares/validate-id-param');
 const { ensureDeletedFailedTasksTable } = require('../services/deleted-failed-tasks.service');
-const { ensureUserNotificationsTable, consumeUnreadUserNotifications } = require('../services/user-notifications.service');
+const { ensureUserNotificationsTable, markUserNotificationsAsRead } = require('../services/user-notifications.service');
 const { normalizeScope, buildAssignmentKpisFromRows, buildUserPerformance } = require('../services/metrics.service');
 const { toAssignmentMetricsDto, toUserMetricsDto } = require('../dto/metrics.dto');
 
@@ -421,6 +421,35 @@ router.get('/assignments/:id/team', authenticateToken, validateIdParam, async (r
   }
 });
 
+router.delete('/assignments/:id/team/:memberId', authenticateToken, validateIdParam, async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.id, 10);
+    const memberId = parseInt(req.params.memberId, 10);
+    const actorUserId = req.user.userId;
+
+    if (isNaN(memberId) || memberId <= 0) {
+      return res.status(400).json({ error: 'Некорректный ID участника' });
+    }
+
+    const removed = await assignmentsController.removeTeamMember(pool, assignmentId, memberId, actorUserId);
+    res.json(removed);
+  } catch (error) {
+    if (error.message === 'Недостаточно прав для управления составом команды') {
+      return res.status(403).json({ error: error.message });
+    }
+    if (
+      error.message === 'Участник не найден в составе команды'
+      || error.message === 'Нельзя удалить создателя проекта из команды'
+      || error.message === 'Проект не найден'
+    ) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    console.error('Ошибка при удалении участника команды:', error);
+    res.status(500).json({ error: 'Ошибка при удалении участника команды' });
+  }
+});
+
 router.get('/assignments/:id/metrics', authenticateToken, validateIdParam, async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.id, 10);
@@ -737,7 +766,7 @@ router.get('/notifications/summary', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const [comments, invitations, tasksResult, systemNotifications] = await Promise.all([
+    const [comments, invitations, tasksResult] = await Promise.all([
       commentsController.getUnreadComments(pool, userId),
       assignmentsController.getPendingInvitations(pool, userId),
       pool.query(
@@ -756,7 +785,6 @@ router.get('/notifications/summary', authenticateToken, async (req, res) => {
          LIMIT 50`,
         [userId]
       ),
-      consumeUnreadUserNotifications(pool, userId),
     ]);
 
     const tasks = tasksResult.rows.map((task) => ({
@@ -770,17 +798,38 @@ router.get('/notifications/summary', authenticateToken, async (req, res) => {
         tasks: tasks.length,
         comments: comments.length,
         invitations: invitations.length,
-        system: systemNotifications.length,
-        total: tasks.length + comments.length + invitations.length + systemNotifications.length,
+        system: 0,
+        total: tasks.length + comments.length + invitations.length,
       },
       tasks,
       comments,
       invitations,
-      systemNotifications,
+      systemNotifications: [],
     });
   } catch (error) {
     console.error('РћС€РёР±РєР° РїСЂРё РїРѕР»СѓС‡РµРЅРёРё СЃРІРѕРґРєРё СѓРІРµРґРѕРјР»РµРЅРёР№:', error);
     res.status(500).json({ error: 'РћС€РёР±РєР° РїСЂРё РїРѕР»СѓС‡РµРЅРёРё СЃРІРѕРґРєРё СѓРІРµРґРѕРјР»РµРЅРёР№' });
+  }
+});
+
+router.post('/notifications/system/mark-read', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { notificationIds } = req.body;
+
+    if (!Array.isArray(notificationIds)) {
+      return res.status(400).json({ error: 'notificationIds должен быть массивом' });
+    }
+
+    const normalizedIds = notificationIds
+      .map((id) => parseInt(id, 10))
+      .filter((id) => !isNaN(id) && id > 0);
+
+    const updatedCount = await markUserNotificationsAsRead(pool, userId, normalizedIds);
+    res.json({ updated_count: updatedCount });
+  } catch (error) {
+    console.error('Ошибка при обновлении статуса системных уведомлений:', error);
+    res.status(500).json({ error: 'Ошибка при обновлении статуса системных уведомлений' });
   }
 });
 

@@ -1,7 +1,6 @@
 const { Pool } = require('pg');
 const logger = require('../logger');
 const auditController = require('./audit-backend');
-const { createUserNotification } = require('../services/user-notifications.service');
 
 // =============================================
 // БЕЗОПАСНЫЕ УТИЛИТЫ
@@ -444,6 +443,55 @@ async function getTeamMembers(pool, assignmentId) {
     }
 }
 
+async function removeTeamMember(pool, assignmentId, memberUserId, actorUserId) {
+    const client = await pool.connect();
+    try {
+        const validatedAssignmentId = validateId(assignmentId, 'ID проекта');
+        const validatedMemberUserId = validateId(memberUserId, 'ID участника');
+        const validatedActorUserId = validateId(actorUserId, 'ID пользователя');
+
+        const permissionResult = await safeQuery(
+            client,
+            `SELECT a.creator_id, r.name AS role_name
+             FROM assignments a
+             JOIN users u ON u.id = $1
+             JOIN roles r ON r.id = u.role_id
+             WHERE a.id = $2`,
+            [validatedActorUserId, validatedAssignmentId]
+        );
+
+        if (permissionResult.rows.length === 0) {
+            throw new Error('Проект не найден');
+        }
+
+        const { creator_id, role_name } = permissionResult.rows[0];
+        if (Number(creator_id) !== validatedActorUserId && role_name !== 'admin') {
+            throw new Error('Недостаточно прав для управления составом команды');
+        }
+
+        if (Number(creator_id) === validatedMemberUserId) {
+            throw new Error('Нельзя удалить создателя проекта из команды');
+        }
+
+        const deleteResult = await safeQuery(
+            client,
+            `DELETE FROM assignment_members
+             WHERE assignment_id = $1
+               AND user_id = $2
+             RETURNING id, assignment_id, user_id, status`,
+            [validatedAssignmentId, validatedMemberUserId]
+        );
+
+        if (deleteResult.rows.length === 0) {
+            throw new Error('Участник не найден в составе команды');
+        }
+
+        return deleteResult.rows[0];
+    } finally {
+        client.release();
+    }
+}
+
 async function respondToInvitation(pool, invitationId, userId, status, assignmentId = null) {
     const client = await pool.connect();
     try {
@@ -503,18 +551,6 @@ async function respondToInvitation(pool, invitationId, userId, status, assignmen
                 assignmentId: invitation.assignment_id,
                 assignmentTitle: invitation.assignment_title
             });
-
-            if (invitation.invited_by && Number(invitation.invited_by) !== validatedUserId) {
-                await createUserNotification(client, {
-                    recipientId: Number(invitation.invited_by),
-                    actorId: validatedUserId,
-                    assignmentId: invitation.assignment_id,
-                    invitationId: validatedInvitationId,
-                    type: 'team_invite_accepted',
-                    title: 'Invitation accepted',
-                    message: `${invitation.invitee_name || 'User'} accepted the invitation to project "${invitation.assignment_title}".`,
-                });
-            }
         } else {
             logger.info('Invitation rejected by user', {
                 userId: validatedUserId,
@@ -592,6 +628,7 @@ module.exports = {
     deleteAssignment,
     inviteUserToAssignment,
     getTeamMembers,
+    removeTeamMember,
     respondToInvitation,
     getPendingInvitations,
     _test: {

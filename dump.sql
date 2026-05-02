@@ -2219,6 +2219,14 @@ CREATE TRIGGER assignments_audit_trigger AFTER INSERT OR DELETE OR UPDATE ON pub
 
 
 --
+-- TOC entry 3440 (class 2620 OID 17380)
+-- Name: tasks tasks_audit_trigger; Type: TRIGGER; Schema: public; Owner: democran
+--
+
+CREATE TRIGGER tasks_audit_trigger AFTER INSERT OR DELETE OR UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.audit_trigger_function();
+
+
+--
 -- TOC entry 3439 (class 2620 OID 17368)
 -- Name: task_attachments task_attachments_audit_trigger; Type: TRIGGER; Schema: public; Owner: democran
 --
