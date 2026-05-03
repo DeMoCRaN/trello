@@ -45,9 +45,9 @@ function SelectedAssignmentDetails({
     }
   };
 
-  const handleDelete = async (taskId) => {
+  const handleDelete = async (taskId, permanent = false) => {
     try {
-      await onDelete(taskId);
+      await onDelete(taskId, permanent);
       // Обновляем данные после удаления
       if (onRefresh) await onRefresh();
     } catch (error) {

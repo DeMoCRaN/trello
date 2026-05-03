@@ -552,10 +552,11 @@ function MainPage({ userEmail }) {
     }
   }, [selectedAssignment, userId, fetchAssignments, fetchAssignedTasks, showSideToast]);
 
-  const handleDeleteTask = useCallback(async (taskId) => {
+  const handleDeleteTask = useCallback(async (taskId, permanent = false) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
+      const url = `http://localhost:3000/api/tasks/${taskId}${permanent ? '?permanent=true' : ''}`;
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -564,7 +565,7 @@ function MainPage({ userEmail }) {
       if (!response.ok) {
         throw new Error('Ошибка при удалении задачи');
       }
-      
+
       await Promise.all([
         fetchAssignments(),
         fetchAssignedTasks()

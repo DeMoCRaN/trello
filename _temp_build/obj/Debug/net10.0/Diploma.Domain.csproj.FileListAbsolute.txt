@@ -1,0 +1,5 @@
+c:\Users\DeMoCRaN\Desktop\trello\_temp_build\obj\Debug\net10.0\Diploma.Domain.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\DeMoCRaN\Desktop\trello\_temp_build\obj\Debug\net10.0\Diploma.Domain.AssemblyInfoInputs.cache
+c:\Users\DeMoCRaN\Desktop\trello\_temp_build\obj\Debug\net10.0\Diploma.Domain.AssemblyInfo.cs
+c:\Users\DeMoCRaN\Desktop\trello\_temp_build\obj\Debug\net10.0\Diploma.Domain.csproj.CoreCompileInputs.cache
+c:\Users\DeMoCRaN\Desktop\trello\_temp_build\obj\Debug\net10.0\Diploma.Domain.sourcelink.json

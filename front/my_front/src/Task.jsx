@@ -177,6 +177,7 @@ function Task({
   const [lastAction, setLastAction] = useState(null);
   const [showFailedModal, setShowFailedModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (loading) {
@@ -218,11 +219,28 @@ function Task({
   };
 
   const handleDelete = async () => {
+    if (isArchived) {
+      setShowConfirmDelete(true);
+      return;
+    }
+
     setIsUpdating(true);
     setLastAction('delete');
 
     try {
       await onDelete(task.id);
+    } catch (error) {
+      console.error('Ошибка удаления:', error);
+      setIsUpdating(false);
+    }
+  };
+
+  const handleConfirmPermanentDelete = async () => {
+    setIsUpdating(true);
+    setLastAction('delete');
+    try {
+      await onDelete(task.id, true);
+      setShowConfirmDelete(false);
     } catch (error) {
       console.error('Ошибка удаления:', error);
       setIsUpdating(false);
@@ -408,6 +426,18 @@ function Task({
           loading={isUpdating}
           onNotify={onNotify}
         />
+      )}
+
+      {showConfirmDelete && (
+        <BaseModal onClose={() => setShowConfirmDelete(false)} title="Подтвердите удаление" size="sm">
+          <div style={{ padding: '8px 0' }}>
+            <p>Вы уверены, что хотите окончательно удалить эту задачу из архива? Это действие необратимо.</p>
+            <div className="modal-actions">
+              <button className="modal-button modal-button-cancel" onClick={() => setShowConfirmDelete(false)} disabled={isUpdating}>Отмена</button>
+              <button className="modal-button modal-button-delete" onClick={handleConfirmPermanentDelete} disabled={isUpdating}>Удалить навсегда</button>
+            </div>
+          </div>
+        </BaseModal>
       )}
     </>
   );
