@@ -100,7 +100,6 @@ function DeadlineProgressBar({ taskId, deadline, status, initialProgress }) {
     };
   }, [taskId, status]);
 
-  // Рассчитываем оставшееся время
   useEffect(() => {
     if (status === 'done') {
       setTimeLeft('Задача завершена');
