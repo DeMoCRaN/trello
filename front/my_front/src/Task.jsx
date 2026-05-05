@@ -345,10 +345,10 @@ function Task({
             <span>Дедлайн:</span>
             <span>{formatDate(deadline)}</span>
           </div>
-          {normalizedTask.status === 'done' && (
+          {(normalizedTask.status === 'done' || normalizedTask.status === 'failed') && (
             <div className="meta-item">
               <span>Завершено:</span>
-              <span>{formatDate(normalizedTask.completedAt)}</span>
+              <span>{formatDate(normalizedTask.updatedAt || normalizedTask.updated_at)}</span>
             </div>
           )}
         </div>
