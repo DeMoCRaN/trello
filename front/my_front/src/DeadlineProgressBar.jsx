@@ -35,7 +35,7 @@ function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
           return;
         }
 
-        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
+        const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token,
@@ -129,7 +129,7 @@ function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
           return;
         }
 
-        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/progress`, {
+        const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/progress`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

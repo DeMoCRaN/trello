@@ -325,7 +325,7 @@ function Dashboard({ userEmail: propUserEmail }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Пользователь не авторизован');
-      const response = await fetch('http://localhost:3000/api/assignments', {
+      const response = await fetch('http://localhost:5000/api/assignments', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Не удалось загрузить задания');
@@ -348,7 +348,7 @@ function Dashboard({ userEmail: propUserEmail }) {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Пользователь не авторизован');
       const response = await fetch(
-        `http://localhost:3000/api/assignments/${selectedAssignment}/tasks?include_archived=true`,
+        `http://localhost:5000/api/assignments/${selectedAssignment}/tasks?include_archived=true`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error(`Не удалось загрузить задачи: ${response.status}`);
@@ -378,7 +378,7 @@ function Dashboard({ userEmail: propUserEmail }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const response = await fetch('http://localhost:3000/api/notifications/summary', {
+      const response = await fetch('http://localhost:5000/api/notifications/summary', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) return;
@@ -404,7 +404,7 @@ function Dashboard({ userEmail: propUserEmail }) {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
+      await fetch('http://localhost:5000/api/notifications/system/mark-read', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -426,7 +426,7 @@ function Dashboard({ userEmail: propUserEmail }) {
       const token = localStorage.getItem('token');
       if (!token) return;
       const response = await fetch(
-        `http://localhost:3000/api/assignments/${selectedAssignment}/metrics?scope=${taskFilter}`,
+        `http://localhost:5000/api/assignments/${selectedAssignment}/metrics?scope=${taskFilter}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error(`Не удалось загрузить метрики: ${response.status}`);

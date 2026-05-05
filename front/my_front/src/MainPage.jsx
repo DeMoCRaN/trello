@@ -105,7 +105,7 @@ function MainPage({ userEmail }) {
   const fetchAssignments = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/assignments?include_archived=true', {
+      const response = await fetch('http://localhost:5000/api/assignments?include_archived=true', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -159,7 +159,7 @@ function MainPage({ userEmail }) {
     setLoadingAssignedTasks(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/tasks/assigned', {
+      const response = await fetch('http://localhost:5000/api/tasks/assigned', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -203,7 +203,7 @@ function MainPage({ userEmail }) {
       if (!token) {
         throw new Error('No auth token found');
       }
-      const response = await fetch('http://localhost:3000/api/notifications/summary', {
+      const response = await fetch('http://localhost:5000/api/notifications/summary', {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -242,7 +242,7 @@ function MainPage({ userEmail }) {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
+      await fetch('http://localhost:5000/api/notifications/system/mark-read', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -266,7 +266,7 @@ function MainPage({ userEmail }) {
       if (!token) {
         throw new Error('No auth token found');
       }
-      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/team`, {
+      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/team`, {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -287,7 +287,7 @@ function MainPage({ userEmail }) {
   const fetchStatuses = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/task_statuses', {
+      const response = await fetch('http://localhost:5000/api/task_statuses', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -306,7 +306,7 @@ function MainPage({ userEmail }) {
   const fetchPriorities = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/task_priorities', {
+      const response = await fetch('http://localhost:5000/api/task_priorities', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -409,7 +409,7 @@ function MainPage({ userEmail }) {
   const handleCreateAssignment = async (assignmentData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/assignments', {
+      const response = await fetch('http://localhost:5000/api/assignments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -435,7 +435,7 @@ function MainPage({ userEmail }) {
   const handleDeleteAssignment = async (assignmentId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}`, {
+      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -499,7 +499,7 @@ function MainPage({ userEmail }) {
       }
 
       const assigneeResponse = await fetch(
-        `http://localhost:3000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`,
+        `http://localhost:5000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -517,7 +517,7 @@ function MainPage({ userEmail }) {
       const createdAt = new Date().toISOString();
 
       const response = await fetch(
-        `http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`,
+        `http://localhost:5000/api/assignments/${selectedAssignment.id}/tasks`,
         {
           method: 'POST',
           headers: { 
@@ -555,7 +555,7 @@ function MainPage({ userEmail }) {
   const handleDeleteTask = useCallback(async (taskId, permanent = false) => {
     try {
       const token = localStorage.getItem('token');
-      const url = `http://localhost:3000/api/tasks/${taskId}${permanent ? '?permanent=true' : ''}`;
+      const url = `http://localhost:5000/api/tasks/${taskId}${permanent ? '?permanent=true' : ''}`;
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
@@ -584,7 +584,7 @@ function MainPage({ userEmail }) {
       const requestBody = typeof statusPayload === 'object'
         ? statusPayload
         : { status_id: statusPayload };
-      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -645,7 +645,7 @@ function MainPage({ userEmail }) {
         selectedInvitation
       });
 
-      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
+      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -800,7 +800,7 @@ function MainPage({ userEmail }) {
                     try {
                       const token = localStorage.getItem('token');
                       if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
                         method: 'PATCH',
                         headers: {
                           'Content-Type': 'application/json',
@@ -825,7 +825,7 @@ function MainPage({ userEmail }) {
                     try {
                       const token = localStorage.getItem('token');
                       if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+                      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
                         method: 'PATCH',
                         headers: {
                           'Content-Type': 'application/json',

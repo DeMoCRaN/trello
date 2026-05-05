@@ -76,7 +76,7 @@ function AssignedTasks({ userEmail }) {
         setLoading(false);
         return;
       }
-      const response = await fetch('http://localhost:3000/api/tasks/assigned', {
+      const response = await fetch('http://localhost:5000/api/tasks/assigned', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ function AssignedTasks({ userEmail }) {
   const fetchAssignmentNames = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/assignments', {
+      const response = await fetch('http://localhost:5000/api/assignments', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ function AssignedTasks({ userEmail }) {
       if (!token) {
         throw new Error('Токен авторизации не найден');
       }
-      const response = await fetch('http://localhost:3000/api/notifications/summary', {
+      const response = await fetch('http://localhost:5000/api/notifications/summary', {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -192,7 +192,7 @@ function AssignedTasks({ userEmail }) {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
+      await fetch('http://localhost:5000/api/notifications/system/mark-read', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -341,7 +341,7 @@ function AssignedTasks({ userEmail }) {
       
       console.log('Fetching task details for taskId:', taskId);
       
-      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -375,7 +375,7 @@ function AssignedTasks({ userEmail }) {
         setUpdatingTaskId(null);
         return;
       }
-      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -427,7 +427,7 @@ function AssignedTasks({ userEmail }) {
     try {
       const token = localStorage.getItem('token');
 
-      await fetch('http://localhost:3000/api/comments/mark-read', {
+      await fetch('http://localhost:5000/api/comments/mark-read', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -439,7 +439,7 @@ function AssignedTasks({ userEmail }) {
       setComments(prev => prev.filter(c => c.id !== comment.id));
       setUnreadCommentsCount(prev => prev - 1);
 
-      const taskResponse = await fetch(`http://localhost:3000/api/tasks/${comment.task_id}`, {
+      const taskResponse = await fetch(`http://localhost:5000/api/tasks/${comment.task_id}`, {
         headers: {
           'Authorization': 'Bearer ' + token,
         },
@@ -489,7 +489,7 @@ function AssignedTasks({ userEmail }) {
         selectedInvitation
       });
 
-      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
+      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

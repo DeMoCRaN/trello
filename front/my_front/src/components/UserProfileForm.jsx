@@ -14,7 +14,7 @@ function UserProfileForm({ userEmail, onClose }) {
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/auth/profile', {
+      const response = await fetch('http://localhost:5000/api/auth/profile', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -34,7 +34,7 @@ function UserProfileForm({ userEmail, onClose }) {
   const handleDisconnectGitHub = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/auth/github/disconnect', {
+      const response = await fetch('http://localhost:5000/api/auth/github/disconnect', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,7 +58,7 @@ function UserProfileForm({ userEmail, onClose }) {
 
   const handleConnectGitHub = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/github');
+      const response = await fetch('http://localhost:5000/api/auth/github');
       const data = await response.json();
       window.location.href = data.url;
     } catch (error) {

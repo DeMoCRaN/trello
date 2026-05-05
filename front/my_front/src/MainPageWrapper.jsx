@@ -24,7 +24,7 @@ export default function MainPageWrapper() {
         }
 
         // 3. Запрашиваем данные пользователя
-        const response = await fetch(`http://localhost:3000/api/users/${decoded.userId}`, {
+        const response = await fetch(`http://localhost:5000/api/users/${decoded.userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

@@ -88,6 +88,40 @@ const performanceMetricDescriptions = {
   'Стабильность': 'Оценивает, насколько ровно пользователь доводит задачи до результата без срывов.',
 };
 
+// Normalize API response keys (snake_case) to camelCase used in the UI
+const normalizeMetrics = (data) => {
+  if (!data) return data;
+  const out = JSON.parse(JSON.stringify(data));
+
+  if (out.performance) {
+    const p = out.performance;
+    p.completionRate = p.completionRate ?? p.completion_rate ?? p.completion ?? 0;
+    p.avgWorkTime = p.avgWorkTime ?? p.avg_work_time ?? p.avg_work_time_seconds ?? p.avg_work_time_sec ?? 0;
+    p.totalWorkTime = p.totalWorkTime ?? p.total_work_time ?? p.total_work_time_seconds ?? 0;
+    p.failedTasks = p.failedTasks ?? p.failed_tasks ?? 0;
+    p.deletedFailedTasks = p.deletedFailedTasks ?? p.deleted_failed_tasks ?? 0;
+    p.deletedFailedPenalty = p.deletedFailedPenalty ?? p.deleted_failed_penalty ?? 0;
+    p.effectiveTotal = p.effectiveTotal ?? p.effective_total ?? p.effectiveTotal;
+    if (p.kpis) {
+      Object.keys(p.kpis).forEach((k) => {
+        p.kpis[k] = p.kpis[k] ?? 0;
+      });
+    }
+  }
+
+  if (out.tasks) {
+    const t = out.tasks;
+    t.total = t.total ?? t.total_tasks ?? 0;
+    t.completed = t.completed ?? t.completed_tasks ?? 0;
+    t.inProgress = t.inProgress ?? t.in_progress ?? t.inprogress ?? 0;
+    t.new = t.new ?? t.new_tasks ?? t['new'] ?? 0;
+    t.review = t.review ?? t.on_review ?? t.review_tasks ?? 0;
+    t.overdue = t.overdue ?? t.overdue_tasks ?? t.overdue ?? 0;
+  }
+
+  return out;
+};
+
 const formatTime = (seconds) => {
   if (isNaN(seconds) || seconds <= 0) return '0м';
   const hours = Math.floor(seconds / 3600);
@@ -130,14 +164,14 @@ const UserInfoPage = () => {
     const fetchUserMetrics = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/users/${userId}/metrics`, {
+        const response = await fetch(`http://localhost:5000/api/users/${userId}/metrics`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) throw new Error('Не удалось загрузить метрики пользователя');
 
         const data = await response.json();
-        setUserMetrics(data);
+        setUserMetrics(normalizeMetrics(data));
       } catch (fetchError) {
         console.error('Ошибка при загрузке метрик:', fetchError);
         setError(fetchError.message);
@@ -154,7 +188,7 @@ const UserInfoPage = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const response = await fetch('http://localhost:3000/api/comments/unread/count', {
+        const response = await fetch('http://localhost:5000/api/comments/unread/count', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
