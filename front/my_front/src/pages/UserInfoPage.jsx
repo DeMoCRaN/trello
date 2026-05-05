@@ -88,7 +88,6 @@ const performanceMetricDescriptions = {
   'Стабильность': 'Оценивает, насколько ровно пользователь доводит задачи до результата без срывов.',
 };
 
-// Normalize API response keys (snake_case) to camelCase used in the UI
 const normalizeMetrics = (data) => {
   if (!data) return data;
   const out = JSON.parse(JSON.stringify(data));
@@ -164,7 +163,7 @@ const UserInfoPage = () => {
     const fetchUserMetrics = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/users/${userId}/metrics`, {
+        const response = await fetch(`http://localhost:3000/api/users/${userId}/metrics`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -188,7 +187,7 @@ const UserInfoPage = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const response = await fetch('http://localhost:5000/api/comments/unread/count', {
+        const response = await fetch('http://localhost:3000/api/comments/unread/count', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {

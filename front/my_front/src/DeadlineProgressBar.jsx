@@ -1,174 +1,169 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './DeadlineProgressBar.css';
 
-function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
-  const [progress, setProgress] = useState(0);
+function DeadlineProgressBar({ taskId, deadline, status, initialProgress }) {
+  const [progress, setProgress] = useState(initialProgress || 0);
   const [timeLeft, setTimeLeft] = useState('');
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const fetchedRef = useRef(false);
+  const abortControllerRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   const parseDate = (dateInput) => {
     if (!dateInput) return null;
     if (dateInput instanceof Date) return dateInput;
-
-    const formats = [
-      dateInput,
-      dateInput.replace(' ', 'T') + 'Z',
-      dateInput.includes('T') ? dateInput : `${dateInput}T00:00:00Z`,
-      dateInput.endsWith('Z') ? dateInput : `${dateInput}Z`
-    ];
-
-    for (const format of formats) {
-      const date = new Date(format);
-      if (!isNaN(date.getTime())) return date;
-    }
-
-    return null;
+    const date = new Date(dateInput);
+    return isNaN(date.getTime()) ? null : date;
   };
 
+  // Загружаем прогресс только один раз при монтировании
   useEffect(() => {
+    isMountedRef.current = true;
+
+    if (status === 'done') {
+      setProgress(100);
+      setIsLoading(false);
+      return;
+    }
+
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     const fetchProgress = async () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      abortControllerRef.current = new AbortController();
+
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          setError('Пользователь не авторизован');
+          if (isMountedRef.current) {
+            setError('Пользователь не авторизован');
+            setIsLoading(false);
+          }
           return;
         }
 
-        const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+        // Таймаут 5 секунд
+        const timeoutId = setTimeout(() => {
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+        }, 5000);
+
+        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-          }
+            'Authorization': `Bearer ${token}`,
+          },
+          signal: abortControllerRef.current.signal,
         });
 
+        clearTimeout(timeoutId);
+
+        if (!isMountedRef.current) return;
+
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error('Ошибка загрузки прогресса: ' + errorText);
+          throw new Error(`HTTP ${response.status}`);
         }
 
         const task = await response.json();
-        setProgress(task.progress_percentage || 0);
+        
+        if (isMountedRef.current) {
+          setProgress(task.progress_percentage || 0);
+          setError(null);
+        }
       } catch (err) {
-        console.error(err);
-        setError(err.message);
+        if (err.name === 'AbortError') {
+          return;
+        }
+        
+        console.error(`Failed to fetch progress for task ${taskId}:`, err);
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchProgress();
-  }, [taskId]);
 
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [taskId, status]);
+
+  // Рассчитываем оставшееся время
   useEffect(() => {
     if (status === 'done') {
-      setProgress(100);
       setTimeLeft('Задача завершена');
       return;
     }
 
-    const calculateProgress = () => {
-      try {
-        const now = new Date();
-        const start = parseDate(createdAt);
-        const end = parseDate(deadline);
+    const calculateTimeLeft = () => {
+      const end = parseDate(deadline);
+      if (!end) return;
 
-        if (!start || !end) {
-          setError('Некорректные даты');
-          return;
-        }
+      const now = new Date();
+      const diff = end - now;
 
-        if (end <= start) {
-          setError('Дедлайн раньше создания');
-          return;
-        }
+      if (diff <= 0) {
+        setTimeLeft('Дедлайн просрочен');
+        return;
+      }
 
-        const totalMs = end - start;
-        const elapsedMs = now - start;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-        if (now < start) {
-          setProgress(0);
-          setTimeLeft(`До начала: ${formatTime(start - now)}`);
-          return;
-        }
-
-        if (now >= end) {
-          setProgress(100);
-          setTimeLeft('Время истекло');
-          return;
-        }
-
-        const currentProgress = (elapsedMs / totalMs) * 100;
-        setProgress(currentProgress);
-        setTimeLeft(`Осталось: ${formatTime(end - now)}`);
-
-        updateProgress(currentProgress);
-
-      } catch (err) {
-        console.error('Progress calculation error:', err);
-        setError('Ошибка расчета');
+      if (hours > 24) {
+        const days = Math.floor(hours / 24);
+        setTimeLeft(`${days}д ${hours % 24}ч`);
+      } else if (hours > 0) {
+        setTimeLeft(`${hours}ч ${minutes}м`);
+      } else if (minutes > 0) {
+        setTimeLeft(`${minutes}м ${seconds}с`);
+      } else {
+        setTimeLeft(`${seconds}с`);
       }
     };
 
-    const formatTime = (ms) => {
-      const totalSeconds = Math.floor(ms / 1000);
-      const days = Math.floor(totalSeconds / (3600 * 24));
-      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      if (days > 0) return `${days}д ${hours}ч`;
-      if (hours > 0) return `${hours}ч ${minutes}м`;
-      if (minutes > 0) return `${minutes}м ${seconds}с`;
-      return `${seconds}с`;
-    };
-
-    const updateProgress = async (progressValue) => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError('Пользователь не авторизован');
-          return;
-        }
-
-        const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/progress`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-          },
-          body: JSON.stringify({ progress_percentage: progressValue }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error('Ошибка обновления прогресса: ' + errorText);
-        }
-      } catch (err) {
-        console.error('Error updating progress:', err);
-      }
-    };
-
-    calculateProgress();
-    const interval = setInterval(calculateProgress, 1000);
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, [taskId, createdAt, deadline, status]);
+  }, [taskId, deadline, status]);
 
-  if (error) {
-    return <div className="deadline-error">{error}</div>;
+  const getUrgencyClass = () => {
+    const end = parseDate(deadline);
+    if (!end || status === 'done') return 'normal';
+    
+    const hoursLeft = (end - new Date()) / (1000 * 60 * 60);
+    if (hoursLeft < 1) return 'critical';
+    if (hoursLeft < 24) return 'warning';
+    return 'normal';
+  };
+
+  if (error && !isLoading) {
+    return null;
   }
 
   return (
     <div className="deadline-progress-container">
       <div className="progress-bar-background">
         <div 
-          className={`progress-bar-fill ${
-            progress >= 90 ? 'critical' : 
-            progress >= 70 ? 'warning' : 'normal'
-          }`}
-          style={{ width: `${progress}%` }}
+          className={`progress-bar-fill ${getUrgencyClass()}`}
+          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
         />
       </div>
       <div className="time-info">
-        <span>Прогресс: {progress.toFixed(1)}%</span>
+        <span>Прогресс: {isLoading ? '...' : `${progress.toFixed(1)}%`}</span>
         <span>{timeLeft}</span>
       </div>
     </div>
@@ -177,15 +172,12 @@ function DeadlineProgressBar({ taskId, createdAt, deadline, status }) {
 
 DeadlineProgressBar.propTypes = {
   taskId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  createdAt: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.instanceOf(Date)
-  ]).isRequired,
   deadline: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.instanceOf(Date)
-  ]).isRequired,
+  ]),
   status: PropTypes.string.isRequired,
+  initialProgress: PropTypes.number,
 };
 
 export default DeadlineProgressBar;

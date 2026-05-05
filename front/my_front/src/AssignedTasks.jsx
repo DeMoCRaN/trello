@@ -28,19 +28,18 @@ function AssignedTasks({ userEmail }) {
   const [highlightedCommentId, setHighlightedCommentId] = useState(null);
 
   const navigate = useNavigate();
-  const statusLabels = {
-    new: 'Новые',
-    in_progress: 'В работе',
-    rew: 'На ревью',
-    done: 'Завершено',
-  };
+  // const statusLabels = {
+  //   new: 'Новые',
+  //   in_progress: 'В работе',
+  //   rew: 'На ревью',
+  //   done: 'Завершено',
+  // };
   const priorityLabels = {
     low: 'Низкий',
     medium: 'Средний',
     high: 'Высокий',
   };
 
-  // Дебаунс для запроса задач
   const debouncedFetchTasks = useCallback(() => {
     let timeoutId;
     return () => {
@@ -76,7 +75,7 @@ function AssignedTasks({ userEmail }) {
         setLoading(false);
         return;
       }
-      const response = await fetch('http://localhost:5000/api/tasks/assigned', {
+      const response = await fetch('http://localhost:3000/api/tasks/assigned', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +126,7 @@ function AssignedTasks({ userEmail }) {
   const fetchAssignmentNames = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/assignments', {
+      const response = await fetch('http://localhost:3000/api/assignments', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +152,7 @@ function AssignedTasks({ userEmail }) {
       if (!token) {
         throw new Error('Токен авторизации не найден');
       }
-      const response = await fetch('http://localhost:5000/api/notifications/summary', {
+      const response = await fetch('http://localhost:3000/api/notifications/summary', {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -192,7 +191,7 @@ function AssignedTasks({ userEmail }) {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:5000/api/notifications/system/mark-read', {
+      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -241,7 +240,7 @@ function AssignedTasks({ userEmail }) {
     if (tasks.length > 0) {
       const newTasks = tasks.filter(task => task.status === 'new');
       if (newTasks.length > 0) {
-        // Handle new tasks if needed
+        // 
       }
     }
   }, [tasks]);
@@ -341,7 +340,7 @@ function AssignedTasks({ userEmail }) {
       
       console.log('Fetching task details for taskId:', taskId);
       
-      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -375,7 +374,7 @@ function AssignedTasks({ userEmail }) {
         setUpdatingTaskId(null);
         return;
       }
-      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
+      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -427,7 +426,7 @@ function AssignedTasks({ userEmail }) {
     try {
       const token = localStorage.getItem('token');
 
-      await fetch('http://localhost:5000/api/comments/mark-read', {
+      await fetch('http://localhost:3000/api/comments/mark-read', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -439,7 +438,7 @@ function AssignedTasks({ userEmail }) {
       setComments(prev => prev.filter(c => c.id !== comment.id));
       setUnreadCommentsCount(prev => prev - 1);
 
-      const taskResponse = await fetch(`http://localhost:5000/api/tasks/${comment.task_id}`, {
+      const taskResponse = await fetch(`http://localhost:3000/api/tasks/${comment.task_id}`, {
         headers: {
           'Authorization': 'Bearer ' + token,
         },
@@ -489,7 +488,7 @@ function AssignedTasks({ userEmail }) {
         selectedInvitation
       });
 
-      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -529,9 +528,17 @@ function AssignedTasks({ userEmail }) {
   }, []);
 
   // Рендер карточки задачи
+// Рендер карточки задачи
 const renderTaskCard = useCallback((task) => {
   const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };
-  const isInProgress = task.status === 'in_progress' || timer.isRunning;
+  
+  // Новая логика определения состояний
+  const isNew = task.status === 'new';
+  const isInProgress = task.status === 'in_progress';
+  const isReview = task.status === 'rew';
+  const isDone = task.status === 'done';
+  const isRunning = timer.isRunning;  // true только когда in_progress_since не null
+  const isPaused = isInProgress && !timer.isRunning;
   
   return (
     <div
@@ -540,9 +547,9 @@ const renderTaskCard = useCallback((task) => {
       className="task-card"
       style={{
         borderLeft: '4px solid ' + (
-          task.priority.toLowerCase() === 'low' ? '#4caf50' :
-          task.priority.toLowerCase() === 'medium' ? '#ff9800' :
-          task.priority.toLowerCase() === 'high' ? '#f44336' :
+          task.priority?.toLowerCase() === 'low' ? '#4caf50' :
+          task.priority?.toLowerCase() === 'medium' ? '#ff9800' :
+          task.priority?.toLowerCase() === 'high' ? '#f44336' :
           '#9e9e9e'
         ),
         marginBottom: '16px',
@@ -560,7 +567,12 @@ const renderTaskCard = useCallback((task) => {
       )}
       <p><strong>Срок:</strong> {task.deadline ? formatDeadline(task.deadline) : 'Нет'}</p>
       <p><strong>Автор:</strong> {task.creator_email}</p>
-      <p><strong>Статус:</strong> {statusLabels[task.status] || task.status}</p>
+      <p><strong>Статус:</strong> {
+        isNew ? 'Новая' :
+        isInProgress ? (isRunning ? 'В работе' : 'На паузе') :
+        isReview ? 'На ревью' :
+        isDone ? 'Завершена' : task.status
+      }</p>
       <p><strong>Приоритет:</strong> {priorityLabels[task.priority] || task.priority}</p>
       <p><strong>Создана:</strong> {new Date(task.created_at).toLocaleString()}</p>
       <p><strong>Обновлена:</strong> {new Date(task.updated_at).toLocaleString()}</p>
@@ -573,7 +585,8 @@ const renderTaskCard = useCallback((task) => {
         marginTop: '12px',
         alignItems: 'center'
       }}>
-        {task.status === 'new' && (
+        {/* Новая задача - только кнопка "Начать работу" */}
+        {isNew && (
           <button
             onClick={() => updateTaskStatus(task.id, 2, 'start')}
             disabled={updatingTaskId === task.id}
@@ -584,7 +597,8 @@ const renderTaskCard = useCallback((task) => {
           </button>
         )}
         
-        {isInProgress && (
+        {/* Задача в работе и таймер идет - показываем Остановить и На ревью */}
+        {isRunning && (
           <>
             <button
               onClick={() => updateTaskStatus(task.id, 2, 'stop')}
@@ -593,14 +607,6 @@ const renderTaskCard = useCallback((task) => {
               style={{ order: 2 }}
             >
               {updatingTaskId === task.id ? 'Остановка...' : 'Остановить'}
-            </button>
-            <button
-              onClick={() => updateTaskStatus(task.id, 2, 'resume')}
-              disabled={updatingTaskId === task.id}
-              className="task-button resume-button"
-              style={{ order: 3 }}
-            >
-              {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
             </button>
             <button
               onClick={() => updateTaskStatus(task.id, 5, 'rew')}
@@ -613,6 +619,19 @@ const renderTaskCard = useCallback((task) => {
           </>
         )}
         
+        {/* Задача на паузе - показываем только Продолжить */}
+        {isPaused && (
+          <button
+            onClick={() => updateTaskStatus(task.id, 2, 'resume')}
+            disabled={updatingTaskId === task.id}
+            className="task-button resume-button"
+            style={{ order: 3 }}
+          >
+            {updatingTaskId === task.id ? 'Возобновление...' : 'Продолжить'}
+          </button>
+        )}
+        
+        {/* Кнопка Подробнее - всегда доступна */}
         <button
           onClick={async () => {
             console.log('Подробнее clicked for task:', task.id);
@@ -632,19 +651,16 @@ const renderTaskCard = useCallback((task) => {
         >
           Подробнее
         </button>
-
       </div>
       
-      {task.status === 'done' && (
+      {isDone && (
         <p className="task-completed" style={{ marginTop: '8px', color: '#4caf50' }}>
           Задача завершена. Общее время работы: {formatTime(timer.elapsedSeconds)}
         </p>
       )}
-
     </div>
   );
 }, [assignmentNames, formatTime, timers, updateTaskStatus, updatingTaskId, formatDeadline, fetchTaskDetails]);
-
 
 
   // Состояния загрузки

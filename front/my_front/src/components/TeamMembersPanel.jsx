@@ -38,7 +38,7 @@ function TeamMembersPanel({ assignmentId, onClose }) {
       setError(null);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/team`, {
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/team`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -71,7 +71,7 @@ function TeamMembersPanel({ assignmentId, onClose }) {
       setFeedback(null);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/invite`, {
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ function TeamMembersPanel({ assignmentId, onClose }) {
 
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `http://localhost:5000/api/assignments/${assignmentId}/team/${confirmRemoveMember.user_id}`,
+        `http://localhost:3000/api/assignments/${assignmentId}/team/${confirmRemoveMember.user_id}`,
         {
           method: 'DELETE',
           headers: {

@@ -18,7 +18,7 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
 
       setLoading(true);
       try {
-        const taskResponse = await fetch(`http://localhost:5000/api/tasks/${task.id}`, {
+        const taskResponse = await fetch(`http://localhost:3000/api/tasks/${task.id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
           setTaskDetails(task);
         }
 
-        const commentsResponse = await fetch(`http://localhost:5000/api/tasks/${task.id}/comments`, {
+        const commentsResponse = await fetch(`http://localhost:3000/api/tasks/${task.id}/comments`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
           setComments(commentsData);
         }
 
-        const commitsResponse = await fetch(`http://localhost:5000/api/tasks/${task.id}/commits`, {
+        const commitsResponse = await fetch(`http://localhost:3000/api/tasks/${task.id}/commits`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/tasks/${task.id}/comments`, {
+      const response = await fetch(`http://localhost:3000/api/tasks/${task.id}/comments`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -83,7 +83,7 @@ const TaskDetailsForm = ({ task, onClose, token }) => {
 
       if (response.ok) {
         setNewComment('');
-        const commentsResponse = await fetch(`http://localhost:5000/api/tasks/${task.id}/comments`, {
+        const commentsResponse = await fetch(`http://localhost:3000/api/tasks/${task.id}/comments`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',

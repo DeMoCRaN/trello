@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {  motion, AnimatePresence } from 'framer-motion';
 import { FiBell, FiX, FiChevronDown, FiChevronUp, FiMessageSquare } from 'react-icons/fi';
 import './TaskNotification.css';
 
@@ -82,7 +82,7 @@ function TaskNotification({
 
     if (hasNotifications && !isBellRinging) {
       setIsBellRinging(true);
-      const timer = setTimeout(() => setIsBellRinging(false), 5000);
+      const timer = setTimeout(() => setIsBellRinging(false), 10000);
       return () => clearTimeout(timer);
     }
 

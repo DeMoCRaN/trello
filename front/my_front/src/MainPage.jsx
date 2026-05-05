@@ -16,6 +16,9 @@ import TaskNotification from './components/TaskNotification';
 import InvitationResponseForm from './components/InvitationResponseForm';
 import SideToast from './components/SideToast';
 
+// Константа для интервала обновления (60 секунд)
+const REFRESH_INTERVAL_MS = 60000;
+
 function parseJwt(token) {
   try {
     const base64Url = token.split('.')[1];
@@ -51,7 +54,6 @@ function MainPage({ userEmail }) {
   const [detailsFormTask, setDetailsFormTask] = useState(null);
   const [showAssignmentCreationForm, setShowAssignmentCreationForm] = useState(false);
   const [showTeamMembersPanel, setShowTeamMembersPanel] = useState(false);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
   const [statusChangeLoading, setStatusChangeLoading] = useState({});
   const [comments, setComments] = useState([]);
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0);
@@ -64,6 +66,7 @@ function MainPage({ userEmail }) {
   const [selectedInvitation, setSelectedInvitation] = useState(null);
   const [sideToast, setSideToast] = useState({ message: '', type: 'error' });
   const lastNotificationCountRef = useRef(0);
+  const isRefreshingRef = useRef(false); // Флаг для предотвращения параллельных запросов
 
   const showSideToast = useCallback((message, type = 'error') => {
     setSideToast({ message, type });
@@ -97,7 +100,7 @@ function MainPage({ userEmail }) {
       isArchived: !!task.deleted_at,
       creator_name: task.creator_name || 'Неизвестно',
       assignee_name: task.assignee_name || 'Неизвестно',
-      created_at: task.created_at || new Date().toISOString(),
+      created_at: task.created_at || task.createdAt || new Date().toISOString(),
       createdAt: task.created_at || task.createdAt || new Date().toISOString()
     }));
   }, [statuses, priorities]);
@@ -105,7 +108,7 @@ function MainPage({ userEmail }) {
   const fetchAssignments = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/assignments?include_archived=true', {
+      const response = await fetch('http://localhost:3000/api/assignments?include_archived=true', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -153,13 +156,14 @@ function MainPage({ userEmail }) {
   }, []);
 
   const fetchAssignedTasks = useCallback(async () => {
-    const now = Date.now();
-    if (now - lastFetchTime < 30000) return; 
+    // Защита от параллельных запросов
+    if (isRefreshingRef.current) return;
     
+    isRefreshingRef.current = true;
     setLoadingAssignedTasks(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/tasks/assigned', {
+      const response = await fetch('http://localhost:3000/api/tasks/assigned', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -188,14 +192,14 @@ function MainPage({ userEmail }) {
       
       setTimers(newTimers);
       setAssignedTasks(processedTasks);
-      setLastFetchTime(now);
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoadingAssignedTasks(false);
+      isRefreshingRef.current = false;
     }
-  }, [lastFetchTime, processTasks]);
+  }, [processTasks]);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -203,7 +207,7 @@ function MainPage({ userEmail }) {
       if (!token) {
         throw new Error('No auth token found');
       }
-      const response = await fetch('http://localhost:5000/api/notifications/summary', {
+      const response = await fetch('http://localhost:3000/api/notifications/summary', {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -223,14 +227,6 @@ function MainPage({ userEmail }) {
     }
   }, []);
 
-  const fetchComments = useCallback(async () => {
-    await fetchNotifications();
-  }, [fetchNotifications]);
-
-  const fetchInvitations = useCallback(async () => {
-    await fetchNotifications();
-  }, [fetchNotifications]);
-
   const markSystemNotificationsAsRead = useCallback(async (ids = []) => {
     const notificationIds = ids
       .map((id) => Number(id))
@@ -242,7 +238,7 @@ function MainPage({ userEmail }) {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:5000/api/notifications/system/mark-read', {
+      await fetch('http://localhost:3000/api/notifications/system/mark-read', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -266,7 +262,7 @@ function MainPage({ userEmail }) {
       if (!token) {
         throw new Error('No auth token found');
       }
-      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/team`, {
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/team`, {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer ' + token,
@@ -284,10 +280,10 @@ function MainPage({ userEmail }) {
     }
   }, []);
 
-  const fetchStatuses = async () => {
+  const fetchStatuses = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/task_statuses', {
+      const response = await fetch('http://localhost:3000/api/task_statuses', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -301,12 +297,12 @@ function MainPage({ userEmail }) {
       console.error(err);
       setError('Ошибка при загрузке статусов');
     }
-  };
+  }, []);
 
   const fetchPriorities = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/task_priorities', {
+      const response = await fetch('http://localhost:3000/api/task_priorities', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -321,6 +317,24 @@ function MainPage({ userEmail }) {
       return [];
     }
   }, []);
+
+  // Функция для массового обновления всех данных
+  const refreshAllData = useCallback(async () => {
+    if (isRefreshingRef.current) return;
+    
+    isRefreshingRef.current = true;
+    try {
+      await Promise.all([
+        fetchAssignments(),
+        fetchAssignedTasks(),
+        fetchNotifications()
+      ]);
+    } catch (err) {
+      console.error('Error refreshing data:', err);
+    } finally {
+      isRefreshingRef.current = false;
+    }
+  }, [fetchAssignments, fetchAssignedTasks, fetchNotifications]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -341,21 +355,19 @@ function MainPage({ userEmail }) {
 
   useEffect(() => {
     const handleTaskUpdate = () => {
-      fetchAssignedTasks();
-      fetchAssignments();
-      fetchComments();
-      fetchInvitations();
+      refreshAllData();
     };
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
 
-    const intervalId = setInterval(handleTaskUpdate, 30000);
+    // Интервал обновления - 60 секунд
+    const intervalId = setInterval(refreshAllData, REFRESH_INTERVAL_MS);
 
     return () => {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
       clearInterval(intervalId);
     };
-  }, [fetchAssignedTasks, fetchAssignments, fetchComments, fetchInvitations]);
+  }, [refreshAllData]);
 
   useEffect(() => {
     if (selectedAssignment) {
@@ -370,13 +382,12 @@ function MainPage({ userEmail }) {
         fetchPriorities(),
         fetchAssignments(),
         fetchAssignedTasks(),
-        fetchComments(),
-        fetchInvitations()
+        fetchNotifications()
       ]);
     };
 
     loadInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -409,7 +420,7 @@ function MainPage({ userEmail }) {
   const handleCreateAssignment = async (assignmentData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/assignments', {
+      const response = await fetch('http://localhost:3000/api/assignments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -423,7 +434,7 @@ function MainPage({ userEmail }) {
         throw new Error(errorData.message || 'Ошибка при создании задания');
       }
       
-      await fetchAssignments();
+      await refreshAllData();
       return true;
     } catch (error) {
       console.error('Ошибка при создании задания:', error);
@@ -435,7 +446,7 @@ function MainPage({ userEmail }) {
   const handleDeleteAssignment = async (assignmentId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}`, {
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -453,7 +464,7 @@ function MainPage({ userEmail }) {
         throw new Error(errorData.message || 'Ошибка при удалении задания');
       }
       
-      await fetchAssignments();
+      await refreshAllData();
       showSideToast('Задание успешно удалено', 'success');
     } catch (error) {
       console.error('Ошибка при удалении задания:', error);
@@ -499,7 +510,7 @@ function MainPage({ userEmail }) {
       }
 
       const assigneeResponse = await fetch(
-        `http://localhost:5000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`,
+        `http://localhost:3000/api/users/email/${encodeURIComponent(taskData.assigneeEmail)}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -517,7 +528,7 @@ function MainPage({ userEmail }) {
       const createdAt = new Date().toISOString();
 
       const response = await fetch(
-        `http://localhost:5000/api/assignments/${selectedAssignment.id}/tasks`,
+        `http://localhost:3000/api/assignments/${selectedAssignment.id}/tasks`,
         {
           method: 'POST',
           headers: { 
@@ -541,21 +552,18 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при создании задачи');
       }
       
-      await Promise.all([
-        fetchAssignments(),
-        fetchAssignedTasks()
-      ]);
+      await refreshAllData();
       window.dispatchEvent(new Event('taskUpdated'));
       setShowTaskForm(false);
     } catch (err) {
       showSideToast(err.message);
     }
-  }, [selectedAssignment, userId, fetchAssignments, fetchAssignedTasks, showSideToast]);
+  }, [selectedAssignment, userId, refreshAllData, showSideToast]);
 
   const handleDeleteTask = useCallback(async (taskId, permanent = false) => {
     try {
       const token = localStorage.getItem('token');
-      const url = `http://localhost:5000/api/tasks/${taskId}${permanent ? '?permanent=true' : ''}`;
+      const url = `http://localhost:3000/api/tasks/${taskId}${permanent ? '?permanent=true' : ''}`;
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
@@ -566,15 +574,12 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при удалении задачи');
       }
 
-      await Promise.all([
-        fetchAssignments(),
-        fetchAssignedTasks()
-      ]);
+      await refreshAllData();
       window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
       showSideToast(err.message);
     }
-  }, [fetchAssignments, fetchAssignedTasks, showSideToast]);
+  }, [refreshAllData, showSideToast]);
 
   const handleStatusChange = useCallback(async (taskId, statusPayload) => {
     setStatusChangeLoading(prev => ({ ...prev, [taskId]: true }));
@@ -584,7 +589,7 @@ function MainPage({ userEmail }) {
       const requestBody = typeof statusPayload === 'object'
         ? statusPayload
         : { status_id: statusPayload };
-      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
+      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -597,10 +602,7 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при обновлении статуса задачи');
       }
       
-      await Promise.all([
-        fetchAssignments(),
-        fetchAssignedTasks()
-      ]);
+      await refreshAllData();
       window.dispatchEvent(new Event('taskUpdated'));
       
     } catch (err) {
@@ -609,7 +611,7 @@ function MainPage({ userEmail }) {
     } finally {
       setStatusChangeLoading(prev => ({ ...prev, [taskId]: false }));
     }
-  }, [fetchAssignments, fetchAssignedTasks, showSideToast]);
+  }, [refreshAllData, showSideToast]);
 
   const formatTime = useCallback((seconds) => {
     const hrs = Math.floor(seconds / 3600);
@@ -645,7 +647,7 @@ function MainPage({ userEmail }) {
         selectedInvitation
       });
 
-      const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
+      const response = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/invitations/${invitationId}/respond`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -667,7 +669,7 @@ function MainPage({ userEmail }) {
       const result = await response.json();
       console.log('Успешный ответ на приглашение:', result);
 
-      await fetchInvitations();
+      await refreshAllData();
       setShowInvitationForm(false);
       setSelectedInvitation(null);
       window.dispatchEvent(new Event('taskUpdated'));
@@ -676,7 +678,7 @@ function MainPage({ userEmail }) {
       showSideToast(`Ошибка при ответе на приглашение: ${error.message}`);
       throw error;
     }
-  }, [selectedInvitation, fetchInvitations, showSideToast]);
+  }, [selectedInvitation, refreshAllData, showSideToast]);
 
   if (loading) {
     return <div className="loading-container">Загрузка заданий...</div>;
@@ -800,7 +802,7 @@ function MainPage({ userEmail }) {
                     try {
                       const token = localStorage.getItem('token');
                       if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
                         method: 'PATCH',
                         headers: {
                           'Content-Type': 'application/json',
@@ -812,10 +814,7 @@ function MainPage({ userEmail }) {
                         const errorText = await response.text();
                         throw new Error('Failed to start work: ' + errorText);
                       }
-                      await Promise.all([
-                        fetchAssignments(),
-                        fetchAssignedTasks()
-                      ]);
+                      await refreshAllData();
                       window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
                       showSideToast(err.message);
@@ -825,7 +824,7 @@ function MainPage({ userEmail }) {
                     try {
                       const token = localStorage.getItem('token');
                       if (!token) throw new Error('User not logged in');
-                      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
+                      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/status`, {
                         method: 'PATCH',
                         headers: {
                           'Content-Type': 'application/json',
@@ -837,10 +836,7 @@ function MainPage({ userEmail }) {
                         const errorText = await response.text();
                         throw new Error('Failed to complete work: ' + errorText);
                       }
-                      await Promise.all([
-                        fetchAssignments(),
-                        fetchAssignedTasks()
-                      ]);
+                      await refreshAllData();
                       window.dispatchEvent(new Event('taskUpdated'));
                     } catch (err) {
                       showSideToast(err.message);
@@ -919,5 +915,3 @@ function MainPage({ userEmail }) {
 }
 
 export default MainPage;
-
-

@@ -12,19 +12,16 @@ export default function MainPageWrapper() {
 
     async function fetchUser() {
       try {
-        // 1. Сначала проверяем токен локально
         if (!token || !tokenExpiry || new Date().getTime() > parseInt(tokenExpiry, 10)) {
           throw new Error('Токен недействителен или истёк');
         }
 
-        // 2. Декодируем токен для получения userId
         const decoded = parseJwt(token);
         if (!decoded?.userId) {
           throw new Error('Неверный формат токена');
         }
 
-        // 3. Запрашиваем данные пользователя
-        const response = await fetch(`http://localhost:5000/api/users/${decoded.userId}`, {
+        const response = await fetch(`http://localhost:3000/api/users/${decoded.userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

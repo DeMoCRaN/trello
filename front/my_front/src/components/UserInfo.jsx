@@ -7,7 +7,7 @@ function UserInfo({ userEmail, onBack }) {
   useEffect(() => {
     async function fetchUserInfo() {
       try {
-        const response = await fetch(`http://localhost:5000/api/users/email/${encodeURIComponent(userEmail)}`);
+        const response = await fetch(`http://localhost:3000/api/users/email/${encodeURIComponent(userEmail)}`);
         if (!response.ok) {
           throw new Error('Ошибка при загрузке информации о пользователе');
         }

@@ -17,7 +17,7 @@ function TaskComments({ taskId, token }) {
       setError(null);
       
       try {
-        const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/comments`, {
+        const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/comments`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ function TaskComments({ taskId, token }) {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/comments`, {
+      const response = await fetch(`http://localhost:3000/api/tasks/${taskId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
