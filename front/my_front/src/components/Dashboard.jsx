@@ -1032,7 +1032,7 @@ function Dashboard({ userEmail: propUserEmail }) {
                                     <TableCell align="right">Готово</TableCell>
                                     <TableCell align="right">Ревью</TableCell>
                                     <TableCell align="right">Провалено</TableCell>
-                                    <TableCell align="right">% эффективности</TableCell>
+                                    <TableCell align="right">% эффективность</TableCell>
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>

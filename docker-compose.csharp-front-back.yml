@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    environment:
+      POSTGRES_USER: democran
+      POSTGRES_PASSWORD: qweasd-123
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - 127.0.0.1:5433:5432
+    networks:
+      - trello
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: test@admin.container-name.com
+      PGADMIN_DEFAULT_PASSWORD: qweasd-123
+      PGADMIN_CONFIG_SERVER_MODE: 'false'
+    volumes:
+      - pgadmin:/var/www/trello/docker-volumes/pgadmin
+    ports:
+      - 0.0.0.0:5050:80
+    networks:
+      - trello
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./с#/Diploma
+      dockerfile: Dockerfile
+    container_name: diploma-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:3000
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=diploma;Username=democran;Password=qweasd-123
+      Jwt__Key: ${JWT__KEY:-change-me}
+      Jwt__Issuer: ${JWT__ISSUER:-issuer}
+      Jwt__Audience: ${JWT__AUDIENCE:-audience}
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
+    networks:
+      - trello
+    restart: unless-stopped
+
+  front:
+    image: node:20-alpine
+    container_name: diploma-front
+    working_dir: /app
+    volumes:
+      - ./front/my_front:/app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_BASE_URL=http://localhost:5000
+    ports:
+      - 5173:5173
+    networks:
+      - trello
+    restart: unless-stopped
+
+networks:
+  trello:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:
+

@@ -47,7 +47,7 @@ function TaskComments({ taskId, token }) {
     };
     
     fetchComments();
-  }, [taskId, token, refreshTrigger]); // Добавляем refreshTrigger в зависимости
+  }, [taskId, token, refreshTrigger]); 
 
   const handleAddComment = async () => {
     if (!newCommentText.trim()) {
@@ -80,9 +80,8 @@ function TaskComments({ taskId, token }) {
         throw new Error(errorData.error || 'Ошибка при добавлении комментария');
       }
       
-      // Вместо ручного добавления комментария, триггерим обновление списка
       setNewCommentText('');
-      setRefreshTrigger(prev => prev + 1); // Обновляем триггер для повторного запроса
+      setRefreshTrigger(prev => prev + 1); 
     } catch (err) {
       console.error('Ошибка при добавлении комментария:', err);
       setError(err.message || 'Не удалось добавить комментарий');
