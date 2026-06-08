@@ -32,8 +32,9 @@ function TaskNotification({
   const [isBellRinging, setIsBellRinging] = useState(false);
   const [activeTab, setActiveTab] = useState('tasks');
 
-  const newTasks = tasks?.filter((task) => task?.status === 'new') || [];
-  const newComments = comments || [];
+ const newTasks = (tasks || []).filter((task) => task?.status === 'new' && !task?.seen_at);
+  const newComments = (comments || []).filter((c) => c?.is_new);
+
   const pendingInvitations = invitations?.filter((invitation) => invitation?.status === 'pending') || [];
 
   const invitationFeed = useMemo(() => {

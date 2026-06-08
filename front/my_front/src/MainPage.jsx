@@ -88,22 +88,27 @@ function MainPage({ userEmail }) {
   const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
   // eslint-disable-next-line no-unused-vars
   const failedInvitations = invitations.filter(inv => inv.status === 'failed');
-  const notificationTotal = newTasks.length + comments.length + pendingInvitations.length;
+  const notificationTotal = newTasks.length + newComments.length + pendingInvitations.length;
 
-  const processTasks = useCallback((tasks) => {
-    return tasks.map(task => ({
-      ...task,
-      status: statuses.find(s => s.id === task.status_id)?.name || 'new',
-      priority: priorities.find(p => p.id === task.priority_id)?.name || 'medium',
-      work_duration: Number(task.work_duration) || 0,
-      due_date: task.deadline || new Date().toISOString(),
-      isArchived: !!task.deleted_at,
-      creator_name: task.creator_name || 'Неизвестно',
-      assignee_name: task.assignee_name || 'Неизвестно',
-      created_at: task.created_at || task.createdAt || new Date().toISOString(),
-      createdAt: task.created_at || task.createdAt || new Date().toISOString()
-    }));
-  }, [statuses, priorities]);
+const processTasks = useCallback((tasks) => {
+    return tasks.map(task => {
+      const mappedStatus = task.status || statuses.find(s => s.id === task.status_id)?.name || 'new';
+      const mappedPriority = task.priority || priorities.find(p => p.id === task.priority_id)?.name || 'medium';
+          
+      return {
+        ...task,
+        status: mappedStatus,
+        priority: mappedPriority,
+        work_duration: Number(task.work_duration) || 0,
+        due_date: task.deadline || new Date().toISOString(),
+        isArchived: !!task.deleted_at,
+        creator_name: task.creator_name || 'Неизвестно',
+        assignee_name: task.assignee_name || 'Неизвестно',
+        created_at: task.created_at || task.createdAt || new Date().toISOString(),
+        createdAt: task.created_at || task.createdAt || new Date().toISOString()
+      };
+    });
+  }, [statuses, priorities]);  
 
   const fetchAssignments = useCallback(async () => {
     try {
@@ -156,7 +161,6 @@ function MainPage({ userEmail }) {
   }, []);
 
   const fetchAssignedTasks = useCallback(async () => {
-    // Защита от параллельных запросов
     if (isRefreshingRef.current) return;
     
     isRefreshingRef.current = true;
@@ -172,9 +176,7 @@ function MainPage({ userEmail }) {
         throw new Error('Ошибка при загрузке задач по исполнителю');
       }
       const data = await response.json();
-      
       const processedTasks = processTasks(data);
-      
       const newTimers = {};
       processedTasks.forEach(task => {
         let elapsedSeconds = Number(task.work_duration) || 0;
@@ -202,30 +204,30 @@ function MainPage({ userEmail }) {
   }, [processTasks]);
 
   const fetchNotifications = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No auth token found');
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No auth token found');
+        }
+        const response = await fetch('http://localhost:3000/api/notifications/summary', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Ошибка синхронизации notifications: ' + response.status);
+        }
+        const data = await response.json();
+        setComments(Array.isArray(data.comments) ? data.comments : []);
+        setInvitations(Array.isArray(data.invitations) ? data.invitations : []);
+        setSystemNotifications(Array.isArray(data.systemNotifications) ? data.systemNotifications : []);
+        setUnreadCommentsCount(Number(data?.counts?.total) || 0);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
       }
-      const response = await fetch('http://localhost:3000/api/notifications/summary', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch notifications: ' + response.status);
-      }
-      const data = await response.json();
-      setComments(Array.isArray(data.comments) ? data.comments : []);
-      setInvitations(Array.isArray(data.invitations) ? data.invitations : []);
-      setSystemNotifications(Array.isArray(data.systemNotifications) ? data.systemNotifications : []);
-      setUnreadCommentsCount(Number(data?.counts?.total) || 0);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    }
-  }, []);
+    }, [userId]);  
 
   const markSystemNotificationsAsRead = useCallback(async (ids = []) => {
     const notificationIds = ids
@@ -270,7 +272,7 @@ function MainPage({ userEmail }) {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch team members: ' + response.status);
+      throw new Error('Ошибка синхронизации team members: ' + response.status);
       }
       const data = await response.json();
       setTeamMembers(data);
@@ -704,7 +706,6 @@ function MainPage({ userEmail }) {
         unreadCommentsCount={unreadCommentsCount}
         onCommentsClick={() => setShowNotification(!showNotification)}
       />
-      
       {showNotification && (
         <TaskNotification
           tasks={assignedTasks}

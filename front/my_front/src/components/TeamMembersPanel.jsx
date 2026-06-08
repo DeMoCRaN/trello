@@ -169,7 +169,7 @@ function TeamMembersPanel({ assignmentId, onClose }) {
 
   if (loading) {
     return (
-      <BaseModal onClose={onClose} title="Состав команды" size="md" panelClassName="task-creation-form team-members-panel">
+      <BaseModal onClose={onClose} title="Состав команды" size="lg" panelClassName="task-creation-form team-members-panel">
         <div className="loading-container">Загрузка состава команды...</div>
       </BaseModal>
     );

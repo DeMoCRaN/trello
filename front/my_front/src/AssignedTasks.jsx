@@ -160,7 +160,7 @@ function AssignedTasks({ userEmail }) {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch notifications: ' + response.status);
+        throw new Error('Ошибка синхронизации notifications: ' + response.status);
       }
       const data = await response.json();
       setComments(Array.isArray(data.comments) ? data.comments : []);
@@ -445,7 +445,7 @@ function AssignedTasks({ userEmail }) {
       });
 
       if (!taskResponse.ok) {
-        throw new Error('Failed to fetch task details');
+        throw new Error('Ошибка синхронизации task details');
       }
 
       const taskData = await taskResponse.json();
