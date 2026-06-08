@@ -227,6 +227,7 @@ const handleRestoreTask = async (taskId, restoreData) => {
                     key={task.id}
                     task={task}
                     statuses={statuses}
+                    token={localStorage.getItem('token')}  
                     onStatusChange={handleStatusChange}
                     onDelete={handleDelete}
                     onDetails={onDetails}

@@ -160,6 +160,7 @@ function RestoreTaskModal({ task, onClose, onConfirm, loading, onNotify }) {
 
 function Task({
   task,
+  token,
   onDelete,
   creatorName,
   assigneeName,
@@ -298,7 +299,6 @@ const handleConfirmPermanentDelete = async () => {
       pointerEvents: 'none',
     }),
   };
-
   return (
     <>
       <article
@@ -363,13 +363,13 @@ const handleConfirmPermanentDelete = async () => {
             </div>
           )}
         </div>
-
         {normalizedTask.deadline ? (
           <DeadlineProgressBar
             taskId={normalizedTask.id}
             createdAt={normalizedTask.createdAt}
             deadline={normalizedTask.deadline}
             status={normalizedTask.status}
+            token={token}
           />
         ) : (
           <div className="no-deadline">Дедлайн не установлен</div>
