@@ -351,6 +351,14 @@ function Task({
               <span>{formatDate(normalizedTask.updatedAt || normalizedTask.updated_at)}</span>
             </div>
           )}
+
+          {normalizedTask.status === 'failed' && (
+            <div className="meta-item" style={{ gridColumn: '1 / -1' }}>
+              <span>Причина провала:</span>
+              <span>{normalizedTask.failedReason || normalizedTask.failed_reason || '—'}</span>
+
+            </div>
+          )}
         </div>
 
         {normalizedTask.deadline ? (
@@ -477,6 +485,7 @@ Task.propTypes = {
     in_progress_since: PropTypes.string,
     work_duration: PropTypes.number,
     completedAt: PropTypes.string,
+    failedReason: PropTypes.string,
   }).isRequired,
   onDelete: PropTypes.func.isRequired,
   creatorName: PropTypes.string,
