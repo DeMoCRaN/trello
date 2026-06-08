@@ -160,7 +160,7 @@ function AssignedTasks({ userEmail }) {
         },
       });
       if (!response.ok) {
-        throw new Error('Ошибка синхронизации notifications: ' + response.status);
+        throw new Error('Ошибка синхронизации уведомлений: ' + response.status);
       }
       const data = await response.json();
       setComments(Array.isArray(data.comments) ? data.comments : []);

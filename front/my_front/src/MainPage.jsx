@@ -217,7 +217,7 @@ const processTasks = useCallback((tasks) => {
           },
         });
         if (!response.ok) {
-          throw new Error('Ошибка синхронизации notifications: ' + response.status);
+          throw new Error('Ошибка синхронизации уведомлений: ' + response.status);
         }
         const data = await response.json();
         setComments(Array.isArray(data.comments) ? data.comments : []);
@@ -272,7 +272,7 @@ const processTasks = useCallback((tasks) => {
         },
       });
       if (!response.ok) {
-      throw new Error('Ошибка синхронизации team members: ' + response.status);
+      throw new Error('Ошибка синхронизации участников команды: ' + response.status);
       }
       const data = await response.json();
       setTeamMembers(data);
@@ -562,26 +562,30 @@ const processTasks = useCallback((tasks) => {
     }
   }, [selectedAssignment, userId, refreshAllData, showSideToast]);
 
-  const handleDeleteTask = useCallback(async (taskId, permanent = false) => {
+  const handleDeleteTask = useCallback(async (taskId, permanent = false) => {    
     try {
-      const token = localStorage.getItem('token');
-      const url = `http://localhost:3000/api/tasks/${taskId}${permanent ? '?permanent=true' : ''}`;
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Ошибка при удалении задачи');
-      }
+        const token = localStorage.getItem('token');
+        const url = `http://localhost:3000/api/tasks/${taskId}?permanent=${permanent}`;
+        
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-      await refreshAllData();
-      window.dispatchEvent(new Event('taskUpdated'));
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            throw new Error(`Ошибка при удалении задачи${errorText ? `: ${errorText}` : ''}`);
+        }
+
+        await refreshAllData();
+        window.dispatchEvent(new Event('taskUpdated'));
     } catch (err) {
-      showSideToast(err.message);
+        showSideToast(err.message);
     }
-  }, [refreshAllData, showSideToast]);
+}, [refreshAllData, showSideToast]);
 
   const handleStatusChange = useCallback(async (taskId, statusPayload) => {
     setStatusChangeLoading(prev => ({ ...prev, [taskId]: true }));

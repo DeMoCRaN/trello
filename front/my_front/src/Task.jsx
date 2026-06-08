@@ -219,33 +219,36 @@ function Task({
   };
 
   const handleDelete = async () => {
-    if (isArchived) {
-      setShowConfirmDelete(true);
-      return;
-    }
+      
+      const shouldBePermanent = isFailed && activeTab === 'failed';
+      
+      if (isArchived) {
+          setShowConfirmDelete(true);
+          return;
+      }
 
-    setIsUpdating(true);
-    setLastAction('delete');
+      setIsUpdating(true);
+      setLastAction('delete');
 
-    try {
-      await onDelete(task.id);
-    } catch (error) {
-      console.error('Ошибка удаления:', error);
-      setIsUpdating(false);
-    }
+      try {
+          await onDelete(task.id, shouldBePermanent);
+      } catch (error) {
+          console.error('Ошибка удаления:', error);
+          setIsUpdating(false);
+      }
   };
 
-  const handleConfirmPermanentDelete = async () => {
+const handleConfirmPermanentDelete = async () => {
     setIsUpdating(true);
     setLastAction('delete');
     try {
-      await onDelete(task.id, true);
-      setShowConfirmDelete(false);
+        await onDelete(task.id, true);
+        setShowConfirmDelete(false);
     } catch (error) {
-      console.error('Ошибка удаления:', error);
-      setIsUpdating(false);
+        console.error('Ошибка удаления:', error);
+        setIsUpdating(false);
     }
-  };
+};
 
   const handleComplete = async () => {
     setIsUpdating(true);

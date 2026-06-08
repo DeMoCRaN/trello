@@ -82,7 +82,7 @@ function DeadlineProgressBar({ taskId, deadline, status, initialProgress }) {
           return;
         }
         
-        console.error(`Ошибка синхронизации progress for task ${taskId}:`, err);
+        console.error(`Ошибка синхронизации для задачи ${taskId}:`, err);
       } finally {
         if (isMountedRef.current) {
           setIsLoading(false);

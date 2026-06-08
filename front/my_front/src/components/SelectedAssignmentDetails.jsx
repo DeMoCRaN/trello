@@ -45,16 +45,15 @@ function SelectedAssignmentDetails({
     }
   };
 
-  const handleDelete = async (taskId, permanent = false) => {
+const handleDelete = async (taskId, permanent = false) => {  
     try {
-      await onDelete(taskId, permanent);
-      // Обновляем данные после удаления
-      if (onRefresh) await onRefresh();
+        await onDelete(taskId, permanent); 
+        if (onRefresh) await onRefresh();
     } catch (error) {
-      console.error('Ошибка удаления задачи:', error);
-      onNotify(error.message);
+        console.error('Ошибка удаления задачи:', error);
+        onNotify(error.message);
     }
-  };
+};
 
   const handleCompleteWork = async (taskId) => {
     try {
@@ -81,20 +80,21 @@ function SelectedAssignmentDetails({
     }
   };
 
-  const handleRestoreTask = async (taskId, restoreData) => {
+const handleRestoreTask = async (taskId, restoreData) => {
     try {
-      await onStatusChange(taskId, {
-        status_id: 1,
-        title: restoreData.title,
-        deadline: restoreData.deadline,
-      });
-      // Обновляем данные после восстановления
-      if (onRefresh) await onRefresh();
+        const payload = {
+            status_id: 1,
+            action: 'restore',
+            title: restoreData.title,
+            deadline: restoreData.deadline,
+        };
+        await onStatusChange(taskId, payload);
+        if (onRefresh) await onRefresh();
     } catch (error) {
-      console.error('Ошибка восстановления задачи:', error);
-      onNotify(error.message);
+        console.error('Ошибка восстановления задачи:', error);
+        onNotify(error.message);
     }
-  };
+};
 
   // Группировка задач в зависимости от вкладки
   const groupTasksByStatus = (tasks, tab) => {
