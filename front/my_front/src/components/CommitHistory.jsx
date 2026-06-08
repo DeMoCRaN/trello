@@ -61,7 +61,6 @@ const CommitHistory = ({ taskId }) => {
   const highlightTaskReferences = (message) => {
     if (!message) return 'Нет сообщения';
 
-    // Подсвечиваем ссылки на задачи
     const highlighted = message.replace(
       /(#\d+|Task:\s*\d+|task\s+\d+)/gi,
       (match) => `<span class="task-reference">${match}</span>`

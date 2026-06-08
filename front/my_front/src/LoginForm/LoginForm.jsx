@@ -54,7 +54,7 @@ function LoginForm() {
     }
   };
 
-  // Обработка успешной OAuth авторизации (вызывается после редиректа)
+  // Обработка успешной OAuth авторизации 
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');

@@ -527,7 +527,7 @@ function AssignedTasks({ userEmail }) {
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
   }, []);
 
-  // Рендер карточки задачи
+
 // Рендер карточки задачи
 const renderTaskCard = useCallback((task) => {
   const timer = timers[task.id] || { elapsedSeconds: 0, isRunning: false };

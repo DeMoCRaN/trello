@@ -16,8 +16,7 @@ import TaskNotification from './components/TaskNotification';
 import InvitationResponseForm from './components/InvitationResponseForm';
 import SideToast from './components/SideToast';
 
-// Константа для интервала обновления (60 секунд)
-const REFRESH_INTERVAL_MS = 60000;
+
 
 function parseJwt(token) {
   try {
@@ -362,7 +361,7 @@ const processTasks = useCallback((tasks) => {
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
 
-    // Интервал обновления - 60 секунд
+    const REFRESH_INTERVAL_MS = 60000;
     const intervalId = setInterval(refreshAllData, REFRESH_INTERVAL_MS);
 
     return () => {

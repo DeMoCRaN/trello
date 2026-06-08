@@ -58,7 +58,6 @@ function DeadlineProgressBar({ taskId, deadline, status, createdAt }) {
     }
   }, [taskId]);
 
-  // Сохраняем функцию в ref, чтобы интервал всегда использовал актуальную
   updateProgressOnServerRef.current = updateProgressOnServer;
 
   // Расчет времени до дедлайна
@@ -109,7 +108,7 @@ function DeadlineProgressBar({ taskId, deadline, status, createdAt }) {
     return () => clearInterval(interval);
   }, [taskId, deadline, status]);
 
-  // Периодическое обновление прогресса на сервере (раз в минуту)
+  // Периодическое обновление прогресса на сервере
   useEffect(() => {
     if (status === 'done' || status === 'failed') return;
     
@@ -127,7 +126,7 @@ function DeadlineProgressBar({ taskId, deadline, status, createdAt }) {
     updateIntervalRef.current = setInterval(() => {
       const newProgress = calculateProgressFromTime();
       updateProgressOnServerRef.current(newProgress);
-    }, 60000); // каждую минуту
+    }, 60000); 
     
     return () => {
       if (updateIntervalRef.current) {

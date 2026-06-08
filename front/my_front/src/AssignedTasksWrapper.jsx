@@ -20,7 +20,7 @@ const AssignedTasksWrapper = () => {
         })
 
         if (response.status === 401) {
-          // Если токен недействителен, очищаем хранилище
+          // Если токен недействителен хранилище очищаеться
           localStorage.removeItem('token')
           localStorage.removeItem('tokenExpiry')
           throw new Error('Требуется повторная авторизация')
